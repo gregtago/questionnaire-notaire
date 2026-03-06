@@ -103,7 +103,15 @@ app.post("/api/soumettre", async (req, res) => {
           max_tokens: 4000,
           messages: [{ role: "user", content: buildXmlPrompt(personnes) }],
         });
-        const xml = xmlResp.content[0].text.trim().replace(/^```xml\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+        let xml = xmlResp.content[0].text;
+        // Supprimer BOM et caractères invisibles de début
+        xml = xml.replace(/^\uFEFF/, "").replace(/^[\s\u200B\u200C\u200D\u00A0]+/, "");
+        // Supprimer blocs markdown
+        xml = xml.replace(/^```xml\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "");
+        // S'assurer que le fichier commence exactement par <?xml
+        const xmlStart = xml.indexOf("<?xml");
+        if (xmlStart > 0) xml = xml.substring(xmlStart);
+        xml = xml.trim();
         await sendXmlEmail(xml, personnes, type);
       } catch (e) {
         console.error("Erreur XML:", e.message);
