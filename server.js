@@ -74,7 +74,7 @@ app.post("/api/otp/verifier", (req, res) => {
 // ─── Soumission formulaire ──────────────────────────────
 app.post("/api/soumettre", async (req, res) => {
   try {
-    const { personnes, type } = req.body;
+    const { personnes, type, xml } = req.body;
     if (!personnes || !personnes.length) {
       return res.status(400).json({ error: "Données manquantes" });
     }
@@ -91,15 +91,14 @@ app.post("/api/soumettre", async (req, res) => {
     setImmediate(async () => {
       if (!process.env.BREVO_API_KEY) return;
       try {
-        // a) Email immédiat avec les réponses (sans XML)
+        // a) Email avec les réponses (sans XML)
         await sendEmail(null, personnes, type);
       } catch (e) {
         console.error("Erreur email réponses:", e.message);
       }
       try {
-        // b) Générer le XML directement en JS
-        const xml = buildXmlDirect(personnes);
-        await sendXmlEmail(xml, personnes, type);
+        // b) XML généré côté client et transmis directement
+        if (xml) await sendXmlEmail(xml, personnes, type);
       } catch (e) {
         console.error("Erreur XML:", e.message);
       }
