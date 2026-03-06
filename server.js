@@ -1,6 +1,6 @@
 const express = require("express");
 const Anthropic = require("@anthropic-ai/sdk");
-const SibApiV3Sdk = require("@getbrevo/brevo");
+const { BrevoClient } = require("@getbrevo/brevo");
 const path = require("path");
 
 const app = express();
@@ -182,10 +182,8 @@ async function sendEmail(xml, personnes, type) {
   </div>
 </body></html>`;
 
-  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
-
-  await apiInstance.sendTransacEmail({
+  const brevo = new BrevoClient({ apiKey });
+  await brevo.transactionalEmails.sendTransacEmail({
     sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
     to: [{ email: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr" }],
     subject: `Questionnaire ${typeLabel} — ${noms}`,
@@ -203,10 +201,8 @@ async function sendXmlEmail(xml, personnes, type) {
   const typeLabel = typeLabels[type] || type;
   const filename = `import_inot_${noms.toLowerCase().replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"")}.XML`;
 
-  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-  apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
-
-  await apiInstance.sendTransacEmail({
+  const brevo = new BrevoClient({ apiKey });
+  await brevo.transactionalEmails.sendTransacEmail({
     sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
     to: [{ email: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr" }],
     subject: `XML iNot — ${typeLabel} — ${noms}`,
