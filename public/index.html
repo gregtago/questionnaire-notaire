@@ -424,9 +424,7 @@ document.getElementById('btnSubmit').onclick = async () => {
   const resultDiv = document.getElementById('result');
   const errorDiv = document.getElementById('error');
 
-  // Validation
-  const reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  const reTel   = /^[+\d][\d\s().\-]{4,}$/;
+  // Validation champs obligatoires
   for (let i = 0; i < persons.length; i++) {
     const p = persons[i];
     const n = i + 1;
@@ -434,12 +432,8 @@ document.getElementById('btnSubmit').onclick = async () => {
       errorDiv.textContent = `Personne ${n} : nom, prénoms, date et lieu de naissance sont obligatoires.`;
       errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
     }
-    if (p.email && !reEmail.test(p.email.trim())) {
+    if (p.email && !p.email.includes('@')) {
       errorDiv.textContent = `Personne ${n} : l'adresse email « ${p.email} » n'est pas valide.`;
-      errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
-    }
-    if (p.tel && !reTel.test(p.tel.trim())) {
-      errorDiv.textContent = `Personne ${n} : le numéro de téléphone « ${p.tel} » n'est pas valide.`;
       errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
     }
   }
