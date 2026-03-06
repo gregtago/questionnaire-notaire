@@ -116,7 +116,7 @@
   <div id="screenEmail" class="otp-screen">
     <div class="field">
       <label for="otpEmail">Votre adresse email *</label>
-      <input type="email" id="otpEmail" placeholder="marie@email.fr" autocomplete="email" />
+      <input type="email" id="otpEmail" placeholder="" autocomplete="email" />
     </div>
     <button class="btn-otp" id="btnSendOtp">Envoyer le code</button>
     <div id="errorOtp" class="error" style="display:none;"></div>
@@ -275,17 +275,17 @@ function renderForm(p, idx) {
       </div>
       <div class="field">
         <label>Nom d'usage *</label>
-        <input type="text" data-f="nom" value="${e(p.nom)}" placeholder="DUPONT" autocomplete="family-name" />
+        <input type="text" data-f="nom" value="${e(p.nom)}" placeholder="" autocomplete="family-name" />
       </div>
       <div class="field">
         <label>Nom de naissance</label>
-        <input type="text" data-f="nomNaissance" value="${e(p.nomNaissance)}" placeholder="si différent" />
+        <input type="text" data-f="nomNaissance" value="${e(p.nomNaissance)}" placeholder="" />
       </div>
     </div>
     <div class="row col-1">
       <div class="field">
         <label>Prénoms *</label>
-        <input type="text" data-f="prenoms" value="${e(p.prenoms)}" placeholder="Marie Claire" autocomplete="given-name" />
+        <input type="text" data-f="prenoms" value="${e(p.prenoms)}" placeholder="" autocomplete="given-name" />
       </div>
     </div>
     <div class="row col-2">
@@ -295,21 +295,21 @@ function renderForm(p, idx) {
       </div>
       <div class="field">
         <label>Lieu de naissance *</label>
-        <input type="text" data-f="lieuNaissance" value="${e(p.lieuNaissance)}" placeholder="Paris" />
+        <input type="text" data-f="lieuNaissance" value="${e(p.lieuNaissance)}" placeholder="" />
       </div>
     </div>
     <div class="row col-3">
       <div class="field">
         <label>Code postal de naissance *</label>
-        <input type="text" data-f="cpNaissance" value="${e(p.cpNaissance)}" placeholder="75001" maxlength="5" />
+        <input type="text" data-f="cpNaissance" value="${e(p.cpNaissance)}" placeholder="" maxlength="5" />
       </div>
       <div class="field">
         <label>Profession</label>
-        <input type="text" data-f="profession" value="${e(p.profession)}" placeholder="Ingénieur" autocomplete="organization-title" />
+        <input type="text" data-f="profession" value="${e(p.profession)}" placeholder="" autocomplete="organization-title" />
       </div>
       <div class="field">
         <label>Nationalité</label>
-        <input type="text" data-f="nationalite" value="${e(p.nationalite)}" placeholder="Française" />
+        <input type="text" data-f="nationalite" value="${e(p.nationalite)}" placeholder="" />
       </div>
     </div>
   </div>
@@ -319,27 +319,27 @@ function renderForm(p, idx) {
     <div class="row col-1">
       <div class="field">
         <label>Adresse *</label>
-        <input type="text" data-f="adresse" value="${e(p.adresse)}" placeholder="12 rue de la Paix" autocomplete="street-address" />
+        <input type="text" data-f="adresse" value="${e(p.adresse)}" placeholder="" autocomplete="street-address" />
       </div>
     </div>
     <div class="row col-2">
       <div class="field">
         <label>Code postal *</label>
-        <input type="text" data-f="cp" value="${e(p.cp)}" placeholder="75001" maxlength="5" autocomplete="postal-code" />
+        <input type="text" data-f="cp" value="${e(p.cp)}" placeholder="" maxlength="5" autocomplete="postal-code" />
       </div>
       <div class="field">
         <label>Ville *</label>
-        <input type="text" data-f="ville" value="${e(p.ville)}" placeholder="Paris" autocomplete="address-level2" />
+        <input type="text" data-f="ville" value="${e(p.ville)}" placeholder="" autocomplete="address-level2" />
       </div>
     </div>
     <div class="row col-2">
       <div class="field">
         <label>Téléphone portable *</label>
-        <input type="tel" data-f="tel" value="${e(p.tel)}" placeholder="06 12 34 56 78" autocomplete="tel" />
+        <input type="tel" data-f="tel" value="${e(p.tel)}" placeholder="" autocomplete="tel" />
       </div>
       <div class="field">
         <label>E-mail</label>
-        <input type="email" data-f="email" value="${e(p.email)}" placeholder="marie@email.fr" autocomplete="email" ${i === 0 && verifiedEmail ? 'readonly style="background:#f5f5f5;color:#aaa;cursor:not-allowed;"' : ''} />
+        <input type="email" data-f="email" value="${e(p.email)}" placeholder="" autocomplete="email" ${i === 0 && verifiedEmail ? 'readonly style="background:#f5f5f5;color:#aaa;cursor:not-allowed;"' : ''} />
       </div>
     </div>
   </div>
@@ -361,11 +361,11 @@ function renderForm(p, idx) {
         </div>
         <div class="field">
           <label>Code postal du mariage</label>
-          <input type="text" data-f="cpMariage" value="${e(p.cpMariage)}" placeholder="75001" />
+          <input type="text" data-f="cpMariage" value="${e(p.cpMariage)}" placeholder="" />
         </div>
         <div class="field">
           <label>Commune du mariage</label>
-          <input type="text" data-f="villeMariage" value="${e(p.villeMariage)}" placeholder="Paris" />
+          <input type="text" data-f="villeMariage" value="${e(p.villeMariage)}" placeholder="" />
         </div>
       </div>
       <div class="row col-2">
@@ -389,11 +389,11 @@ function renderForm(p, idx) {
       <div class="row col-2">
         <div class="field">
           <label>Nom du conjoint</label>
-          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="MARTIN" />
+          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="" />
         </div>
         <div class="field">
           <label>Prénom(s) du conjoint</label>
-          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="Jean Paul" />
+          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="" />
         </div>
       </div>
     </div>
@@ -403,7 +403,7 @@ function renderForm(p, idx) {
       <div class="row col-2">
         <div class="field">
           <label>Tribunal (ville)</label>
-          <input type="text" data-f="tribunal" value="${e(p.tribunal)}" placeholder="Paris" />
+          <input type="text" data-f="tribunal" value="${e(p.tribunal)}" placeholder="" />
         </div>
         <div class="field">
           <label>Date du jugement</label>
@@ -413,11 +413,11 @@ function renderForm(p, idx) {
       ${!showM ? `<div class="row col-2">
         <div class="field">
           <label>Nom de l'ex-conjoint</label>
-          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="MARTIN" />
+          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="" />
         </div>
         <div class="field">
           <label>Prénom(s) de l'ex-conjoint</label>
-          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="Jean Paul" />
+          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="" />
         </div>
       </div>` : ''}
     </div>
@@ -427,11 +427,11 @@ function renderForm(p, idx) {
       <div class="row col-2">
         <div class="field">
           <label>Nom du conjoint décédé</label>
-          <input type="text" data-f="nomVeuf" value="${e(p.nomVeuf)}" placeholder="MARTIN" />
+          <input type="text" data-f="nomVeuf" value="${e(p.nomVeuf)}" placeholder="" />
         </div>
         <div class="field">
           <label>Prénom(s) du conjoint décédé</label>
-          <input type="text" data-f="prenomsVeuf" value="${e(p.prenomsVeuf)}" placeholder="Jean Paul" />
+          <input type="text" data-f="prenomsVeuf" value="${e(p.prenomsVeuf)}" placeholder="" />
         </div>
       </div>
     </div>
@@ -445,21 +445,21 @@ function renderForm(p, idx) {
         </div>
         <div class="field">
           <label>Code postal</label>
-          <input type="text" data-f="cpPacs" value="${e(p.cpPacs)}" placeholder="75001" />
+          <input type="text" data-f="cpPacs" value="${e(p.cpPacs)}" placeholder="" />
         </div>
         <div class="field">
           <label>Commune</label>
-          <input type="text" data-f="villePacs" value="${e(p.villePacs)}" placeholder="Paris" />
+          <input type="text" data-f="villePacs" value="${e(p.villePacs)}" placeholder="" />
         </div>
       </div>
       <div class="row col-2">
         <div class="field">
           <label>Nom du partenaire</label>
-          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="MARTIN" />
+          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="" />
         </div>
         <div class="field">
           <label>Prénom(s) du partenaire</label>
-          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="Jean Paul" />
+          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="" />
         </div>
       </div>
     </div>
