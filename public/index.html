@@ -300,7 +300,7 @@ function renderForm(p, idx) {
     </div>
     <div class="row col-3">
       <div class="field">
-        <label>Code postal de naissance</label>
+        <label>Code postal de naissance *</label>
         <input type="text" data-f="cpNaissance" value="${e(p.cpNaissance)}" placeholder="75001" maxlength="5" />
       </div>
       <div class="field">
@@ -543,6 +543,10 @@ document.getElementById('btnSubmit').onclick = async () => {
     }
     if (!p.dateNaissance || !p.lieuNaissance) {
       errorDiv.textContent = `Personne ${n} : la date et le lieu de naissance sont obligatoires.`;
+      errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
+    }
+    if (!p.cpNaissance) {
+      errorDiv.textContent = `Personne ${n} : le code postal de naissance est obligatoire.`;
       errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
     }
     if (!p.adresse || !p.cp || !p.ville) {
