@@ -1,6 +1,6 @@
 const express = require("express");
 const Anthropic = require("@anthropic-ai/sdk");
-const nodemailer = require("nodemailer");
+const SibApiV3Sdk = require("@getbrevo/brevo");
 const path = require("path");
 
 const app = express();
@@ -32,7 +32,7 @@ app.post("/api/soumettre", async (req, res) => {
 
     // ── 2. Tout en arrière-plan ─────────────────────────
     setImmediate(async () => {
-      if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) return;
+      if (!process.env.BREVO_API_KEY) return;
       try {
         // a) Email immédiat avec les réponses (sans XML)
         await sendEmail(null, personnes, type);
@@ -89,26 +89,12 @@ ${JSON.stringify(personnes, null, 2)}
 Réponds UNIQUEMENT avec le XML complet, sans texte avant ni après, sans balises markdown.`;
 }
 
-// ─── Envoi email ────────────────────────────────────────
+// ─── Envoi email via Brevo API ──────────────────────────
 async function sendEmail(xml, personnes, type) {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "ssl0.ovh.net",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error("BREVO_API_KEY manquante");
 
-  const typeLabels = {
-    etatcivil: "État civil",
-    acquereur: "Acquéreur",
-    "vendeur-appartement": "Vendeur – Appartement",
-    "vendeur-maison": "Vendeur – Maison",
-    divorce: "Divorce",
-    succession: "Succession",
-  };
+  const typeLabels = { etatcivil:"État civil", acquereur:"Acquéreur", "vendeur-appartement":"Vendeur – Appartement", "vendeur-maison":"Vendeur – Maison", divorce:"Divorce", succession:"Succession" };
   const sitLabels = { C:"Célibataire", M:"Marié(e)", D:"Divorcé(e)", V:"Veuf / Veuve", I:"En instance de divorce", P:"Pacsé(e)", S:"Séparé(e) de corps" };
   const regLabels = { "4":"Sans contrat (régime légal)", "30":"Communauté réduite aux acquêts", "33":"Séparation de biens", "32":"Communauté universelle", "35":"Participation aux acquêts" };
   const civLabels = { "M.":"Monsieur", "MME":"Madame", "MELLE":"Mademoiselle" };
@@ -121,23 +107,17 @@ async function sendEmail(xml, personnes, type) {
     if (!d) return "";
     try { return new Date(d).toLocaleDateString("fr-FR"); } catch { return d; }
   }
-
   function row(label, value) {
     if (!value) return "";
-    return `<tr>
-      <td style="padding:6px 12px 6px 0;font-size:12px;color:#888;white-space:nowrap;vertical-align:top;">${label}</td>
-      <td style="padding:6px 0;font-size:13px;color:#111;vertical-align:top;">${value}</td>
-    </tr>`;
+    return `<tr><td style="padding:6px 12px 6px 0;font-size:12px;color:#888;white-space:nowrap;vertical-align:top;">${label}</td><td style="padding:6px 0;font-size:13px;color:#111;vertical-align:top;">${value}</td></tr>`;
   }
-
   function section(title) {
     return `<tr><td colspan="2" style="padding:18px 0 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bbb;font-weight:bold;border-top:1px solid #eee;">${title}</td></tr>`;
   }
 
-  let personnesHtml = personnes.map((p, i) => {
+  const personnesHtml = personnes.map((p, i) => {
     const sit = p.situation || "C";
     let rows = "";
-
     rows += section("Identité");
     rows += row("Civilité", civLabels[p.civilite] || p.civilite);
     rows += row("Nom d'usage", (p.nom||"").toUpperCase());
@@ -147,16 +127,13 @@ async function sendEmail(xml, personnes, type) {
     rows += row("Date et lieu de naissance", naiss);
     rows += row("Profession", p.profession);
     rows += row("Nationalité", p.nationalite);
-
     rows += section("Coordonnées");
     const adresse = [p.adresse, [p.cp, p.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
     rows += row("Adresse", adresse);
     rows += row("Téléphone", p.tel);
     rows += row("E-mail", p.email);
-
     rows += section("Situation matrimoniale");
     rows += row("Situation", sitLabels[sit] || sit);
-
     if (["M","I","S"].includes(sit)) {
       const mariage = [formatDate(p.dateMariage), [p.cpMariage, p.villeMariage].filter(Boolean).join(" ")].filter(Boolean).join(" — ");
       rows += row("Date et lieu du mariage", mariage);
@@ -183,71 +160,58 @@ async function sendEmail(xml, personnes, type) {
       const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
       rows += row("Partenaire", conj);
     }
-
     const nomComplet = `${civLabels[p.civilite]||""} ${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim();
-    return `
-      ${i > 0 ? '<tr><td colspan="2" style="padding:24px 0 8px;"><hr style="border:none;border-top:2px solid #111;margin:0;" /></td></tr>' : ""}
-      <tr><td colspan="2" style="padding-bottom:8px;">
-        <span style="font-size:15px;font-weight:bold;color:#111;">${nomComplet}</span>
-      </td></tr>
-      ${rows}`;
+    return `${i > 0 ? '<tr><td colspan="2" style="padding:24px 0 8px;"><hr style="border:none;border-top:2px solid #111;margin:0;" /></td></tr>' : ""}
+      <tr><td colspan="2" style="padding-bottom:8px;"><span style="font-size:15px;font-weight:bold;color:#111;">${nomComplet}</span></td></tr>${rows}`;
   }).join("");
 
-  const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
+  const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#fafafa;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <div style="max-width:600px;margin:40px auto;background:#fff;border:1px solid #eee;border-radius:6px;overflow:hidden;">
-    
     <div style="background:#111;padding:28px 32px;">
       <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:6px;">Cabinet Tagot — Notaire</div>
       <div style="font-size:20px;font-weight:300;color:#fff;">Questionnaire ${typeLabel}</div>
       <div style="font-size:12px;color:#666;margin-top:4px;">Reçu le ${today}</div>
     </div>
-
     <div style="padding:32px;">
-      <table style="width:100%;border-collapse:collapse;">
-        ${personnesHtml}
-      </table>
-
+      <table style="width:100%;border-collapse:collapse;">${personnesHtml}</table>
     </div>
-
     <div style="background:#fafafa;padding:16px 32px;border-top:1px solid #eee;">
-      <p style="margin:0;font-size:10px;color:#bbb;line-height:1.6;">
-        Questionnaire soumis via questionnaire.tagot.notaires.fr · Cabinet Tagot
-      </p>
+      <p style="margin:0;font-size:10px;color:#bbb;line-height:1.6;">Questionnaire soumis via questionnaire.tagot.notaires.fr · Cabinet Tagot</p>
     </div>
   </div>
 </body></html>`;
 
-  await transporter.sendMail({
-    from: `"Cabinet Tagot" <${process.env.SMTP_USER}>`,
-    to: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr",
+  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+
+  await apiInstance.sendTransacEmail({
+    sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
+    to: [{ email: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr" }],
     subject: `Questionnaire ${typeLabel} — ${noms}`,
-    html,
-
+    htmlContent,
   });
-
-  return true;
 }
 
-// ─── Email XML iNot (second email) ─────────────────────
+// ─── Email XML iNot via Brevo ───────────────────────────
 async function sendXmlEmail(xml, personnes, type) {
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "ssl0.ovh.net",
-    port: 587,
-    secure: false,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error("BREVO_API_KEY manquante");
+
   const typeLabels = { etatcivil:"État civil", acquereur:"Acquéreur", "vendeur-appartement":"Vendeur – Appartement", "vendeur-maison":"Vendeur – Maison", divorce:"Divorce", succession:"Succession" };
   const noms = personnes.map(p => `${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim()).join(", ");
   const typeLabel = typeLabels[type] || type;
   const filename = `import_inot_${noms.toLowerCase().replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"")}.XML`;
-  await transporter.sendMail({
-    from: `"Cabinet Tagot" <${process.env.SMTP_USER}>`,
-    to: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr",
+
+  const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+  apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+
+  await apiInstance.sendTransacEmail({
+    sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
+    to: [{ email: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr" }],
     subject: `XML iNot — ${typeLabel} — ${noms}`,
-    text: `Fichier XML iNot en pièce jointe pour : ${noms}`,
-    attachments: [{ filename, content: xml, contentType: "application/xml" }],
+    textContent: `Fichier XML iNot en pièce jointe pour : ${noms}`,
+    attachment: [{ name: filename, content: Buffer.from(xml).toString("base64") }],
   });
 }
 
