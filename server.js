@@ -1,5 +1,4 @@
 const express = require("express");
-const Anthropic = require("@anthropic-ai/sdk");
 const { BrevoClient } = require("@getbrevo/brevo");
 const path = require("path");
 
@@ -78,11 +77,6 @@ app.post("/api/soumettre", async (req, res) => {
     if (!personnes || !personnes.length) {
       return res.status(400).json({ error: "Données manquantes" });
     }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "Clé API manquante" });
-
-    const client = new Anthropic({ apiKey });
 
     // ── 1. Répondre immédiatement au client ────────────
     res.json({ ok: true });

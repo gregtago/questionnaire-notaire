@@ -7,658 +7,532 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
-
-    /* ── Header ── */
     .header { background: #111; color: #fff; padding: 28px 32px 24px; }
     .header .cabinet { font-size: 11px; letter-spacing: .05em; color: #888; margin-bottom: 6px; }
-    .header h1 { font-size: 26px; font-weight: 300; letter-spacing: -.01em; }
+    .header h1 { font-size: 24px; font-weight: 300; }
     .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
-
-    /* ── OTP screens ── */
     .screen { max-width: 520px; margin: 60px auto; padding: 0 20px; }
-    .screen-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
-    .screen-card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
-    .screen-card p { color: #777; font-size: 14px; margin-bottom: 28px; }
-    .field-group { margin-bottom: 20px; }
-    .field-group label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
-    .field-group input[type=email],
-    .field-group input[type=text],
-    .field-group input[type=tel] { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; transition: border .15s; }
-    .field-group input:focus { border-color: #111; }
-    .btn-primary { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: background .15s; }
-    .btn-primary:hover { background: #333; }
-    .btn-primary:disabled { background: #999; cursor: not-allowed; }
-    .btn-secondary { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; }
-    .err { color: #c0392b; font-size: 13px; margin-top: 8px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p { color: #777; font-size: 14px; margin-bottom: 28px; }
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; }
+    .fg input:focus { border-color: #111; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #999; cursor: not-allowed; }
+    .btn-ghost { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 8px; min-height: 18px; }
     .otp-input { text-align: center; font-size: 28px; letter-spacing: .3em; font-weight: 600; }
-
-    /* ── Form layout ── */
-    .form-wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
-
-    /* ── Person tabs ── */
-    .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-    .tab { padding: 8px 18px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: #fff; color: #555; transition: all .15s; }
+    .form-wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { padding: 7px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: #fff; color: #555; }
     .tab.active { background: #111; color: #fff; border-color: #111; }
-    .tab-add { border-style: dashed; color: #888; }
-    .tab-add:hover { border-color: #111; color: #111; }
-
-    /* ── Sections ── */
-    .section { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 28px; margin-bottom: 16px; }
-    .section-title { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #aaa; margin-bottom: 20px; }
-
-    /* ── Fields ── */
-    .field { margin-bottom: 18px; }
-    .field label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+    .sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; margin-bottom: 14px; }
+    .sec-title { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #bbb; margin-bottom: 18px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
     .field label .req { color: #c0392b; }
-    .field input[type=text],
-    .field input[type=email],
-    .field input[type=tel],
-    .field input[type=date],
-    .field select { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; transition: border .15s; }
+    .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .field input, .field select { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; }
     .field input:focus, .field select:focus { border-color: #111; }
-    .field input[readonly] { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
-    .field-row { display: grid; gap: 12px; }
-    .field-row.col2 { grid-template-columns: 1fr 1fr; }
-    .field-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
-
-    /* ── Situation buttons ── */
-    .sit-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-    .sit-btn { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; transition: all .15s; }
-    .sit-btn.active { background: #111; color: #fff; border-color: #111; }
-
-    /* ── Conditional sections ── */
-    .cond { display: none; }
+    .field input.ro { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .choice { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; }
+    .choice.on { background: #111; color: #fff; border-color: #111; }
+    .cond { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
     .cond.show { display: block; }
-
-    /* ── Conjoint toggle ── */
-    .conjoint-toggle { display: flex; align-items: center; gap: 10px; padding: 14px 20px; background: #f9f9f9; border: 1px dashed #ccc; border-radius: 6px; margin-bottom: 16px; cursor: pointer; font-size: 14px; color: #555; }
-    .conjoint-toggle:hover { border-color: #888; color: #111; }
-    .conjoint-toggle .icon { font-size: 18px; }
-
-    /* ── Submit ── */
-    .submit-zone { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 28px; }
-    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; transition: background .15s; }
+    .add-conjoint { display: flex; align-items: center; gap: 10px; padding: 13px 18px; background: #f9f9f9; border: 1px dashed #ccc; border-radius: 6px; margin-bottom: 14px; cursor: pointer; font-size: 14px; color: #666; }
+    .add-conjoint:hover { border-color: #888; color: #111; }
+    .submit-sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; }
+    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
     .btn-submit:hover { background: #333; }
     .btn-submit:disabled { background: #999; cursor: not-allowed; }
-    .form-error { color: #c0392b; font-size: 13px; margin-top: 12px; }
-
-    /* ── RGPD ── */
+    .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
     .rgpd { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-
-    /* ── Confirm ── */
-    .confirm-box { text-align: center; padding: 60px 20px; }
-    .confirm-icon { font-size: 48px; margin-bottom: 16px; }
-    .confirm-title { font-size: 22px; font-weight: 300; margin-bottom: 12px; }
-    .confirm-text { color: #777; font-size: 14px; line-height: 1.7; }
-
-    /* ── Footer ── */
-    footer { text-align: center; padding: 32px 20px; font-size: 11px; color: #bbb; }
-    footer a { color: #bbb; }
-
-    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; margin-right: 8px; vertical-align: middle; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width: 600px) {
-      .field-row.col2, .field-row.col3 { grid-template-columns: 1fr; }
-      .header { padding: 20px; }
-    }
+    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm .icon { font-size: 44px; margin-bottom: 14px; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; }
+    footer { text-align: center; padding: 28px 20px; font-size: 11px; color: #bbb; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .conj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .conj-header span { font-size: 13px; color: #888; font-style: italic; }
+    .conj-header button { background: none; border: none; color: #c0392b; font-size: 13px; cursor: pointer; }
+    @media(max-width:600px){ .row2,.row3{ grid-template-columns:1fr; } .header{ padding: 20px; } }
   </style>
 </head>
 <body>
 
 <div class="header">
   <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
-  <h1 id="pageTitle">Questionnaire État civil</h1>
-  <div class="subtitle" id="pageSubtitle">Pour accéder au questionnaire, veuillez d'abord vérifier votre adresse email.</div>
+  <h1 id="pageTitle">Questionnaire état civil</h1>
+  <div class="subtitle" id="pageSub">Veuillez d'abord vérifier votre adresse email.</div>
 </div>
 
-<!-- ══ ÉCRAN 1 : Email ══ -->
-<div id="screenEmail" class="screen">
-  <div class="screen-card">
+<!-- ÉCRAN 1 : Email -->
+<div id="sEmail" class="screen">
+  <div class="card">
     <h2>Vérification email</h2>
-    <p>Saisissez votre adresse email. Nous vous enverrons un code à 6 chiffres.</p>
-    <div class="field-group">
-      <label>Votre adresse email <span style="color:#c0392b">*</span></label>
-      <input type="email" id="otpEmail" autocomplete="email" placeholder="">
+    <p>Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.</p>
+    <div class="fg">
+      <label>Adresse email <span style="color:#c0392b">*</span></label>
+      <input type="email" id="iEmail" autocomplete="email">
     </div>
-    <button class="btn-primary" id="btnSendOtp">ENVOYER LE CODE</button>
-    <div class="err" id="errEmail"></div>
+    <button class="btn" id="btnSend">ENVOYER LE CODE</button>
+    <div class="err" id="eEmail"></div>
   </div>
 </div>
 
-<!-- ══ ÉCRAN 2 : Code OTP ══ -->
-<div id="screenCode" class="screen" style="display:none">
-  <div class="screen-card">
+<!-- ÉCRAN 2 : Code -->
+<div id="sCode" class="screen" style="display:none">
+  <div class="card">
     <h2>Code de vérification</h2>
-    <p id="otpSentTo">Saisissez le code reçu par email.</p>
-    <div class="field-group">
+    <p id="otpMsg">Saisissez le code reçu par email.</p>
+    <div class="fg">
       <label>Code à 6 chiffres</label>
-      <input type="text" id="otpCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="      ">
+      <input type="text" id="iCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
     </div>
-    <button class="btn-primary" id="btnVerifyOtp">VALIDER</button>
-    <div class="err" id="errCode"></div>
-    <br>
-    <button class="btn-secondary" id="btnResend">Renvoyer le code</button>
+    <button class="btn" id="btnVerify">VALIDER</button>
+    <div class="err" id="eCode"></div>
+    <br><button class="btn-ghost" id="btnResend">Renvoyer le code</button>
   </div>
 </div>
 
-<!-- ══ ÉCRAN 3 : Formulaire ══ -->
-<div id="screenForm" style="display:none">
+<!-- ÉCRAN 3 : Formulaire -->
+<div id="sForm" style="display:none">
   <div class="form-wrap">
     <div id="tabs" class="tabs"></div>
     <div id="forms"></div>
-
-    <!-- Bouton ajouter conjoint -->
-    <div id="conjointToggle" class="conjoint-toggle" onclick="addConjoint()">
-      <span class="icon">+</span>
+    <div id="addConj" class="add-conjoint" onclick="addConjoint()">
+      <span style="font-size:18px">+</span>
       <span>Ajouter le conjoint / partenaire</span>
     </div>
-
-    <!-- Zone soumission -->
-    <div class="submit-zone">
+    <div class="submit-sec">
       <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
-      <div class="form-error" id="formError" style="display:none"></div>
+      <div class="ferr" id="ferr"></div>
       <div class="rgpd">
         <strong style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;">Mention sur la protection des données personnelles</strong><br><br>
-        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales (Fichier Central Des Dernières Volontés, Minutier Central Électronique des Notaires, registre du PACS, etc.), les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés, les organismes de conseils spécialisés dans la gestion des activités notariales, le Conseil supérieur du notariat ou son délégataire, pour la production des statistiques permettant l'évaluation des biens immobiliers, en application du décret n° 2013-803 du 3 septembre 2013, les organismes publics ou privés pour des opérations de vérification dans le cadre de la recherche de personnalités politiquement exposées ou ayant fait l'objet de gel des avoirs ou sanctions, de la lutte contre le blanchiment des capitaux et le financement du terrorisme. Ces vérifications font l'objet d'un transfert de données dans un pays situé hors de l'Union Européenne et encadré par la signature de clauses contractuelles types de la Commission européenne, visant à assurer un niveau de protection des données personnelles substantiellement équivalent à celui garanti par l'Union Européenne. La communication de ces données à ces destinataires peut être indispensable pour l'accomplissement des activités notariales. Les documents permettant d'établir, d'enregistrer ou de conserver les actes sont conservés 30 ans à compter de la date de réalisation de l'ensemble des formalités. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17 relative à l'informatique, aux fichiers et aux libertés, vous disposez d'un droit d'accès, de rectification et d'effacement des données à caractère personnel vous concernant. Ces droits peuvent être exercés auprès de l'Office notarial.
+        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales, les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
       </div>
     </div>
   </div>
 </div>
 
-<footer>
-  <a href="https://questionnaire.tagot.notaires.fr">questionnaire.tagot.notaires.fr</a> · Grégoire TAGOT&nbsp;|&nbsp;notaire
-</footer>
+<footer>questionnaire.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
 
 <script>
 'use strict';
 
-// ══ CONFIG ══════════════════════════════════════════════
-const TYPE = new URLSearchParams(location.search).get('type') || 'etatcivil';
-const TYPE_LABELS = { etatcivil:'État civil', acquereur:'Acquéreur', 'vendeur-appartement':'Vendeur – Appartement', 'vendeur-maison':'Vendeur – Maison', divorce:'Divorce', succession:'Succession' };
-document.getElementById('pageTitle').textContent = 'Questionnaire ' + (TYPE_LABELS[TYPE] || 'État civil');
-
-// ══ OTP ════════════════════════════════════════════════
-let verifiedEmail = '';
+// ── État global ───────────────────────────────────────────
+let email0 = '';
+let persons = [newPerson('personne')];
+let hasConj = false;
 let activeIdx = 0;
 
-document.getElementById('otpEmail').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('btnSendOtp').click(); });
-document.getElementById('otpCode').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('btnVerifyOtp').click(); });
-
-document.getElementById('btnSendOtp').onclick = async () => {
-  const email = document.getElementById('otpEmail').value.trim();
-  const err = document.getElementById('errEmail');
-  if (!email.includes('@')) { err.textContent = 'Adresse email invalide.'; return; }
-  err.textContent = '';
-  document.getElementById('btnSendOtp').disabled = true;
-  document.getElementById('btnSendOtp').innerHTML = '<span class="spinner"></span>Envoi…';
-  try {
-    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email }) });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Erreur');
-    verifiedEmail = email;
-    document.getElementById('screenEmail').style.display = 'none';
-    document.getElementById('screenCode').style.display = 'block';
-    document.getElementById('otpSentTo').textContent = `Code envoyé à ${email}. Vérifiez vos spams si nécessaire.`;
-    document.getElementById('otpCode').focus();
-  } catch(e) {
-    err.textContent = e.message;
-  } finally {
-    document.getElementById('btnSendOtp').disabled = false;
-    document.getElementById('btnSendOtp').textContent = 'ENVOYER LE CODE';
-  }
-};
-
-document.getElementById('btnResend').onclick = () => {
-  document.getElementById('screenCode').style.display = 'none';
-  document.getElementById('screenEmail').style.display = 'block';
-  document.getElementById('btnSendOtp').click();
-};
-
-document.getElementById('btnVerifyOtp').onclick = async () => {
-  const code = document.getElementById('otpCode').value.trim();
-  const err = document.getElementById('errCode');
-  if (code.length !== 6) { err.textContent = 'Le code doit contenir 6 chiffres.'; return; }
-  err.textContent = '';
-  document.getElementById('btnVerifyOtp').disabled = true;
-  document.getElementById('btnVerifyOtp').innerHTML = '<span class="spinner"></span>Vérification…';
-  try {
-    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email: verifiedEmail, code }) });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Code incorrect');
-    persons[0].EMAIL = verifiedEmail;
-    document.getElementById('screenCode').style.display = 'none';
-    document.getElementById('screenForm').style.display = 'block';
-    document.getElementById('pageSubtitle').style.display = 'none';
-    renderAll();
-  } catch(e) {
-    err.textContent = e.message;
-  } finally {
-    document.getElementById('btnVerifyOtp').disabled = false;
-    document.getElementById('btnVerifyOtp').textContent = 'VALIDER';
-  }
-};
-
-// ══ MODÈLE DE DONNÉES (calqué sur champs iNot) ══════════
+// ── Modèle ────────────────────────────────────────────────
 function newPerson(role) {
   return {
-    _role: role || 'personne',   // 'personne' | 'conjoint'
-    // Identité
-    TITRE: '',        // Monsieur / Madame / Mademoiselle
-    CODETITRE: '',    // M. / MME / MELLE
-    ACCORD: '',       // M / F
-    NOMU: '',         // Nom usuel (MAJUSCULES)
-    NOM: '',          // Nom état civil (= NOMU si pas de nom de naissance)
-    PRENOMU: '',      // Prénom usuel (1er prénom)
-    PRENOM: '',       // Tous les prénoms
-    DATNA: '',        // Date naissance JJMMAAAA (saisie JJ/MM/AAAA)
-    LVNARU: '',       // Lieu de naissance (MAJUSCULES)
-    CODERU: '',       // CP de naissance
-    DEPTNA: '',       // Département de naissance (calculé)
+    _role: role,       // 'personne' | 'conjoint'
+    TITRE: '', CODETITRE: '', ACCORD: '',
+    NOMU: '',          // nom d'usage
+    NOM: '',           // nom de naissance (si différent)
+    PRENOMU: '',       // prénom usuel
+    AUTPREN: '',       // autres prénoms (2e, 3e…)
+    PRENOM: '',        // tous prénoms = PRENOMU + AUTPREN (calculé)
+    DATNA: '',         // AAAA-MM-JJ (input date)
+    LVNARU: '',        // lieu naissance
+    CODERU: '',        // CP naissance
+    DEPTNA: '',
     CPAYNA: 'FRANCE',
-    PROF: '',         // Profession
-    NATION: '',       // Nationalité
-    // Adresse
-    ADR1: '',         // Adresse ligne 1
-    ADR2: '',         // Adresse ligne 2
-    ADR3: '',         // Code postal
-    ADR4: '',         // Ville (MAJUSCULES)
-    DEPTDO: '',       // Département domicile (calculé)
-    CPAYDO: 'FRANCE',
-    // Contact
-    TEL: '',
-    EMAIL: '',
-    // Situation matrimoniale
-    ETAT: 'C',        // C/M/D/V/I/P/S
+    PROF: '',
+    NATION: 'Française',
+    ADR1: '', ADR2: '',
+    ADR3: '',          // CP domicile
+    ADR4: '',          // ville domicile
+    DEPTDO: '',
+    CPAYDO: 'FRANCE',  // pays domicile
+    TEL: '', EMAIL: '',
+    // Situation (personne principale seulement)
+    ETAT: 'C',
     HISTORIQUE: 'N',
-    REGIME: '',
-    DATMA: '',        // Date mariage/PACS (JJ/MM/AAAA)
-    CPVILMA: '',      // CP + ville mariage/PACS
-    // Conjoint (pour HistoriqueMarital)
-    LNCOMA: '',       // Nom conjoint
-    LPCOMA: '',       // Prénoms conjoint
-    // Divorce
-    TRIBUNAL: '',
+    REGIME: '4',
+    DATMA: '',         // date mariage/PACS
+    CPVILMA: '',       // lieu mariage/PACS
+    LNCOMA: '',        // nom conjoint/ex/défunt
+    LPCOMA: '',        // prénoms conjoint/ex/défunt
     DATDIV: '',
+    TRIBUNAL: '',
   };
 }
 
-let persons = [newPerson('personne')];
-let hasConjoint = false;
+// ── Helpers ───────────────────────────────────────────────
+const DEPTS = {'01':'Ain','02':'Aisne','03':'Allier','04':'Alpes-de-Haute-Provence','05':'Hautes-Alpes','06':'Alpes-Maritimes','07':'Ardèche','08':'Ardennes','09':'Ariège','10':'Aube','11':'Aude','12':'Aveyron','13':'Bouches-du-Rhône','14':'Calvados','15':'Cantal','16':'Charente','17':'Charente-Maritime','18':'Cher','19':'Corrèze','20':'Corse','21':'Côte-d\'Or','22':'Côtes-d\'Armor','23':'Creuse','24':'Dordogne','25':'Doubs','26':'Drôme','27':'Eure','28':'Eure-et-Loir','29':'Finistère','30':'Gard','31':'Haute-Garonne','32':'Gers','33':'Gironde','34':'Hérault','35':'Ille-et-Vilaine','36':'Indre','37':'Indre-et-Loire','38':'Isère','39':'Jura','40':'Landes','41':'Loir-et-Cher','42':'Loire','43':'Haute-Loire','44':'Loire-Atlantique','45':'Loiret','46':'Lot','47':'Lot-et-Garonne','48':'Lozère','49':'Maine-et-Loire','50':'Manche','51':'Marne','52':'Haute-Marne','53':'Mayenne','54':'Meurthe-et-Moselle','55':'Meuse','56':'Morbihan','57':'Moselle','58':'Nièvre','59':'Nord','60':'Oise','61':'Orne','62':'Pas-de-Calais','63':'Puy-de-Dôme','64':'Pyrénées-Atlantiques','65':'Hautes-Pyrénées','66':'Pyrénées-Orientales','67':'Bas-Rhin','68':'Haut-Rhin','69':'Rhône','70':'Haute-Saône','71':'Saône-et-Loire','72':'Sarthe','73':'Savoie','74':'Haute-Savoie','75':'Paris','76':'Seine-Maritime','77':'Seine-et-Marne','78':'Yvelines','79':'Deux-Sèvres','80':'Somme','81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse','85':'Vendée','86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne','90':'Territoire de Belfort','91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne','95':'Val-d\'Oise','971':'Guadeloupe','972':'Martinique','973':'Guyane','974':'La Réunion','976':'Mayotte'};
 
-// ══ UTILS ════════════════════════════════════════════════
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-const DEPTS = {'01':'Ain','02':'Aisne','03':'Allier','04':'Alpes-de-Haute-Provence','05':'Hautes-Alpes','06':'Alpes-Maritimes','07':'Ardèche','08':'Ardennes','09':'Ariège','10':'Aube','11':'Aude','12':'Aveyron','13':'Bouches-du-Rhône','14':'Calvados','15':'Cantal','16':'Charente','17':'Charente-Maritime','18':'Cher','19':'Corrèze','20':'Corse','21':'Côte-d\'Or','22':'Côtes-d\'Armor','23':'Creuse','24':'Dordogne','25':'Doubs','26':'Drôme','27':'Eure','28':'Eure-et-Loir','29':'Finistère','30':'Gard','31':'Haute-Garonne','32':'Gers','33':'Gironde','34':'Hérault','35':'Ille-et-Vilaine','36':'Indre','37':'Indre-et-Loire','38':'Isère','39':'Jura','40':'Landes','41':'Loir-et-Cher','42':'Loire','43':'Haute-Loire','44':'Loire-Atlantique','45':'Loiret','46':'Lot','47':'Lot-et-Garonne','48':'Lozère','49':'Maine-et-Loire','50':'Manche','51':'Marne','52':'Haute-Marne','53':'Mayenne','54':'Meurthe-et-Moselle','55':'Meuse','56':'Morbihan','57':'Moselle','58':'Nièvre','59':'Nord','60':'Oise','61':'Orne','62':'Pas-de-Calais','63':'Puy-de-Dôme','64':'Pyrénées-Atlantiques','65':'Hautes-Pyrénées','66':'Pyrénées-Orientales','67':'Bas-Rhin','68':'Haut-Rhin','69':'Rhône','70':'Haute-Saône','71':'Saône-et-Loire','72':'Sarthe','73':'Savoie','74':'Haute-Savoie','75':'Paris','76':'Seine-Maritime','77':'Seine-et-Marne','78':'Yvelines','79':'Deux-Sèvres','80':'Somme','81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse','85':'Vendée','86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne','90':'Territoire de Belfort','91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne','95':'Val-d\'Oise','97':'Outre-mer'};
-
-function deptFromCp(cp) {
+function dept(cp) {
   if (!cp) return '';
-  const n = cp.length >= 3 && cp.startsWith('97') ? cp.substring(0,3) : cp.substring(0,2);
-  return DEPTS[n] || '';
+  const k3 = cp.substring(0,3);
+  const k2 = cp.substring(0,2);
+  return DEPTS[k3] || DEPTS[k2] || '';
 }
 
 function toInotDate(d) {
   if (!d) return '';
-  // JJ/MM/AAAA → AAAAMMJJ
-  const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (m) return m[3] + m[2] + m[1];
-  // AAAA-MM-JJ (date input) → AAAAMMJJ
-  const m2 = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m2) return m2[1] + m2[2] + m2[3];
-  return '';
-}
-
-function formatDateDisplay(d) {
-  // AAAA-MM-JJ → JJ/MM/AAAA pour affichage
   const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) return m[3]+'/'+m[2]+'/'+m[1];
-  return d;
+  return m ? m[1]+m[2]+m[3] : '';
 }
 
-const SIT_LABELS = { C:'Célibataire', M:'Marié(e)', D:'Divorcé(e)', V:'Veuf / Veuve', I:'En instance de divorce', P:'Pacsé(e)', S:'Séparé(e) de corps' };
+function x(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-// ══ RENDU FORMULAIRE ════════════════════════════════════
+const SITS = { C:'Célibataire', M:'Marié(e)', D:'Divorcé(e)', V:'Veuf / Veuve', I:'En instance de divorce', P:'Pacsé(e)', S:'Séparé(e) de corps' };
+
+// ── Rendu ─────────────────────────────────────────────────
+function renderAll() {
+  renderTabs();
+  renderForms();
+  document.getElementById('addConj').style.display = hasConj ? 'none' : 'flex';
+}
+
 function renderTabs() {
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = persons.map((p, i) => {
-    const label = p.NOMU ? p.NOMU : (p._role === 'conjoint' ? 'Conjoint / Partenaire' : 'Personne ' + (i+1));
-    return `<div class="tab ${i===activeIdx?'active':''}" onclick="activeIdx=${i};renderAll()">${esc(label)}</div>`;
+  document.getElementById('tabs').innerHTML = persons.map((p, i) => {
+    const lbl = p.NOMU ? p.NOMU : (p._role==='conjoint' ? 'Conjoint / Partenaire' : 'Personne');
+    return `<div class="tab${i===activeIdx?' active':''}" onclick="activeIdx=${i};renderAll()">${x(lbl)}</div>`;
   }).join('');
 }
 
 function renderForms() {
-  document.getElementById('forms').innerHTML = persons.map((p,i) => renderForm(p,i)).join('');
-  bindEvents();
+  document.getElementById('forms').innerHTML = persons.map((p, i) => formHtml(p, i)).join('');
+  bindAll();
 }
 
-function renderAll() {
-  renderTabs();
-  renderForms();
-  // Afficher/masquer bouton conjoint
-  const btn = document.getElementById('conjointToggle');
-  btn.style.display = hasConjoint ? 'none' : 'flex';
-}
-
-function renderForm(p, idx) {
+function formHtml(p, i) {
+  const isConj = p._role === 'conjoint';
   const sit = p.ETAT || 'C';
   const showM = ['M','I','S'].includes(sit);
   const showD = ['D','I'].includes(sit);
   const showV = sit === 'V';
   const showP = sit === 'P';
-  const isConjoint = p._role === 'conjoint';
-  const emailReadonly = idx === 0 && verifiedEmail ? 'readonly style="background:#f5f5f5;color:#aaa;cursor:not-allowed;"' : '';
+  const isFR = !p.CPAYDO || p.CPAYDO.toUpperCase() === 'FRANCE';
 
-  return `<div data-idx="${idx}" style="${idx===activeIdx?'':'display:none'}">
+  return `<div data-idx="${i}" style="${i===activeIdx?'':'display:none'}">
 
-    ${isConjoint ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <span style="font-size:13px;color:#888;font-style:italic;">Conjoint / Partenaire</span>
-      <button onclick="removeConjoint()" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;">✕ Supprimer</button>
-    </div>` : ''}
+  ${isConj ? `<div class="conj-header">
+    <span>Conjoint / Partenaire</span>
+    <button onclick="removeConjoint()">✕ Supprimer</button>
+  </div>` : ''}
 
-    <!-- Identité -->
-    <div class="section">
-      <div class="section-title">Identité</div>
+  <!-- IDENTITÉ -->
+  <div class="sec">
+    <div class="sec-title">Identité</div>
 
+    <div class="field">
+      <label>Civilité <span class="req">*</span></label>
+      <div class="btns">
+        ${['Monsieur','Madame','Mademoiselle'].map(c=>`<button type="button" class="choice${p.TITRE===c?' on':''}" data-f="TITRE" data-v="${c}">${c}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="row2">
       <div class="field">
-        <label>Civilité <span class="req">*</span></label>
-        <div class="sit-grid">
-          ${['Monsieur','Madame','Mademoiselle'].map(c => `<button type="button" class="sit-btn ${p.TITRE===c?'active':''}" data-f="TITRE" data-v="${c}">${c}</button>`).join('')}
+        <label>Nom d'usage <span class="req">*</span></label>
+        <input type="text" data-f="NOMU" value="${x(p.NOMU)}">
+      </div>
+      <div class="field">
+        <label>Nom de naissance <span class="opt">(si différent)</span></label>
+        <input type="text" data-f="NOM" value="${x(p.NOM)}">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Prénom usuel <span class="req">*</span></label>
+        <input type="text" data-f="PRENOMU" value="${x(p.PRENOMU)}">
+      </div>
+      <div class="field">
+        <label>Autres prénoms <span class="opt">(2e, 3e…)</span></label>
+        <input type="text" data-f="AUTPREN" value="${x(p.AUTPREN)}">
+      </div>
+    </div>
+
+    <div class="row3">
+      <div class="field">
+        <label>Date de naissance <span class="req">*</span></label>
+        <input type="date" data-f="DATNA" value="${x(p.DATNA)}">
+      </div>
+      <div class="field">
+        <label>Lieu de naissance <span class="req">*</span></label>
+        <input type="text" data-f="LVNARU" value="${x(p.LVNARU)}">
+      </div>
+      <div class="field">
+        <label>CP de naissance <span class="req">*</span></label>
+        <input type="text" data-f="CODERU" value="${x(p.CODERU)}" maxlength="5" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Profession</label>
+        <input type="text" data-f="PROF" value="${x(p.PROF)}">
+      </div>
+      <div class="field">
+        <label>Nationalité</label>
+        <input type="text" data-f="NATION" value="${x(p.NATION)}">
+      </div>
+    </div>
+  </div>
+
+  <!-- ADRESSE -->
+  <div class="sec">
+    <div class="sec-title">Adresse domicile</div>
+    <div class="field">
+      <label>Adresse (numéro et voie) <span class="req">*</span></label>
+      <input type="text" data-f="ADR1" value="${x(p.ADR1)}" autocomplete="street-address">
+    </div>
+    <div class="field">
+      <label>Complément d'adresse</label>
+      <input type="text" data-f="ADR2" value="${x(p.ADR2)}">
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Code postal${isFR?` <span class="req">*</span>`:''}</label>
+        <input type="text" data-f="ADR3" value="${x(p.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville <span class="req">*</span></label>
+        <input type="text" data-f="ADR4" value="${x(p.ADR4)}">
+      </div>
+      <div class="field">
+        <label>Pays</label>
+        <input type="text" data-f="CPAYDO" value="${x(p.CPAYDO||'FRANCE')}">
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="sec">
+    <div class="sec-title">Contact</div>
+    <div class="row2">
+      <div class="field">
+        <label>Téléphone <span class="req">*</span></label>
+        <input type="tel" data-f="TEL" value="${x(p.TEL)}" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label>Email${i===0?` <span class="req">*</span>`:''}</label>
+        <input type="email" data-f="EMAIL" value="${x(p.EMAIL)}"${i===0&&email0?` class="ro" readonly`:''} autocomplete="email">
+      </div>
+    </div>
+  </div>
+
+  <!-- SITUATION MATRIMONIALE — personne principale seulement -->
+  ${!isConj ? `<div class="sec">
+    <div class="sec-title">Situation matrimoniale</div>
+    <div class="field">
+      <label>Situation <span class="req">*</span></label>
+      <div class="btns">
+        ${Object.entries(SITS).map(([k,v])=>`<button type="button" class="choice${sit===k?' on':''}" data-f="ETAT" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+
+    <!-- Marié / En instance / Séparé de corps -->
+    <div class="cond${showM?' show':''}">
+      <div class="sec-title">Détails du mariage</div>
+      <div class="row2">
+        <div class="field">
+          <label>Date du mariage</label>
+          <input type="date" data-f="DATMA" value="${x(p.DATMA)}">
+        </div>
+        <div class="field">
+          <label>Lieu (CP + commune)</label>
+          <input type="text" data-f="CPVILMA" value="${x(p.CPVILMA)}">
         </div>
       </div>
-
-      <div class="field-row col2">
+      <div class="row2">
         <div class="field">
-          <label>Nom d'usage <span class="req">*</span></label>
-          <input type="text" data-f="NOMU" value="${esc(p.NOMU)}" autocomplete="family-name">
+          <label>Nom du conjoint</label>
+          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
         </div>
         <div class="field">
-          <label>Nom de naissance <span style="color:#aaa;font-size:10px;">(si différent)</span></label>
-          <input type="text" data-f="NOM" value="${esc(p.NOM)}">
-        </div>
-      </div>
-
-      <div class="field-row col2">
-        <div class="field">
-          <label>Prénom usuel <span class="req">*</span></label>
-          <input type="text" data-f="PRENOMU" value="${esc(p.PRENOMU)}" autocomplete="given-name">
-        </div>
-        <div class="field">
-          <label>Tous les prénoms <span class="req">*</span></label>
-          <input type="text" data-f="PRENOM" value="${esc(p.PRENOM)}">
+          <label>Prénoms du conjoint</label>
+          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
         </div>
       </div>
+      <div class="field">
+        <label>Régime matrimonial</label>
+        <select data-f="REGIME">
+          <option value="4"${p.REGIME==='4'?' selected':''}>Sans contrat — communauté légale (après 01/02/1966)</option>
+          <option value="33"${p.REGIME==='33'?' selected':''}>Séparation de biens</option>
+          <option value="32"${p.REGIME==='32'?' selected':''}>Communauté universelle</option>
+          <option value="30"${p.REGIME==='30'?' selected':''}>Communauté réduite aux acquêts (contrat)</option>
+          <option value="35"${p.REGIME==='35'?' selected':''}>Participation aux acquêts</option>
+        </select>
+      </div>
+    </div>
 
-      <div class="field-row col3">
+    <!-- Divorcé / En instance -->
+    <div class="cond${showD?' show':''}">
+      <div class="sec-title">Détails du divorce</div>
+      <div class="row2">
         <div class="field">
-          <label>Date de naissance <span class="req">*</span></label>
-          <input type="date" data-f="DATNA" value="${p.DATNA}">
+          <label>Date du divorce</label>
+          <input type="date" data-f="DATDIV" value="${x(p.DATDIV)}">
         </div>
         <div class="field">
-          <label>Lieu de naissance <span class="req">*</span></label>
-          <input type="text" data-f="LVNARU" value="${esc(p.LVNARU)}" placeholder="">
-        </div>
-        <div class="field">
-          <label>CP de naissance <span class="req">*</span></label>
-          <input type="text" data-f="CODERU" value="${esc(p.CODERU)}" maxlength="5" inputmode="numeric">
+          <label>Tribunal</label>
+          <input type="text" data-f="TRIBUNAL" value="${x(p.TRIBUNAL)}">
         </div>
       </div>
-
-      <div class="field-row col2">
+      <div class="row2">
         <div class="field">
-          <label>Profession</label>
-          <input type="text" data-f="PROF" value="${esc(p.PROF)}">
+          <label>Nom de l'ex-conjoint</label>
+          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
         </div>
         <div class="field">
-          <label>Nationalité</label>
-          <input type="text" data-f="NATION" value="${esc(p.NATION || 'Française')}">
+          <label>Prénoms de l'ex-conjoint</label>
+          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
         </div>
       </div>
     </div>
 
-    <!-- Adresse -->
-    <div class="section">
-      <div class="section-title">Adresse domicile</div>
-      <div class="field">
-        <label>Adresse (numéro et voie) <span class="req">*</span></label>
-        <input type="text" data-f="ADR1" value="${esc(p.ADR1)}" autocomplete="street-address">
-      </div>
-      <div class="field">
-        <label>Complément d'adresse</label>
-        <input type="text" data-f="ADR2" value="${esc(p.ADR2)}">
-      </div>
-      <div class="field-row col2">
+    <!-- Veuf / Veuve -->
+    <div class="cond${showV?' show':''}">
+      <div class="sec-title">Conjoint décédé</div>
+      <div class="row2">
         <div class="field">
-          <label>Code postal <span class="req">*</span></label>
-          <input type="text" data-f="ADR3" value="${esc(p.ADR3)}" maxlength="5" inputmode="numeric" autocomplete="postal-code">
+          <label>Nom</label>
+          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
         </div>
         <div class="field">
-          <label>Ville <span class="req">*</span></label>
-          <input type="text" data-f="ADR4" value="${esc(p.ADR4)}" autocomplete="address-level2">
+          <label>Prénoms</label>
+          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
         </div>
       </div>
     </div>
 
-    <!-- Contact -->
-    <div class="section">
-      <div class="section-title">Contact</div>
-      <div class="field-row col2">
+    <!-- Pacsé -->
+    <div class="cond${showP?' show':''}">
+      <div class="sec-title">Détails du PACS</div>
+      <div class="row2">
         <div class="field">
-          <label>Téléphone <span class="req">*</span></label>
-          <input type="tel" data-f="TEL" value="${esc(p.TEL)}" autocomplete="tel">
+          <label>Date du PACS</label>
+          <input type="date" data-f="DATMA" value="${x(p.DATMA)}">
         </div>
         <div class="field">
-          <label>Email <span class="req">*</span></label>
-          <input type="email" data-f="EMAIL" value="${esc(p.EMAIL)}" ${emailReadonly} autocomplete="email">
+          <label>Lieu (CP + commune)</label>
+          <input type="text" data-f="CPVILMA" value="${x(p.CPVILMA)}">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Nom du partenaire</label>
+          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
+        </div>
+        <div class="field">
+          <label>Prénoms du partenaire</label>
+          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
         </div>
       </div>
     </div>
 
-    <!-- Situation matrimoniale -->
-    <div class="section">
-      <div class="section-title">Situation matrimoniale</div>
-      <div class="field">
-        <label>Situation <span class="req">*</span></label>
-        <div class="sit-grid">
-          ${Object.entries(SIT_LABELS).map(([k,v]) => `<button type="button" class="sit-btn ${sit===k?'active':''}" data-f="ETAT" data-v="${k}">${v}</button>`).join('')}
-        </div>
-      </div>
+  </div>` : ''}
 
-      <!-- Marié / Séparé / En instance -->
-      <div class="cond${showM?' show':''}">
-        <div class="field-row col2">
-          <div class="field">
-            <label>Date du mariage</label>
-            <input type="date" data-f="DATMA" value="${p.DATMA}">
-          </div>
-          <div class="field">
-            <label>Lieu du mariage (CP + ville)</label>
-            <input type="text" data-f="CPVILMA" value="${esc(p.CPVILMA)}">
-          </div>
-        </div>
-        <div class="field-row col2">
-          <div class="field">
-            <label>Nom du conjoint</label>
-            <input type="text" data-f="LNCOMA" value="${esc(p.LNCOMA)}">
-          </div>
-          <div class="field">
-            <label>Prénoms du conjoint</label>
-            <input type="text" data-f="LPCOMA" value="${esc(p.LPCOMA)}">
-          </div>
-        </div>
-        <div class="field">
-          <label>Régime matrimonial</label>
-          <select data-f="REGIME">
-            <option value="4" ${p.REGIME==='4'?'selected':''}>Sans contrat — régime légal (après 01/02/1966)</option>
-            <option value="33" ${p.REGIME==='33'?'selected':''}>Séparation de biens</option>
-            <option value="32" ${p.REGIME==='32'?'selected':''}>Communauté universelle</option>
-            <option value="30" ${p.REGIME==='30'?'selected':''}>Communauté réduite aux acquêts (contrat)</option>
-            <option value="35" ${p.REGIME==='35'?'selected':''}>Participation aux acquêts</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Divorcé / En instance -->
-      <div class="cond${showD?' show':''}">
-        <div class="field-row col2">
-          <div class="field">
-            <label>Date du divorce</label>
-            <input type="date" data-f="DATDIV" value="${p.DATDIV}">
-          </div>
-          <div class="field">
-            <label>Tribunal</label>
-            <input type="text" data-f="TRIBUNAL" value="${esc(p.TRIBUNAL)}">
-          </div>
-        </div>
-        <div class="field-row col2">
-          <div class="field">
-            <label>Nom de l'ex-conjoint</label>
-            <input type="text" data-f="LNCOMA" value="${esc(p.LNCOMA)}">
-          </div>
-          <div class="field">
-            <label>Prénoms de l'ex-conjoint</label>
-            <input type="text" data-f="LPCOMA" value="${esc(p.LPCOMA)}">
-          </div>
-        </div>
-      </div>
-
-      <!-- Veuf/Veuve -->
-      <div class="cond${showV?' show':''}">
-        <div class="field-row col2">
-          <div class="field">
-            <label>Nom du défunt conjoint</label>
-            <input type="text" data-f="LNCOMA" value="${esc(p.LNCOMA)}">
-          </div>
-          <div class="field">
-            <label>Prénoms du défunt conjoint</label>
-            <input type="text" data-f="LPCOMA" value="${esc(p.LPCOMA)}">
-          </div>
-        </div>
-      </div>
-
-      <!-- Pacsé -->
-      <div class="cond${showP?' show':''}">
-        <div class="field-row col2">
-          <div class="field">
-            <label>Date du PACS</label>
-            <input type="date" data-f="DATMA" value="${p.DATMA}">
-          </div>
-          <div class="field">
-            <label>Lieu du PACS (CP + ville)</label>
-            <input type="text" data-f="CPVILMA" value="${esc(p.CPVILMA)}">
-          </div>
-        </div>
-        <div class="field-row col2">
-          <div class="field">
-            <label>Nom du partenaire</label>
-            <input type="text" data-f="LNCOMA" value="${esc(p.LNCOMA)}">
-          </div>
-          <div class="field">
-            <label>Prénoms du partenaire</label>
-            <input type="text" data-f="LPCOMA" value="${esc(p.LPCOMA)}">
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>`;
+</div>`;
 }
 
-// ══ CONJOINT ════════════════════════════════════════════
-function addConjoint() {
-  if (hasConjoint) return;
-  hasConjoint = true;
-  persons.push(newPerson('conjoint'));
-  activeIdx = persons.length - 1;
-  renderAll();
-}
-function removeConjoint() {
-  if (!hasConjoint) return;
-  hasConjoint = false;
-  persons = persons.filter(p => p._role !== 'conjoint');
-  activeIdx = 0;
-  renderAll();
-}
-
-// ══ BINDING EVENTS ═══════════════════════════════════════
-function bindEvents() {
-  // Champs texte/date/select
+// ── Binding ───────────────────────────────────────────────
+function bindAll() {
   document.querySelectorAll('[data-f]').forEach(el => {
-    if (el.tagName === 'BUTTON') return; // géré séparément
-    const idx = +el.closest('[data-idx]').dataset.idx;
-    const sync = () => {
+    if (el.tagName === 'BUTTON') return;
+    const i = +el.closest('[data-idx]').dataset.idx;
+    const update = () => {
       const f = el.dataset.f;
-      persons[idx][f] = el.value;
-      // Calculs automatiques
-      if (f === 'ADR3') persons[idx]['DEPTDO'] = deptFromCp(el.value);
-      if (f === 'CODERU') persons[idx]['DEPTNA'] = deptFromCp(el.value);
-      if (f === 'NOMU') { persons[idx]['NOMU'] = el.value.toUpperCase(); el.value = el.value.toUpperCase(); renderTabs(); }
-      if (f === 'NOM' || f === 'LVNARU' || f === 'ADR4') { persons[idx][f] = el.value.toUpperCase(); el.value = el.value.toUpperCase(); }
+      let v = el.value;
+      // Majuscules automatiques
+      if (['NOMU','NOM','LVNARU','ADR4'].includes(f)) { v = v.toUpperCase(); el.value = v; }
+      persons[i][f] = v;
+      // Calculs dérivés
+      if (f === 'ADR3') persons[i].DEPTDO = dept(v);
+      if (f === 'CODERU') persons[i].DEPTNA = dept(v);
+      if (f === 'PRENOMU' || f === 'AUTPREN') {
+        const pu = persons[i].PRENOMU || '';
+        const au = persons[i].AUTPREN || '';
+        persons[i].PRENOM = au ? pu + ' ' + au : pu;
+      }
+      if (f === 'NOMU') renderTabs();
     };
-    el.addEventListener('change', sync);
-    el.addEventListener('input', sync);
+    el.addEventListener('input', update);
+    el.addEventListener('change', update);
   });
 
-  // Boutons situation (TITRE et ETAT)
-  document.querySelectorAll('.sit-btn').forEach(btn => {
-    const idx = +btn.closest('[data-idx]').dataset.idx;
+  document.querySelectorAll('button.choice').forEach(btn => {
+    const i = +btn.closest('[data-idx]').dataset.idx;
     btn.onclick = () => {
       const f = btn.dataset.f;
       const v = btn.dataset.v;
-      persons[idx][f] = v;
-      // Dérivés civilité
+      persons[i][f] = v;
       if (f === 'TITRE') {
-        persons[idx]['CODETITRE'] = v === 'Monsieur' ? 'M.' : v === 'Madame' ? 'MME' : 'MELLE';
-        persons[idx]['ACCORD'] = v === 'Monsieur' ? 'M' : 'F';
+        persons[i].CODETITRE = v==='Monsieur'?'M.':v==='Madame'?'MME':'MELLE';
+        persons[i].ACCORD = v==='Monsieur'?'M':'F';
       }
-      // Dérivés situation
       if (f === 'ETAT') {
-        const hasH = ['M','D','V','I','P','S'].includes(v);
-        persons[idx]['HISTORIQUE'] = hasH ? 'O' : 'N';
-        if (['M','I','S'].includes(v) && !persons[idx]['REGIME']) persons[idx]['REGIME'] = '4';
+        persons[i].HISTORIQUE = ['M','D','V','I','P','S'].includes(v) ? 'O' : 'N';
       }
       renderForms();
     };
   });
 }
 
-// ══ GÉNÉRATION XML iNot ══════════════════════════════════
-function buildXml() {
-  function vr(key, val, nameOverride) {
-    const name = nameOverride || key;
-    return `    <Var key="${key}" name="${name}"><Value>${esc(val||'')}</Value></Var>`;
-  }
+// ── Conjoint ──────────────────────────────────────────────
+function addConjoint() {
+  if (hasConj) return;
+  hasConj = true;
+  persons.push(newPerson('conjoint'));
+  activeIdx = 1;
+  renderAll();
+}
+function removeConjoint() {
+  hasConj = false;
+  persons = persons.filter(p => p._role !== 'conjoint');
+  activeIdx = 0;
+  renderAll();
+}
 
+// ── XML ───────────────────────────────────────────────────
+function vr(key, val) {
+  return `    <Var key="${key}" name="${key}"><Value>${x(val||'')}</Value></Var>`;
+}
+
+function buildXml() {
   const xmlPersons = persons.map((p, i) => {
     const num = String(10000001 + i);
     const sit = p.ETAT || 'C';
-    const hasH = p.HISTORIQUE === 'O';
     const showM = ['M','I','S'].includes(sit);
     const showD = ['D','I'].includes(sit);
-    const showV = sit === 'V';
-    const showP = sit === 'P';
+    const hasH = p.HISTORIQUE === 'O';
 
-    // Date mariage
-    const datMa = toInotDate(p.DATMA);
-    const cpayMa = p.CPVILMA ? 'FR' : '';
-
-    // Historique marital
-    let historiqueXml = '    <HistoriqueMarital />';
+    let histXml = '    <HistoriqueMarital />';
     if (hasH) {
-      let cotyma = sit;
-      if (sit === 'I') cotyma = 'D';
-      const datEvt = showD ? toInotDate(p.DATDIV) : datMa;
+      const cotyma = showD ? 'D' : sit;
+      const datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
       const lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
-      historiqueXml = `    <HistoriqueMarital>
+      histXml = `    <HistoriqueMarital>
       <Evenement>
-        <Var key="COTYMA" name="COTYMA"><Value>${cotyma}</Value></Var>
-        <Var key="DAMAMA" name="DAMAMA"><Value>${esc(datEvt)}</Value></Var>
-        <Var key="LVT1MA" name="LVT1MA"><Value>${esc(lieuEvt)}</Value></Var>
-        <Var key="LNCOMA" name="LNCOMA"><Value>${esc((p.LNCOMA||'').toUpperCase())}</Value></Var>
-        <Var key="LPCOMA" name="LPCOMA"><Value>${esc(p.LPCOMA||'')}</Value></Var>
-        <Var key="COCRMA" name="COCRMA"><Value></Value></Var>
+        ${vr('COTYMA', cotyma)}
+        ${vr('DAMAMA', datEvt)}
+        ${vr('LVT1MA', lieuEvt)}
+        ${vr('LNCOMA', (p.LNCOMA||'').toUpperCase())}
+        ${vr('LPCOMA', p.LPCOMA)}
+        ${vr('COCRMA', '')}
       </Evenement>
     </HistoriqueMarital>`;
     }
+
+    const prenomComplet = p.AUTPREN ? (p.PRENOMU+' '+p.AUTPREN) : p.PRENOMU;
 
     return `  <Person info="">
 ${vr('NUMERO', num)}
@@ -668,110 +542,126 @@ ${vr('ADR2', p.ADR2)}
 ${vr('ADR3', p.ADR3)}
 ${vr('ADR4', p.ADR4)}
 ${vr('RCS', '')}
-${vr('VILRCS', '')}
-${vr('CPRCS', '')}
-${vr('CPAYRCS', '')}
-${vr('NUMMB', '')}
-${vr('IDENMB', '')}
 ${vr('ACCORD', p.ACCORD)}
-${vr('ADR1MB', '')}
-${vr('ADR2MB', '')}
-${vr('CPMB', '')}
-${vr('VILLEMB', '')}
-${vr('PRESENCE', '')}
-${vr('INTCONJ', '')}
-${vr('PRECONJ', '')}
-${vr('JODATE', '')}
-${vr('CPVILMA', p.CPVILMA)}
-${vr('NOTMA', '')}
-${vr('HISTORIQUE', p.HISTORIQUE||'N')}
-${vr('INTCONJPURIEL', '')}
-${vr('CODCRU', '')}
-${vr('LVDCRU', '')}
-${vr('CPSTAT', '')}
-${vr('PREFDAT', '')}
-${vr('DEPTDO', p.DEPTDO || deptFromCp(p.ADR3))}
-${vr('CPAYDO', 'FRANCE')}
-${vr('CONJ', '')}
+${vr('DEPTDO', p.DEPTDO || dept(p.ADR3))}
+${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
 ${vr('ETAT', sit)}
-${vr('CODETITRE', p.CODETITRE, 'CIVILITY')}
+${vr('CODETITRE', p.CODETITRE)}
 ${vr('NOMU', p.NOMU)}
 ${vr('PRENOMU', p.PRENOMU)}
-${vr('PRENOM', p.PRENOM)}
+${vr('PRENOM', prenomComplet)}
+${vr('NOM', p.NOM || p.NOMU)}
 ${vr('PROF', p.PROF)}
 ${vr('DATNA', toInotDate(p.DATNA))}
-${vr('DEPTNA', p.DEPTNA || deptFromCp(p.CODERU))}
-${vr('CPAYNA', 'FRANCE')}
-${vr('DEPMOR', '')}
-${vr('NATION', p.NATION)}
-${vr('INCAPABLE', '')}
-${vr('TITRE', p.TITRE)}
-${vr('DATMOR', '')}
-${vr('DATMA', datMa)}
-${vr('CPAYMA', cpayMa)}
-${vr('ADR1IMP', p.ADR1)}
-${vr('ADR2IMP', p.ADR2)}
-${vr('CPIMP', p.ADR3)}
-${vr('VILLEIMP', p.ADR4)}
-${vr('CODERU', p.CODERU)}
 ${vr('LVNARU', p.LVNARU)}
-${vr('NOM', p.NOM || p.NOMU)}
+${vr('CODERU', p.CODERU)}
+${vr('DEPTNA', p.DEPTNA || dept(p.CODERU))}
+${vr('CPAYNA', p.CPAYNA || 'FRANCE')}
+${vr('NATION', p.NATION)}
+${vr('TITRE', p.TITRE)}
+${vr('HISTORIQUE', p.HISTORIQUE || 'N')}
+${vr('DATMA', toInotDate(p.DATMA))}
+${vr('CPVILMA', p.CPVILMA)}
 ${vr('REGIME', showM ? (p.REGIME||'4') : '')}
-${vr('DATCONTR', '')}
-${vr('DATAN', '')}
-${vr('DATDECL', '')}
-${vr('DATHOM', '')}
-${vr('TGIME', '')}
-${vr('REGPRE', '')}
-${vr('LIEME', '')}
-${vr('NOTME', '')}
-${vr('NOPME', '')}
-${historiqueXml}
+${vr('TEL', p.TEL)}
+${vr('EMAIL', p.EMAIL)}
+${histXml}
   </Person>`;
   });
 
   return `<?xml version="1.0" encoding="utf-8"?>\n<iNova><iNot><Customer><Folder>\n${xmlPersons.join('\n')}\n</Folder></Customer></iNot></iNova>`;
 }
 
-// ══ SOUMISSION ════════════════════════════════════════════
+// ── OTP ───────────────────────────────────────────────────
+document.getElementById('iEmail').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSend').click(); });
+document.getElementById('iCode').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnVerify').click(); });
+
+document.getElementById('btnSend').onclick = async () => {
+  const em = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!em.includes('@')) { err.textContent = 'Adresse invalide.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:em}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Erreur');
+    email0 = em;
+    persons[0].EMAIL = em;
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${em}. Vérifiez vos spams si besoin.`;
+    document.getElementById('iCode').focus();
+  } catch(e) { err.textContent = e.message; }
+  finally { btn.disabled=false; btn.textContent='ENVOYER LE CODE'; }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display='none';
+  document.getElementById('sEmail').style.display='block';
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length!==6) { err.textContent='Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnVerify');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Vérification…';
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Code incorrect');
+    document.getElementById('sCode').style.display='none';
+    document.getElementById('sForm').style.display='block';
+    document.getElementById('pageSub').style.display='none';
+    renderAll();
+  } catch(e) { err.textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='VALIDER'; }
+};
+
+// ── Soumission ────────────────────────────────────────────
 document.getElementById('btnSubmit').onclick = async () => {
-  const btn = document.getElementById('btnSubmit');
-  const errDiv = document.getElementById('formError');
+  const ferr = document.getElementById('ferr');
+  ferr.style.display = 'none';
 
   // Validation
-  for (let i = 0; i < persons.length; i++) {
+  for (let i=0; i<persons.length; i++) {
     const p = persons[i];
-    const n = p._role === 'conjoint' ? 'Conjoint' : `Personne ${i+1}`;
-    if (!p.TITRE) { showErr(`${n} : la civilité est obligatoire.`, i); return; }
-    if (!p.NOMU) { showErr(`${n} : le nom est obligatoire.`, i); return; }
-    if (!p.PRENOMU || !p.PRENOM) { showErr(`${n} : les prénoms sont obligatoires.`, i); return; }
-    if (!p.DATNA) { showErr(`${n} : la date de naissance est obligatoire.`, i); return; }
-    if (!p.LVNARU) { showErr(`${n} : le lieu de naissance est obligatoire.`, i); return; }
-    if (!p.CODERU) { showErr(`${n} : le code postal de naissance est obligatoire.`, i); return; }
-    if (!p.ADR1 || !p.ADR3 || !p.ADR4) { showErr(`${n} : l'adresse complète est obligatoire.`, i); return; }
-    if (!p.TEL) { showErr(`${n} : le téléphone est obligatoire.`, i); return; }
-    if (i === 0 && !p.EMAIL) { showErr(`${n} : l'email est obligatoire.`, i); return; }
+    const n = p._role==='conjoint' ? 'Conjoint' : 'Vous';
+    if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
+    if (!p.NOMU)    return showErr(`${n} : nom obligatoire.`, i);
+    if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
+    if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
+    if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
+    if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+    if (!p.ADR1 || !p.ADR4) return showErr(`${n} : adresse incomplète.`, i);
+    if (!p.TEL)     return showErr(`${n} : téléphone obligatoire.`, i);
+    if (i===0 && !p.EMAIL) return showErr(`Email obligatoire.`, i);
   }
 
-  errDiv.style.display = 'none';
+  const btn = document.getElementById('btnSubmit');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Envoi en cours…';
-
+  btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
   try {
     const xml = buildXml();
-    const resp = await fetch('/api/soumettre', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ personnes: persons, xml, type: TYPE })
+    const r = await fetch('/api/soumettre', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil' })
     });
-    if (!resp.ok) {
-      const e = await resp.json().catch(()=>({}));
-      throw new Error(e.error || 'Erreur serveur');
-    }
-    document.getElementById('app') ? document.getElementById('app').innerHTML = confirmHtml() : showConfirm();
-  } catch(err) {
-    errDiv.textContent = err.message;
-    errDiv.style.display = 'block';
+    if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
+    document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+      <div class="icon">✓</div>
+      <h2>Merci, votre questionnaire a bien été transmis.</h2>
+      <p>Votre notaire a reçu vos informations et reviendra vers vous prochainement.<br>Vous pouvez fermer cette page.</p>
+    </div></div>`;
+  } catch(e) {
+    ferr.textContent = e.message;
+    ferr.style.display = 'block';
   } finally {
     btn.disabled = false;
     btn.textContent = 'Envoyer mes réponses';
@@ -779,23 +669,13 @@ document.getElementById('btnSubmit').onclick = async () => {
 };
 
 function showErr(msg, idx) {
-  const errDiv = document.getElementById('formError');
-  errDiv.textContent = msg;
-  errDiv.style.display = 'block';
   activeIdx = idx;
   renderAll();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const ferr = document.getElementById('ferr');
+  ferr.textContent = msg;
+  ferr.style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-
-function showConfirm() {
-  document.getElementById('screenForm').innerHTML = `<div class="form-wrap"><div class="confirm-box">
-    <div class="confirm-icon">✓</div>
-    <div class="confirm-title">Merci, votre questionnaire a bien été transmis.</div>
-    <p class="confirm-text">Votre notaire a reçu vos informations et reviendra vers vous prochainement.<br>Vous pouvez fermer cette page.</p>
-  </div></div>`;
-}
-
-renderAll();
 </script>
 </body>
 </html>
