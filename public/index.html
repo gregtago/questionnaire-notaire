@@ -334,7 +334,7 @@ function renderForm(p, idx) {
     </div>
     <div class="row col-2">
       <div class="field">
-        <label>Téléphone portable</label>
+        <label>Téléphone portable *</label>
         <input type="tel" data-f="tel" value="${e(p.tel)}" placeholder="06 12 34 56 78" autocomplete="tel" />
       </div>
       <div class="field">
@@ -533,12 +533,24 @@ document.getElementById('btnSubmit').onclick = async () => {
   for (let i = 0; i < persons.length; i++) {
     const p = persons[i];
     const n = i + 1;
-    if (!p.nom || !p.prenoms || !p.dateNaissance || !p.lieuNaissance) {
-      errorDiv.textContent = `Personne ${n} : nom, prénoms, date et lieu de naissance sont obligatoires.`;
+    if (!p.civilite) {
+      errorDiv.textContent = `Personne ${n} : la civilité est obligatoire.`;
       errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
     }
-    if (p.email && !p.email.includes('@')) {
-      errorDiv.textContent = `Personne ${n} : l'adresse email « ${p.email} » n'est pas valide.`;
+    if (!p.nom || !p.prenoms) {
+      errorDiv.textContent = `Personne ${n} : le nom et les prénoms sont obligatoires.`;
+      errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
+    }
+    if (!p.dateNaissance || !p.lieuNaissance) {
+      errorDiv.textContent = `Personne ${n} : la date et le lieu de naissance sont obligatoires.`;
+      errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
+    }
+    if (!p.adresse || !p.cp || !p.ville) {
+      errorDiv.textContent = `Personne ${n} : l'adresse complète (voie, code postal, ville) est obligatoire.`;
+      errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
+    }
+    if (!p.tel) {
+      errorDiv.textContent = `Personne ${n} : le numéro de téléphone est obligatoire.`;
       errorDiv.style.display = 'block'; activeIdx = i; renderAll(); return;
     }
   }
