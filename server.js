@@ -219,6 +219,30 @@ RÈGLES DE REMPLISSAGE :
 - Tous les champs doivent être présents, même vides
 - NUMERO : 10000001 pour la 1ère personne, 10000002 pour la 2ème, etc.
 
+CORRESPONDANCE DES CHAMPS (formulaire → XML iNot) :
+- civilite → TITRE (Monsieur/Madame/Mademoiselle) et CODETITRE (M./MME/MELLE) et ACCORD (M/F)
+- nom → NOMU et NOM (en MAJUSCULES)
+- nomNaissance → NOM si différent, sinon = nom
+- prenoms → PRENOMU (prénom usuel = 1er prénom) et PRENOM (tous les prénoms)
+- dateNaissance (format JJ/MM/AAAA) → DATNA (convertir en AAAAMMJJ)
+- lieuNaissance → LVNARU (en MAJUSCULES)
+- cpNaissance → CODERU
+- profession → PROF
+- nationalite → NATION
+- adresse → ADR1 et ADR1IMP
+- cp → ADR3 et CPIMP
+- ville → ADR4 et VILLEIMP
+- situation → ETAT (C/M/D/V/I/P/S) et HISTORIQUE (O si pas C, N si C)
+- dateMariage (JJ/MM/AAAA) → DATMA (AAAAMMJJ) et DAMAMA dans Evenement
+- cpMariage + villeMariage → LVT1MA dans Evenement
+- nomConjoint → LNCOMA dans Evenement
+- prenomsConjoint → LPCOMA dans Evenement
+- regime → REGIME
+- tribunal → LVT1MA si divorcé
+- dateDivorce (JJ/MM/AAAA) → DAMAMA dans Evenement
+- nomVeuf / prenomsVeuf → LNCOMA / LPCOMA dans Evenement si veuf
+- datePacs / cpPacs / villePacs → idem que mariage mais COTYMA=P
+
 DONNÉES À TRANSFORMER :
 \${JSON.stringify(personnes, null, 2)}
 
