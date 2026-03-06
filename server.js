@@ -4,6 +4,13 @@ const { BrevoClient } = require("@getbrevo/brevo");
 const path = require("path");
 
 const app = express();
+
+// ─── Store OTP en mémoire (10 min) ─────────────────────
+const otpStore = new Map(); // email -> { code, expires }
+
+function generateOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -14,7 +21,57 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// ─── Génération XML + PDF ───────────────────────────────
+// ─── Envoi du code OTP ─────────────────────────────────
+app.post("/api/otp/envoyer", async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes("@")) {
+    return res.status(400).json({ error: "Email invalide" });
+  }
+  const code = generateOtp();
+  otpStore.set(email.toLowerCase(), { code, expires: Date.now() + 10 * 60 * 1000 });
+
+  try {
+    const { BrevoClient } = require("@getbrevo/brevo");
+    const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
+    await brevo.transactionalEmails.sendTransacEmail({
+      sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
+      to: [{ email }],
+      subject: "Votre code de vérification — Cabinet Tagot",
+      htmlContent: `
+        <div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:40px auto;padding:32px;border:1px solid #eee;border-radius:6px;">
+          <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:8px;">Cabinet Tagot — Notaire</div>
+          <h2 style="margin:0 0 24px;font-weight:300;font-size:22px;color:#111;">Code de vérification</h2>
+          <p style="color:#555;font-size:14px;line-height:1.6;">Pour accéder au questionnaire, saisissez le code ci-dessous :</p>
+          <div style="text-align:center;margin:32px 0;">
+            <span style="font-size:36px;font-weight:bold;letter-spacing:.2em;color:#111;">${code}</span>
+          </div>
+          <p style="color:#aaa;font-size:12px;">Ce code est valable 10 minutes. Si vous n'avez pas demandé ce code, ignorez cet email.</p>
+        </div>`,
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("Erreur envoi OTP:", e.message);
+    res.status(500).json({ error: "Erreur envoi email" });
+  }
+});
+
+// ─── Vérification du code OTP ──────────────────────────
+app.post("/api/otp/verifier", (req, res) => {
+  const { email, code } = req.body;
+  const entry = otpStore.get(email?.toLowerCase());
+  if (!entry) return res.status(400).json({ error: "Aucun code envoyé pour cet email" });
+  if (Date.now() > entry.expires) {
+    otpStore.delete(email.toLowerCase());
+    return res.status(400).json({ error: "Code expiré, veuillez en demander un nouveau" });
+  }
+  if (entry.code !== code?.trim()) {
+    return res.status(400).json({ error: "Code incorrect" });
+  }
+  otpStore.delete(email.toLowerCase());
+  res.json({ ok: true });
+});
+
+// ─── Soumission formulaire ──────────────────────────────
 app.post("/api/soumettre", async (req, res) => {
   try {
     const { personnes, type } = req.body;
