@@ -97,22 +97,8 @@ app.post("/api/soumettre", async (req, res) => {
         console.error("Erreur email réponses:", e.message);
       }
       try {
-        // b) Générer le XML et envoyer en second email
-        console.log("DONNÉES PERSONNES pour XML:", JSON.stringify(personnes, null, 2));
-        const xmlResp = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 4000,
-          messages: [{ role: "user", content: buildXmlPrompt(personnes) }],
-        });
-        let xml = xmlResp.content[0].text;
-        // Supprimer BOM et caractères invisibles de début
-        xml = xml.replace(/^\uFEFF/, "").replace(/^[\s\u200B\u200C\u200D\u00A0]+/, "");
-        // Supprimer blocs markdown
-        xml = xml.replace(/^```xml\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "");
-        // S'assurer que le fichier commence exactement par <?xml
-        const xmlStart = xml.indexOf("<?xml");
-        if (xmlStart > 0) xml = xml.substring(xmlStart);
-        xml = xml.trim();
+        // b) Générer le XML directement en JS
+        const xml = buildXmlDirect(personnes);
         await sendXmlEmail(xml, personnes, type);
       } catch (e) {
         console.error("Erreur XML:", e.message);
@@ -249,6 +235,218 @@ DONNÉES À TRANSFORMER :
 Réponds UNIQUEMENT avec le XML complet, sans texte avant ni après, sans balises markdown.`;
 }
 
+
+
+// ─── Génération XML iNot directe en JS ─────────────────
+function buildXmlDirect(personnes) {
+  function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function v(key, val) {
+    return `    <Var key="${key}" name="${key === 'CODETITRE' ? 'CIVILITY' : key}"><Value>${esc(val)}</Value></Var>`;
+  }
+  // Convertit JJ/MM/AAAA → AAAAMMJJ
+  function toInotDate(d) {
+    if (!d) return '';
+    const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) return m[3] + m[2] + m[1];
+    return d.replace(/\D/g,'').length === 8 ? d.replace(/\D/g,'') : '';
+  }
+  // Détermine le département à partir du CP
+  function deptFromCp(cp) {
+    if (!cp) return '';
+    const n = cp.substring(0, 2);
+    const depts = {
+      '01':'Ain','02':'Aisne','03':'Allier','04':'Alpes-de-Haute-Provence','05':'Hautes-Alpes',
+      '06':'Alpes-Maritimes','07':'Ardèche','08':'Ardennes','09':'Ariège','10':'Aube',
+      '11':'Aude','12':'Aveyron','13':'Bouches-du-Rhône','14':'Calvados','15':'Cantal',
+      '16':'Charente','17':'Charente-Maritime','18':'Cher','19':'Corrèze','20':'Corse',
+      '21':'Côte-d\'Or','22':'Côtes-d\'Armor','23':'Creuse','24':'Dordogne','25':'Doubs',
+      '26':'Drôme','27':'Eure','28':'Eure-et-Loir','29':'Finistère','30':'Gard',
+      '31':'Haute-Garonne','32':'Gers','33':'Gironde','34':'Hérault','35':'Ille-et-Vilaine',
+      '36':'Indre','37':'Indre-et-Loire','38':'Isère','39':'Jura','40':'Landes',
+      '41':'Loir-et-Cher','42':'Loire','43':'Haute-Loire','44':'Loire-Atlantique','45':'Loiret',
+      '46':'Lot','47':'Lot-et-Garonne','48':'Lozère','49':'Maine-et-Loire','50':'Manche',
+      '51':'Marne','52':'Haute-Marne','53':'Mayenne','54':'Meurthe-et-Moselle','55':'Meuse',
+      '56':'Morbihan','57':'Moselle','58':'Nièvre','59':'Nord','60':'Oise',
+      '61':'Orne','62':'Pas-de-Calais','63':'Puy-de-Dôme','64':'Pyrénées-Atlantiques','65':'Hautes-Pyrénées',
+      '66':'Pyrénées-Orientales','67':'Bas-Rhin','68':'Haut-Rhin','69':'Rhône','70':'Haute-Saône',
+      '71':'Saône-et-Loire','72':'Sarthe','73':'Savoie','74':'Haute-Savoie','75':'Paris',
+      '76':'Seine-Maritime','77':'Seine-et-Marne','78':'Yvelines','79':'Deux-Sèvres','80':'Somme',
+      '81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse','85':'Vendée',
+      '86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne','90':'Territoire de Belfort',
+      '91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne','95':'Val-d\'Oise',
+      '97':'Outre-mer'
+    };
+    return depts[n] || '';
+  }
+
+  const persons = personnes.map((p, i) => {
+    const num = String(10000001 + i);
+    const sit = p.situation || 'C';
+    const hasHistory = ['M','D','V','I','P','S'].includes(sit);
+    const isMarie = ['M','I','S'].includes(sit);
+    const isDivorce = ['D','I'].includes(sit);
+    const isVeuf = sit === 'V';
+    const isPacs = sit === 'P';
+
+    // Civilité
+    const civ = p.civilite || '';
+    const titre = civ === 'Monsieur' ? 'Monsieur' : civ === 'Madame' ? 'Madame' : civ === 'Mademoiselle' ? 'Mademoiselle' : '';
+    const codeTitre = civ === 'Monsieur' ? 'M.' : civ === 'Madame' ? 'MME' : civ === 'Mademoiselle' ? 'MELLE' : '';
+    const accord = civ === 'Monsieur' ? 'M' : 'F';
+
+    // Noms
+    const nom = (p.nom || '').toUpperCase();
+    const nomNaissance = (p.nomNaissance || p.nom || '').toUpperCase();
+    const prenoms = p.prenoms || '';
+    const prenomUsuel = prenoms.split(/\s+/)[0] || '';
+
+    // Adresse
+    const adresse = p.adresse || '';
+    const cp = p.cp || '';
+    const ville = (p.ville || '').toUpperCase();
+    const deptDo = deptFromCp(cp);
+
+    // Naissance
+    const datNa = toInotDate(p.dateNaissance);
+    const lieuNa = (p.lieuNaissance || '').toUpperCase();
+    const cpNa = p.cpNaissance || '';
+    const deptNa = deptFromCp(cpNa);
+
+    // Mariage / événement
+    let datMa = '';
+    let cpayMa = '';
+    let historiqueXml = '<HistoriqueMarital />';
+
+    if (isMarie) {
+      datMa = toInotDate(p.dateMariage);
+      cpayMa = p.cpMariage ? 'FR' : '';
+      const lieuMa = [p.cpMariage, p.villeMariage].filter(Boolean).join(' ');
+      const conjNom = (p.nomConjoint || '').toUpperCase();
+      const conjPrenoms = p.prenomsConjoint || '';
+      const cotyma = sit === 'S' ? 'S' : 'M';
+      historiqueXml = `<HistoriqueMarital><Evenement>
+      <Var key="COTYMA" name="COTYMA"><Value>${cotyma}</Value></Var>
+      <Var key="DAMAMA" name="DAMAMA"><Value>${esc(datMa)}</Value></Var>
+      <Var key="LVT1MA" name="LVT1MA"><Value>${esc(lieuMa)}</Value></Var>
+      <Var key="LNCOMA" name="LNCOMA"><Value>${esc(conjNom)}</Value></Var>
+      <Var key="LPCOMA" name="LPCOMA"><Value>${esc(conjPrenoms)}</Value></Var>
+      <Var key="COCRMA" name="COCRMA"><Value></Value></Var>
+    </Evenement></HistoriqueMarital>`;
+    } else if (isDivorce) {
+      const datDiv = toInotDate(p.dateDivorce);
+      const trib = p.tribunal || '';
+      const conjNom = (p.nomConjoint || '').toUpperCase();
+      const conjPrenoms = p.prenomsConjoint || '';
+      historiqueXml = `<HistoriqueMarital><Evenement>
+      <Var key="COTYMA" name="COTYMA"><Value>D</Value></Var>
+      <Var key="DAMAMA" name="DAMAMA"><Value>${esc(datDiv)}</Value></Var>
+      <Var key="LVT1MA" name="LVT1MA"><Value>${esc(trib)}</Value></Var>
+      <Var key="LNCOMA" name="LNCOMA"><Value>${esc(conjNom)}</Value></Var>
+      <Var key="LPCOMA" name="LPCOMA"><Value>${esc(conjPrenoms)}</Value></Var>
+      <Var key="COCRMA" name="COCRMA"><Value></Value></Var>
+    </Evenement></HistoriqueMarital>`;
+    } else if (isVeuf) {
+      const veufNom = (p.nomVeuf || '').toUpperCase();
+      const veufPrenoms = p.prenomsVeuf || '';
+      historiqueXml = `<HistoriqueMarital><Evenement>
+      <Var key="COTYMA" name="COTYMA"><Value>V</Value></Var>
+      <Var key="DAMAMA" name="DAMAMA"><Value></Value></Var>
+      <Var key="LVT1MA" name="LVT1MA"><Value></Value></Var>
+      <Var key="LNCOMA" name="LNCOMA"><Value>${esc(veufNom)}</Value></Var>
+      <Var key="LPCOMA" name="LPCOMA"><Value>${esc(veufPrenoms)}</Value></Var>
+      <Var key="COCRMA" name="COCRMA"><Value></Value></Var>
+    </Evenement></HistoriqueMarital>`;
+    } else if (isPacs) {
+      const datPacs = toInotDate(p.datePacs);
+      const lieuPacs = [p.cpPacs, p.villePacs].filter(Boolean).join(' ');
+      const conjNom = (p.nomConjoint || '').toUpperCase();
+      const conjPrenoms = p.prenomsConjoint || '';
+      historiqueXml = `<HistoriqueMarital><Evenement>
+      <Var key="COTYMA" name="COTYMA"><Value>P</Value></Var>
+      <Var key="DAMAMA" name="DAMAMA"><Value>${esc(datPacs)}</Value></Var>
+      <Var key="LVT1MA" name="LVT1MA"><Value>${esc(lieuPacs)}</Value></Var>
+      <Var key="LNCOMA" name="LNCOMA"><Value>${esc(conjNom)}</Value></Var>
+      <Var key="LPCOMA" name="LPCOMA"><Value>${esc(conjPrenoms)}</Value></Var>
+      <Var key="COCRMA" name="COCRMA"><Value></Value></Var>
+    </Evenement></HistoriqueMarital>`;
+    }
+
+    const regime = isMarie || sit === 'D' ? (p.regime || '4') : '';
+
+    return `  <Person info="">
+${v('NUMERO', num)}
+${v('TYPE', 'PP')}
+${v('ADR1', adresse)}
+${v('ADR2', '')}
+${v('ADR3', cp)}
+${v('ADR4', ville)}
+${v('RCS', '')}
+${v('VILRCS', '')}
+${v('CPRCS', '')}
+${v('CPAYRCS', '')}
+${v('NUMMB', '')}
+${v('IDENMB', '')}
+${v('ACCORD', accord)}
+${v('ADR1MB', '')}
+${v('ADR2MB', '')}
+${v('CPMB', '')}
+${v('VILLEMB', '')}
+${v('PRESENCE', '')}
+${v('INTCONJ', '')}
+${v('PRECONJ', '')}
+${v('JODATE', '')}
+${v('CPVILMA', '')}
+${v('NOTMA', '')}
+${v('HISTORIQUE', hasHistory ? 'O' : 'N')}
+${v('INTCONJPURIEL', '')}
+${v('CODCRU', '')}
+${v('LVDCRU', '')}
+${v('CPSTAT', '')}
+${v('PREFDAT', '')}
+${v('DEPTDO', deptDo)}
+${v('CPAYDO', 'FRANCE')}
+${v('CONJ', '')}
+${v('ETAT', sit)}
+${v('CODETITRE', codeTitre)}
+${v('NOMU', nom)}
+${v('PRENOMU', prenomUsuel)}
+${v('PRENOM', prenoms)}
+${v('PROF', p.profession || '')}
+${v('DATNA', datNa)}
+${v('DEPTNA', deptNa)}
+${v('CPAYNA', 'FRANCE')}
+${v('DEPMOR', '')}
+${v('NATION', p.nationalite || '')}
+${v('INCAPABLE', '')}
+${v('TITRE', titre)}
+${v('DATMOR', '')}
+${v('DATMA', datMa)}
+${v('CPAYMA', cpayMa)}
+${v('ADR1IMP', adresse)}
+${v('ADR2IMP', '')}
+${v('CPIMP', cp)}
+${v('VILLEIMP', ville)}
+${v('CODERU', cpNa)}
+${v('LVNARU', lieuNa)}
+${v('NOM', nomNaissance)}
+${v('REGIME', regime)}
+${v('DATCONTR', '')}
+${v('DATAN', '')}
+${v('DATDECL', '')}
+${v('DATHOM', '')}
+${v('TGIME', '')}
+${v('REGPRE', '')}
+${v('LIEME', '')}
+${v('NOTME', '')}
+${v('NOPME', '')}
+    ${historiqueXml}
+  </Person>`;
+  });
+
+  return `<?xml version="1.0" encoding="utf-8"?>\n<iNova><iNot><Customer><Folder>\n${persons.join('\n')}\n</Folder></Customer></iNot></iNova>`;
+}
 
 // ─── Envoi email via Brevo API ──────────────────────────
 async function sendEmail(xml, personnes, type) {
