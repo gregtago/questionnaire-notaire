@@ -34,12 +34,12 @@ app.post("/api/otp/envoyer", async (req, res) => {
     const { BrevoClient } = require("@getbrevo/brevo");
     const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
     await brevo.transactionalEmails.sendTransacEmail({
-      sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
+      sender: { name: "Grégoire TAGOT | notaire", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
       to: [{ email }],
-      subject: "Votre code de vérification — Cabinet Tagot",
+      subject: "Votre code de vérification — Grégoire TAGOT | notaire",
       htmlContent: `
         <div style="font-family:Helvetica,Arial,sans-serif;max-width:480px;margin:40px auto;padding:32px;border:1px solid #eee;border-radius:6px;">
-          <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:8px;">Cabinet Tagot — Notaire</div>
+          <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:8px;">Grégoire TAGOT  |  notaire</div>
           <h2 style="margin:0 0 24px;font-weight:300;font-size:22px;color:#111;">Code de vérification</h2>
           <p style="color:#555;font-size:14px;line-height:1.6;">Pour accéder au questionnaire, saisissez le code ci-dessous :</p>
           <div style="text-align:center;margin:32px 0;">
@@ -226,7 +226,7 @@ async function sendEmail(xml, personnes, type) {
 <body style="margin:0;padding:0;background:#fafafa;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
   <div style="max-width:600px;margin:40px auto;background:#fff;border:1px solid #eee;border-radius:6px;overflow:hidden;">
     <div style="background:#111;padding:28px 32px;">
-      <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:6px;">Cabinet Tagot — Notaire</div>
+      <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:6px;">Grégoire TAGOT  |  notaire</div>
       <div style="font-size:20px;font-weight:300;color:#fff;">Questionnaire ${typeLabel}</div>
       <div style="font-size:12px;color:#666;margin-top:4px;">Reçu le ${today}</div>
     </div>
@@ -234,14 +234,14 @@ async function sendEmail(xml, personnes, type) {
       <table style="width:100%;border-collapse:collapse;">${personnesHtml}</table>
     </div>
     <div style="background:#fafafa;padding:16px 32px;border-top:1px solid #eee;">
-      <p style="margin:0;font-size:10px;color:#bbb;line-height:1.6;">Questionnaire soumis via questionnaire.tagot.notaires.fr · Cabinet Tagot</p>
+      <p style="margin:0;font-size:10px;color:#bbb;line-height:1.6;">Questionnaire soumis via questionnaire.tagot.notaires.fr · Grégoire TAGOT | notaire</p>
     </div>
   </div>
 </body></html>`;
 
   const brevo = new BrevoClient({ apiKey });
   await brevo.transactionalEmails.sendTransacEmail({
-    sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
+    sender: { name: "Grégoire TAGOT | notaire", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
     to: [{ email: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr" }],
     subject: `Questionnaire ${typeLabel} — ${noms}`,
     htmlContent,
@@ -260,7 +260,7 @@ async function sendXmlEmail(xml, personnes, type) {
 
   const brevo = new BrevoClient({ apiKey });
   await brevo.transactionalEmails.sendTransacEmail({
-    sender: { name: "Cabinet Tagot", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
+    sender: { name: "Grégoire TAGOT | notaire", email: process.env.SENDER_EMAIL || "gregoire@tagot.fr" },
     to: [{ email: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr" }],
     subject: `XML iNot — ${typeLabel} — ${noms}`,
     textContent: `Fichier XML iNot en pièce jointe pour : ${noms}`,
