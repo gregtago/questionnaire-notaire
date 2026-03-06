@@ -339,7 +339,7 @@ function renderForm(p, idx) {
       </div>
       <div class="field">
         <label>E-mail</label>
-        <input type="email" data-f="email" value="${e(p.email)}" placeholder="marie@email.fr" autocomplete="email" />
+        <input type="email" data-f="email" value="${e(p.email)}" placeholder="marie@email.fr" autocomplete="email" ${i === 0 && verifiedEmail ? 'readonly style="background:#f5f5f5;color:#aaa;cursor:not-allowed;"' : ''} />
       </div>
     </div>
   </div>
