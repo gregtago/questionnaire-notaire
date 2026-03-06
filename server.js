@@ -99,8 +99,8 @@ app.post("/api/soumettre", async (req, res) => {
       try {
         // b) Générer le XML et envoyer en second email
         const xmlResp = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 4000,
+          model: "claude-sonnet-4-6",
+          max_tokens: 6000,
           messages: [{ role: "user", content: buildXmlPrompt(personnes) }],
         });
         let xml = xmlResp.content[0].text;
