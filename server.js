@@ -27,22 +27,29 @@ app.post("/api/soumettre", async (req, res) => {
 
     const client = new Anthropic({ apiKey });
 
-    // ── 1. Générer le XML iNot ──────────────────────────
-    const xmlPrompt = buildXmlPrompt(personnes);
-    const xmlResp = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 4000,
-      messages: [{ role: "user", content: xmlPrompt }],
-    });
-    const xml = xmlResp.content[0].text.trim();
+    // ── 1. Répondre immédiatement au client ────────────
+    res.json({ ok: true });
 
-    // ── 2. Envoyer par email si configuré ──────────────
-    let emailSent = false;
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      emailSent = await sendEmail(xml, personnes, type);
-    }
+    // ── 2. Traitement en arrière-plan ──────────────────
+    (async () => {
+      try {
+        // Générer le XML iNot
+        const xmlPrompt = buildXmlPrompt(personnes);
+        const xmlResp = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 4000,
+          messages: [{ role: "user", content: xmlPrompt }],
+        });
+        const xml = xmlResp.content[0].text.trim();
 
-    res.json({ xml, emailSent });
+        // Envoyer l'email avec les réponses + XML
+        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+          await sendEmail(xml, personnes, type);
+        }
+      } catch (e) {
+        console.error("Erreur traitement arrière-plan:", e.message);
+      }
+    })();
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message || "Erreur serveur" });
