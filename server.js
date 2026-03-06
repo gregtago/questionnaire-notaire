@@ -46,7 +46,7 @@ app.post("/api/soumettre", async (req, res) => {
           max_tokens: 4000,
           messages: [{ role: "user", content: buildXmlPrompt(personnes) }],
         });
-        const xml = xmlResp.content[0].text.trim();
+        const xml = xmlResp.content[0].text.trim().replace(/^```xml\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
         await sendXmlEmail(xml, personnes, type);
       } catch (e) {
         console.error("Erreur XML:", e.message);
