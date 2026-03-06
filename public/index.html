@@ -454,28 +454,16 @@ document.getElementById('btnSubmit').onclick = async () => {
 
     // Afficher le résultat
     const noms = persons.map(p=>(p.nom||'').toLowerCase()).join('_');
-    resultDiv.innerHTML = `
-      <div class="result">
-        <div class="result-title">Questionnaire traité avec succès</div>
-        ${data.emailSent ? '<div class="email-badge">✓ Envoyé au cabinet par email</div>' : ''}
-        <div class="result-btns">
-          <button class="btn-dl" id="dlXml">Télécharger le XML iNot</button>
-        </div>
-        <details>
-          <summary style="font-size:.75rem;color:#bbb;cursor:pointer;margin-bottom:.5rem;">Aperçu XML</summary>
-          <pre class="xml-out">${data.xml.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
-        </details>
+    // Remplacer tout le formulaire par la confirmation
+    document.getElementById('app').innerHTML = `
+      <div class="confirm-box">
+        <div class="confirm-icon">✓</div>
+        <div class="confirm-title">Merci, votre questionnaire a bien été transmis.</div>
+        <p class="confirm-text">
+          Votre notaire a reçu vos informations et reviendra vers vous prochainement.<br>
+          Vous pouvez fermer cette page.
+        </p>
       </div>`;
-    resultDiv.style.display = 'block';
-
-    document.getElementById('dlXml').onclick = () => {
-      const blob = new Blob([data.xml], {type:'application/xml'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `import_inot_${noms}.XML`; a.click();
-    };
-
-
-    resultDiv.scrollIntoView({behavior:'smooth'});
   } catch(err) {
     errorDiv.textContent = err.message;
     errorDiv.style.display = 'block';
