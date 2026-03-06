@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Questionnaire d'état civil — Cabinet Tagot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #fafafa; font-family: 'DM Sans', sans-serif; font-weight: 300; color: #111; }
+
+    .page { max-width: 680px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+
+    /* En-tête */
+    .header { margin-bottom: 3rem; }
+    .cabinet { font-size: .75rem; letter-spacing: .15em; text-transform: uppercase; color: #bbb; margin-bottom: .5rem; }
+    .titre { font-size: 1.8rem; font-weight: 300; letter-spacing: -.02em; color: #111; margin-bottom: .4rem; }
+    .intro { font-size: .9rem; color: #888; line-height: 1.7; max-width: 500px; }
+
+    /* Onglets personnes */
+    .tabs-bar { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: 2.5rem; }
+    .tab { padding: .45rem 1.1rem; border: 1px solid #e0e0e0; border-radius: 20px; cursor: pointer; font-size: .82rem; color: #888; background: #fff; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+    .tab.active { border-color: #111; background: #111; color: #fff; }
+    .tab-add { padding: .45rem 1rem; border: 1px dashed #ccc; border-radius: 20px; cursor: pointer; font-size: .82rem; color: #aaa; background: transparent; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+    .tab-add:hover { border-color: #555; color: #555; }
+    .tab-del { padding: .45rem .8rem; border: 1px solid #eee; border-radius: 20px; cursor: pointer; font-size: .82rem; color: #ddd; background: #fff; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+    .tab-del:hover { border-color: #e00; color: #e00; }
+
+    /* Formulaire */
+    .person-form { display: none; }
+    .person-form.active { display: block; }
+    .section { margin-bottom: 2.5rem; }
+    .section-label { font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; color: #bbb; margin-bottom: 1.2rem; display: block; font-weight: 400; }
+
+    .row { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    .col-1 { grid-template-columns: 1fr; }
+    .col-2 { grid-template-columns: 1fr 1fr; }
+    .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .field label { font-size: .8rem; color: #666; display: block; margin-bottom: .3rem; }
+    .field input, .field select {
+      width: 100%; padding: .65rem .85rem;
+      border: 1px solid #e8e8e8; border-radius: 4px;
+      font-family: 'DM Sans', sans-serif; font-size: .95rem; font-weight: 300; color: #111;
+      background: #fff; outline: none; transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus { border-color: #999; }
+    .field select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ccc'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right .85rem center; padding-right: 2rem; cursor: pointer; }
+
+    /* Situation matrimoniale */
+    .sit-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .sit-btn { padding: .4rem .9rem; border: 1px solid #e0e0e0; border-radius: 20px; cursor: pointer; font-size: .8rem; color: #888; background: #fff; transition: all .15s; font-family: 'DM Sans', sans-serif; }
+    .sit-btn.active { border-color: #111; background: #111; color: #fff; }
+    .cond { display: none; }
+    .cond.show { display: block; }
+
+    /* Actions */
+    .actions { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid #eee; }
+    .required-note { font-size: .78rem; color: #bbb; margin-bottom: 1.5rem; }
+    .btn-submit { width: 100%; padding: .85rem; background: #111; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 400; letter-spacing: .06em; text-transform: uppercase; transition: background .15s; }
+    .btn-submit:hover { background: #333; }
+    .btn-submit:disabled { background: #ccc; cursor: default; }
+    .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; margin-right: .5rem; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Résultat */
+    .result { margin-top: 2rem; padding: 2rem; background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; }
+    .result-title { font-size: .65rem; letter-spacing: .15em; text-transform: uppercase; color: #bbb; margin-bottom: 1.5rem; }
+    .result-btns { display: flex; gap: .75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .btn-dl { padding: .55rem 1.2rem; background: #111; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+    .btn-dl.secondary { background: #fff; color: #111; border: 1px solid #e0e0e0; }
+    .xml-out { font-family: 'Courier New', monospace; font-size: .7rem; line-height: 1.7; color: #666; white-space: pre-wrap; word-break: break-all; max-height: 280px; overflow: auto; background: #fafafa; padding: 1rem; border-radius: 4px; border: 1px solid #eee; margin-top: 1rem; }
+    .email-badge { display: inline-block; padding: .3rem .75rem; background: #f0faf0; border: 1px solid #c3e6c3; border-radius: 12px; font-size: .75rem; color: #2a7a2a; margin-bottom: 1rem; }
+
+    /* Erreur */
+    .error { margin-top: 1.5rem; padding: .85rem 1rem; background: #fff5f5; border: 1px solid #fcc; border-radius: 4px; font-size: .85rem; color: #c03030; }
+
+    /* Confirmation finale */
+    .confirm-box { text-align: center; padding: 3rem 1.5rem; }
+    .confirm-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .confirm-title { font-size: 1.3rem; font-weight: 300; color: #111; margin-bottom: .75rem; }
+    .confirm-text { font-size: .9rem; color: #888; line-height: 1.7; }
+
+    /* Footer */
+    footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #f0f0f0; font-size: .75rem; color: #ccc; line-height: 1.8; }
+
+    @media (max-width: 520px) {
+      .col-2, .col-3 { grid-template-columns: 1fr; }
+      .sit-tabs { gap: .3rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page" id="app">
+
+  <div class="header">
+    <div class="cabinet">Cabinet Tagot · Notaire</div>
+    <h1 class="titre">Questionnaire d'état civil</h1>
+    <p class="intro">Merci de remplir ce formulaire avec soin. Les informations saisies permettront à votre notaire de préparer votre dossier. En cas de doute, laissez le champ vide.</p>
+  </div>
+
+  <div class="tabs-bar" id="tabsBar">
+    <button class="tab active" data-idx="0">Personne 1</button>
+    <button class="tab-add" id="btnAdd">+ Ajouter une personne</button>
+  </div>
+
+  <div id="forms"></div>
+
+  <div class="actions">
+    <p class="required-note">Les champs marqués * sont obligatoires.</p>
+    <button class="btn-submit" id="btnSubmit">Valider le questionnaire</button>
+  </div>
+
+  <div id="result" style="display:none;"></div>
+  <div id="error" class="error" style="display:none;"></div>
+
+  <footer>
+    <strong style="color:#999;">Cabinet Tagot — Grégoire Tagot, Notaire</strong><br>
+    Ce formulaire est sécurisé. Vos données sont transmises directement à l'étude notariale et ne sont pas conservées en ligne.<br>
+    Conformément au RGPD, vous disposez d'un droit d'accès et de rectification : gregoiretagot@tagot.notaires.fr
+  </footer>
+</div>
+
+<script>
+const TYPE = new URLSearchParams(location.search).get('type') || 'etatcivil';
+let persons = [newPerson()];
+let activeIdx = 0;
+
+function newPerson() {
+  return {
+    civilite:'', nom:'', prenoms:'', nomNaissance:'',
+    dateNaissance:'', lieuNaissance:'', cpNaissance:'',
+    profession:'', nationalite:'Française',
+    adresse:'', cp:'', ville:'',
+    tel:'', email:'',
+    situation:'C',
+    dateMariage:'', cpMariage:'', villeMariage:'',
+    contratMariage:false, regime:'4',
+    nomConjoint:'', prenomsConjoint:'',
+    tribunal:'', dateDivorce:'',
+    nomVeuf:'', prenomsVeuf:'',
+    datePacs:'', cpPacs:'', villePacs:''
+  };
+}
+
+function e(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const SIT = {C:'Célibataire',M:'Marié(e)',D:'Divorcé(e)',I:'En instance de divorce',V:'Veuf / Veuve',P:'Pacsé(e)',S:'Séparé(e) de corps'};
+
+function renderForm(p, idx) {
+  const sit = p.situation;
+  const showM = ['M','I','S'].includes(sit);
+  const showD = ['D','I'].includes(sit);
+  return `
+<div class="person-form ${idx===activeIdx?'active':''}" data-idx="${idx}">
+
+  <div class="section">
+    <span class="section-label">Identité *</span>
+    <div class="row col-3">
+      <div class="field">
+        <label>Civilité *</label>
+        <select data-f="civilite">
+          <option value="">—</option>
+          <option value="M." ${p.civilite==='M.'?'selected':''}>Monsieur</option>
+          <option value="MME" ${p.civilite==='MME'?'selected':''}>Madame</option>
+          <option value="MELLE" ${p.civilite==='MELLE'?'selected':''}>Mademoiselle</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Nom d'usage *</label>
+        <input type="text" data-f="nom" value="${e(p.nom)}" placeholder="DUPONT" autocomplete="family-name" />
+      </div>
+      <div class="field">
+        <label>Nom de naissance</label>
+        <input type="text" data-f="nomNaissance" value="${e(p.nomNaissance)}" placeholder="si différent" />
+      </div>
+    </div>
+    <div class="row col-1">
+      <div class="field">
+        <label>Prénoms *</label>
+        <input type="text" data-f="prenoms" value="${e(p.prenoms)}" placeholder="Marie Claire" autocomplete="given-name" />
+      </div>
+    </div>
+    <div class="row col-2">
+      <div class="field">
+        <label>Date de naissance *</label>
+        <input type="date" data-f="dateNaissance" value="${p.dateNaissance}" />
+      </div>
+      <div class="field">
+        <label>Lieu de naissance *</label>
+        <input type="text" data-f="lieuNaissance" value="${e(p.lieuNaissance)}" placeholder="Paris" />
+      </div>
+    </div>
+    <div class="row col-3">
+      <div class="field">
+        <label>Code postal de naissance</label>
+        <input type="text" data-f="cpNaissance" value="${e(p.cpNaissance)}" placeholder="75001" maxlength="5" />
+      </div>
+      <div class="field">
+        <label>Profession</label>
+        <input type="text" data-f="profession" value="${e(p.profession)}" placeholder="Ingénieur" autocomplete="organization-title" />
+      </div>
+      <div class="field">
+        <label>Nationalité</label>
+        <input type="text" data-f="nationalite" value="${e(p.nationalite)}" placeholder="Française" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="section-label">Coordonnées</span>
+    <div class="row col-1">
+      <div class="field">
+        <label>Adresse *</label>
+        <input type="text" data-f="adresse" value="${e(p.adresse)}" placeholder="12 rue de la Paix" autocomplete="street-address" />
+      </div>
+    </div>
+    <div class="row col-2">
+      <div class="field">
+        <label>Code postal *</label>
+        <input type="text" data-f="cp" value="${e(p.cp)}" placeholder="75001" maxlength="5" autocomplete="postal-code" />
+      </div>
+      <div class="field">
+        <label>Ville *</label>
+        <input type="text" data-f="ville" value="${e(p.ville)}" placeholder="Paris" autocomplete="address-level2" />
+      </div>
+    </div>
+    <div class="row col-2">
+      <div class="field">
+        <label>Téléphone portable</label>
+        <input type="tel" data-f="tel" value="${e(p.tel)}" placeholder="06 12 34 56 78" autocomplete="tel" />
+      </div>
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" data-f="email" value="${e(p.email)}" placeholder="marie@email.fr" autocomplete="email" />
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="section-label">Situation matrimoniale *</span>
+    <div class="sit-tabs">
+      ${Object.entries(SIT).map(([code,label]) =>
+        `<button class="sit-btn${sit===code?' active':''}" data-sit="${code}">${label}</button>`
+      ).join('')}
+    </div>
+
+    <!-- Mariage / Instance / Séparation -->
+    <div class="cond${showM?' show':''}">
+      <div class="row col-3">
+        <div class="field">
+          <label>Date du mariage</label>
+          <input type="date" data-f="dateMariage" value="${p.dateMariage}" />
+        </div>
+        <div class="field">
+          <label>Code postal du mariage</label>
+          <input type="text" data-f="cpMariage" value="${e(p.cpMariage)}" placeholder="75001" />
+        </div>
+        <div class="field">
+          <label>Commune du mariage</label>
+          <input type="text" data-f="villeMariage" value="${e(p.villeMariage)}" placeholder="Paris" />
+        </div>
+      </div>
+      <div class="row col-2">
+        <div class="field">
+          <label>Régime matrimonial</label>
+          <select data-f="regime">
+            <option value="4" ${p.regime==='4'?'selected':''}>Sans contrat (après 01/02/1966)</option>
+            <option value="30" ${p.regime==='30'?'selected':''}>Communauté réduite aux acquêts</option>
+            <option value="33" ${p.regime==='33'?'selected':''}>Séparation de biens</option>
+            <option value="32" ${p.regime==='32'?'selected':''}>Communauté universelle</option>
+            <option value="35" ${p.regime==='35'?'selected':''}>Participation aux acquêts</option>
+          </select>
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;padding-bottom:.65rem;">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;color:#555;">
+            <input type="checkbox" data-f="contratMariage" ${p.contratMariage?'checked':''} style="width:auto;accent-color:#111;" />
+            Contrat de mariage établi
+          </label>
+        </div>
+      </div>
+      <div class="row col-2">
+        <div class="field">
+          <label>Nom du conjoint</label>
+          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="MARTIN" />
+        </div>
+        <div class="field">
+          <label>Prénom(s) du conjoint</label>
+          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="Jean Paul" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Divorce -->
+    <div class="cond${showD?' show':''}">
+      <div class="row col-2">
+        <div class="field">
+          <label>Tribunal (ville)</label>
+          <input type="text" data-f="tribunal" value="${e(p.tribunal)}" placeholder="Paris" />
+        </div>
+        <div class="field">
+          <label>Date du jugement</label>
+          <input type="date" data-f="dateDivorce" value="${p.dateDivorce}" />
+        </div>
+      </div>
+      ${!showM ? `<div class="row col-2">
+        <div class="field">
+          <label>Nom de l'ex-conjoint</label>
+          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="MARTIN" />
+        </div>
+        <div class="field">
+          <label>Prénom(s) de l'ex-conjoint</label>
+          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="Jean Paul" />
+        </div>
+      </div>` : ''}
+    </div>
+
+    <!-- Veuf/Veuve -->
+    <div class="cond${sit==='V'?' show':''}">
+      <div class="row col-2">
+        <div class="field">
+          <label>Nom du conjoint décédé</label>
+          <input type="text" data-f="nomVeuf" value="${e(p.nomVeuf)}" placeholder="MARTIN" />
+        </div>
+        <div class="field">
+          <label>Prénom(s) du conjoint décédé</label>
+          <input type="text" data-f="prenomsVeuf" value="${e(p.prenomsVeuf)}" placeholder="Jean Paul" />
+        </div>
+      </div>
+    </div>
+
+    <!-- PACS -->
+    <div class="cond${sit==='P'?' show':''}">
+      <div class="row col-3">
+        <div class="field">
+          <label>Date du PACS</label>
+          <input type="date" data-f="datePacs" value="${p.datePacs}" />
+        </div>
+        <div class="field">
+          <label>Code postal</label>
+          <input type="text" data-f="cpPacs" value="${e(p.cpPacs)}" placeholder="75001" />
+        </div>
+        <div class="field">
+          <label>Commune</label>
+          <input type="text" data-f="villePacs" value="${e(p.villePacs)}" placeholder="Paris" />
+        </div>
+      </div>
+      <div class="row col-2">
+        <div class="field">
+          <label>Nom du partenaire</label>
+          <input type="text" data-f="nomConjoint" value="${e(p.nomConjoint)}" placeholder="MARTIN" />
+        </div>
+        <div class="field">
+          <label>Prénom(s) du partenaire</label>
+          <input type="text" data-f="prenomsConjoint" value="${e(p.prenomsConjoint)}" placeholder="Jean Paul" />
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>`;
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabsBar');
+  const addBtn = document.getElementById('btnAdd');
+  bar.innerHTML = '';
+  persons.forEach((p, i) => {
+    const label = p.nom ? p.nom.toUpperCase() : `Personne ${i+1}`;
+    const tab = document.createElement('button');
+    tab.className = 'tab' + (i===activeIdx?' active':'');
+    tab.textContent = label;
+    tab.onclick = () => { activeIdx = i; renderAll(); };
+    bar.appendChild(tab);
+  });
+  bar.appendChild(addBtn);
+  if (persons.length > 1) {
+    const del = document.createElement('button');
+    del.className = 'tab-del';
+    del.textContent = '− Supprimer';
+    del.onclick = () => {
+      persons.splice(activeIdx, 1);
+      activeIdx = Math.max(0, activeIdx-1);
+      renderAll();
+    };
+    bar.appendChild(del);
+  }
+}
+
+function renderForms() {
+  document.getElementById('forms').innerHTML = persons.map((p,i) => renderForm(p,i)).join('');
+  bindEvents();
+}
+
+function renderAll() { renderTabs(); renderForms(); }
+
+function bindEvents() {
+  document.querySelectorAll('[data-f]').forEach(el => {
+    const idx = +el.closest('[data-idx]').dataset.idx;
+    const sync = () => {
+      persons[idx][el.dataset.f] = el.type==='checkbox' ? el.checked : el.value;
+      if (el.dataset.f === 'nom') renderTabs();
+    };
+    el.addEventListener('change', sync);
+    el.addEventListener('input', () => { if(el.dataset.f==='nom'){ persons[idx].nom=el.value; renderTabs(); }});
+  });
+  document.querySelectorAll('.sit-btn').forEach(btn => {
+    const idx = +btn.closest('[data-idx]').dataset.idx;
+    btn.onclick = () => { persons[idx].situation = btn.dataset.sit; renderForms(); };
+  });
+}
+
+document.getElementById('btnAdd').onclick = () => {
+  persons.push(newPerson());
+  activeIdx = persons.length - 1;
+  renderAll();
+};
+
+// ── Soumission ──────────────────────────────────────────
+document.getElementById('btnSubmit').onclick = async () => {
+  const btn = document.getElementById('btnSubmit');
+  const resultDiv = document.getElementById('result');
+  const errorDiv = document.getElementById('error');
+
+  // Validation basique
+  for (let i = 0; i < persons.length; i++) {
+    const p = persons[i];
+    if (!p.nom || !p.prenoms || !p.dateNaissance || !p.lieuNaissance) {
+      errorDiv.textContent = `Personne ${i+1} : nom, prénoms, date et lieu de naissance sont obligatoires.`;
+      errorDiv.style.display = 'block';
+      activeIdx = i; renderAll();
+      return;
+    }
+  }
+  errorDiv.style.display = 'none';
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Génération en cours…';
+  resultDiv.style.display = 'none';
+
+  try {
+    const resp = await fetch('/api/soumettre', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ personnes: persons, type: TYPE })
+    });
+    if (!resp.ok) {
+      const e = await resp.json().catch(()=>({}));
+      throw new Error(e.error || 'Erreur serveur');
+    }
+    const data = await resp.json();
+
+    // Afficher le résultat
+    const noms = persons.map(p=>(p.nom||'').toLowerCase()).join('_');
+    resultDiv.innerHTML = `
+      <div class="result">
+        <div class="result-title">Questionnaire traité avec succès</div>
+        ${data.emailSent ? '<div class="email-badge">✓ Envoyé au cabinet par email</div>' : ''}
+        <div class="result-btns">
+          <button class="btn-dl" id="dlXml">Télécharger le XML iNot</button>
+          <button class="btn-dl secondary" id="dlPdf">Télécharger le PDF récapitulatif</button>
+        </div>
+        <details>
+          <summary style="font-size:.75rem;color:#bbb;cursor:pointer;margin-bottom:.5rem;">Aperçu XML</summary>
+          <pre class="xml-out">${data.xml.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+        </details>
+      </div>`;
+    resultDiv.style.display = 'block';
+
+    document.getElementById('dlXml').onclick = () => {
+      const blob = new Blob([data.xml], {type:'application/xml'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `import_inot_${noms}.XML`; a.click();
+    };
+    document.getElementById('dlPdf').onclick = () => {
+      const blob = new Blob([Uint8Array.from(atob(data.pdfBase64),c=>c.charCodeAt(0))], {type:'application/pdf'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `questionnaire_${noms}.pdf`; a.click();
+    };
+
+    resultDiv.scrollIntoView({behavior:'smooth'});
+  } catch(err) {
+    errorDiv.textContent = err.message;
+    errorDiv.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Valider le questionnaire';
+  }
+};
+
+renderAll();
+</script>
+</body>
+</html>
