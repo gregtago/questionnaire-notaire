@@ -2,9 +2,7 @@ const express = require("express");
 const Anthropic = require("@anthropic-ai/sdk");
 const nodemailer = require("nodemailer");
 const path = require("path");
-const { execSync } = require("child_process");
-const fs = require("fs");
-const os = require("os");
+const PDFDocument = require("pdfkit");
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
@@ -40,7 +38,7 @@ app.post("/api/soumettre", async (req, res) => {
     const xml = xmlResp.content[0].text.trim();
 
     // ── 2. Générer le PDF récapitulatif ─────────────────
-    const pdfBase64 = generatePdf(personnes, type);
+    const pdfBase64 = await generatePdf(personnes, type);
 
     // ── 3. Envoyer par email si configuré ───────────────
     let emailSent = false;
@@ -86,196 +84,131 @@ ${JSON.stringify(personnes, null, 2)}
 Réponds UNIQUEMENT avec le XML complet, sans texte avant ni après, sans balises markdown.`;
 }
 
-// ─── Génération PDF avec Python / reportlab ─────────────
+// ─── Génération PDF avec pdfkit (JS pur) ───────────────
 function generatePdf(personnes, type) {
-  const labels = {
-    etatcivil: "État civil",
-    acquereur: "Acquéreur",
-    "vendeur-appartement": "Vendeur – Appartement",
-    "vendeur-maison": "Vendeur – Maison",
-    divorce: "Divorce",
-    succession: "Succession",
-  };
-  const titre = labels[type] || "Questionnaire";
-  const data = JSON.stringify(personnes).replace(/'/g, "\\'").replace(/\\/g, "\\\\");
+  return new Promise((resolve, reject) => {
+    const labels = {
+      etatcivil: "État civil",
+      acquereur: "Acquéreur",
+      "vendeur-appartement": "Vendeur – Appartement",
+      "vendeur-maison": "Vendeur – Maison",
+      divorce: "Divorce",
+      succession: "Succession",
+    };
+    const titre = labels[type] || "Questionnaire";
+    const sitLabels = { C:"Célibataire", M:"Marié(e)", D:"Divorcé(e)", V:"Veuf / Veuve", I:"En instance de divorce", P:"Pacsé(e)", S:"Séparé(e) de corps" };
+    const regLabels = { "4":"Sans contrat (régime légal)", "30":"Communauté réduite aux acquêts", "33":"Séparation de biens", "32":"Communauté universelle", "35":"Participation aux acquêts" };
+    const civLabels = { "M.":"Monsieur", "MME":"Madame", "MELLE":"Mademoiselle" };
 
-  const script = `
-import json, sys, os
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
+    const doc = new PDFDocument({ margin: 50, size: "A4" });
+    const chunks = [];
+    doc.on("data", c => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks).toString("base64")));
+    doc.on("error", reject);
 
-outpath = sys.argv[1]
-personnes = json.loads(sys.argv[2])
-titre = sys.argv[3]
+    const W = doc.page.width - 100;
+    const today = new Date().toLocaleDateString("fr-FR");
 
-doc = SimpleDocTemplate(outpath, pagesize=A4,
-    leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    // En-tête
+    doc.fontSize(18).font("Helvetica-Bold").fillColor("#111111").text(`Questionnaire — ${titre}`, 50, 50);
+    doc.fontSize(9).font("Helvetica").fillColor("#999999").text(`Reçu le ${today} · Cabinet Tagot — Grégoire Tagot, Notaire`, 50, 76);
+    doc.moveTo(50, 96).lineTo(50 + W, 96).strokeColor("#eeeeee").lineWidth(1).stroke();
 
-styles = getSampleStyleSheet()
-story = []
+    let y = 112;
 
-# Styles
-s_title = ParagraphStyle('title', fontSize=16, fontName='Helvetica-Bold',
-    spaceAfter=4, textColor=colors.HexColor('#111111'))
-s_sub = ParagraphStyle('sub', fontSize=9, fontName='Helvetica',
-    spaceAfter=20, textColor=colors.HexColor('#999999'))
-s_section = ParagraphStyle('section', fontSize=8, fontName='Helvetica-Bold',
-    spaceBefore=16, spaceAfter=8, textColor=colors.HexColor('#bbbbbb'),
-    borderPad=0)
-s_label = ParagraphStyle('label', fontSize=8, fontName='Helvetica',
-    textColor=colors.HexColor('#888888'), spaceAfter=1)
-s_value = ParagraphStyle('value', fontSize=10, fontName='Helvetica',
-    textColor=colors.HexColor('#111111'), spaceAfter=6)
-s_empty = ParagraphStyle('empty', fontSize=10, fontName='Helvetica',
-    textColor=colors.HexColor('#cccccc'), spaceAfter=6)
+    function section(title) {
+      if (y > doc.page.height - 120) { doc.addPage(); y = 50; }
+      y += 14;
+      doc.fontSize(7).font("Helvetica-Bold").fillColor("#bbbbbb").text(title.toUpperCase(), 50, y, { width: W });
+      y += 14;
+      doc.moveTo(50, y).lineTo(50 + W, y).strokeColor("#eeeeee").lineWidth(0.5).stroke();
+      y += 8;
+    }
 
-from datetime import date
-story.append(Paragraph(f"Questionnaire — {titre}", s_title))
-story.append(Paragraph(f"Reçu le {date.today().strftime('%d/%m/%Y')} · Cabinet Tagot", s_sub))
-story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#eeeeee'), spaceAfter=20))
+    function field(label, value) {
+      if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
+      doc.fontSize(7).font("Helvetica").fillColor("#888888").text(label.toUpperCase(), 50, y, { width: W });
+      y += 11;
+      if (value) {
+        doc.fontSize(10).font("Helvetica").fillColor("#111111").text(value, 50, y, { width: W });
+        y += doc.heightOfString(value, { width: W, fontSize: 10 }) + 5;
+      } else {
+        doc.fontSize(10).font("Helvetica").fillColor("#cccccc").text("—", 50, y);
+        y += 16;
+      }
+    }
 
-sit_labels = {
-    'C': 'Célibataire', 'M': 'Marié(e)', 'D': 'Divorcé(e)',
-    'V': 'Veuf / Veuve', 'I': 'En instance de divorce',
-    'P': 'Pacsé(e)', 'S': 'Séparé(e) de corps'
-}
-civ_labels = {'M.': 'Monsieur', 'MME': 'Madame', 'MELLE': 'Mademoiselle'}
-reg_labels = {
-    '4': 'Sans contrat (régime légal)', '30': 'Communauté réduite aux acquêts',
-    '33': 'Séparation de biens', '32': 'Communauté universelle', '35': 'Participation aux acquêts'
-}
+    function formatDate(d) {
+      if (!d) return "";
+      try { return new Date(d).toLocaleDateString("fr-FR"); } catch { return d; }
+    }
 
-def field(story, label, value):
-    story.append(Paragraph(label.upper(), s_label))
-    if value:
-        story.append(Paragraph(str(value), s_value))
-    else:
-        story.append(Paragraph("—", s_empty))
+    personnes.forEach((p, i) => {
+      if (i > 0) {
+        y += 10;
+        doc.moveTo(50, y).lineTo(50 + W, y).strokeColor("#111111").lineWidth(2).stroke();
+        y += 18;
+      }
+      const nomComplet = `${civLabels[p.civilite] || ""} ${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim();
+      doc.fontSize(13).font("Helvetica-Bold").fillColor("#111111").text(nomComplet, 50, y, { width: W });
+      y += 22;
 
-def section(story, title):
-    story.append(Paragraph(title.upper(), s_section))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#eeeeee'), spaceAfter=8))
+      section("Identité");
+      field("Nom d'usage", (p.nom||"").toUpperCase());
+      if (p.nomNaissance) field("Nom de naissance", (p.nomNaissance||"").toUpperCase());
+      field("Prénoms", p.prenoms);
+      const naissance = [formatDate(p.dateNaissance), p.lieuNaissance, p.cpNaissance ? `(${p.cpNaissance})` : ""].filter(Boolean).join(" à ").replace(" à (", " (");
+      field("Date et lieu de naissance", naissance);
+      field("Profession", p.profession);
+      field("Nationalité", p.nationalite);
 
-for i, p in enumerate(personnes):
-    if i > 0:
-        story.append(Spacer(1, 0.5*cm))
-        story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#111111'), spaceAfter=16))
+      section("Coordonnées");
+      const adresse = [p.adresse, [p.cp, p.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+      field("Adresse", adresse);
+      field("Téléphone", p.tel);
+      field("E-mail", p.email);
 
-    nom_complet = f"{civ_labels.get(p.get('civilite',''), '')} {p.get('nom','').upper()} {p.get('prenoms','')}"
-    story.append(Paragraph(nom_complet.strip(), ParagraphStyle('nom_p',
-        fontSize=13, fontName='Helvetica-Bold', spaceAfter=12, textColor=colors.HexColor('#111111'))))
+      section("Situation matrimoniale");
+      const sit = p.situation || "C";
+      field("Situation", sitLabels[sit] || sit);
 
-    section(story, "Identité")
-    # Ligne 1 : nom / nom naissance / prénoms
-    row1 = [
-        [Paragraph("NOM D'USAGE", s_label), Paragraph(p.get('nom','').upper() or '—', s_value)],
-        [Paragraph("NOM DE NAISSANCE", s_label), Paragraph(p.get('nomNaissance','').upper() or '—', s_value)],
-        [Paragraph("PRÉNOMS", s_label), Paragraph(p.get('prenoms','') or '—', s_value)],
-    ]
-    for row in row1:
-        story.append(row[0])
-        story.append(row[1])
-
-    # Date/lieu naissance
-    dn = p.get('dateNaissance','')
-    if dn:
-        try:
-            from datetime import datetime
-            dn = datetime.strptime(dn, '%Y-%m-%d').strftime('%d/%m/%Y')
-        except: pass
-    naissance = f"{dn} à {p.get('lieuNaissance','')} ({p.get('cpNaissance','')})" if dn or p.get('lieuNaissance') else '—'
-    field(story, "Date et lieu de naissance", naissance)
-    field(story, "Profession", p.get('profession'))
-    field(story, "Nationalité", p.get('nationalite'))
-
-    section(story, "Coordonnées")
-    adresse = p.get('adresse','')
-    if p.get('cp') or p.get('ville'):
-        adresse += f"\\n{p.get('cp','')} {p.get('ville','')}".strip()
-    field(story, "Adresse", adresse)
-    field(story, "Téléphone", p.get('tel'))
-    field(story, "E-mail", p.get('email'))
-
-    section(story, "Situation matrimoniale")
-    sit = p.get('situation', 'C')
-    field(story, "Situation", sit_labels.get(sit, sit))
-
-    if sit == 'M':
-        dm = p.get('dateMariage','')
-        if dm:
-            try:
-                from datetime import datetime
-                dm = datetime.strptime(dm, '%Y-%m-%d').strftime('%d/%m/%Y')
-            except: pass
-        mariage = f"Le {dm} à {p.get('cpMariage','')} {p.get('villeMariage','')}".strip() if dm else '—'
-        field(story, "Date et lieu du mariage", mariage)
-        field(story, "Régime matrimonial", reg_labels.get(p.get('regime','4'), p.get('regime','4')))
-        if p.get('contratMariage'):
-            field(story, "Contrat de mariage", "Oui")
-        conj = f"{p.get('nomConjoint','').upper()} {p.get('prenomsConjoint','')}".strip()
-        field(story, "Conjoint", conj or '—')
-
-    elif sit in ('D', 'I'):
-        dd = p.get('dateDivorce','')
-        if dd:
-            try:
-                from datetime import datetime
-                dd = datetime.strptime(dd, '%Y-%m-%d').strftime('%d/%m/%Y')
-            except: pass
-        field(story, "Tribunal de grande instance", p.get('tribunal'))
-        field(story, "Date du jugement", dd or '—')
-        conj = f"{p.get('nomConjoint','').upper()} {p.get('prenomsConjoint','')}".strip()
-        field(story, "Ex-conjoint", conj or '—')
-
-    elif sit == 'V':
-        conj = f"{p.get('nomVeuf','').upper()} {p.get('prenomsVeuf','')}".strip()
-        field(story, "Conjoint décédé", conj or '—')
-
-    elif sit == 'P':
-        dp = p.get('datePacs','')
-        if dp:
-            try:
-                from datetime import datetime
-                dp = datetime.strptime(dp, '%Y-%m-%d').strftime('%d/%m/%Y')
-            except: pass
-        pacs = f"Le {dp} à {p.get('cpPacs','')} {p.get('villePacs','')}".strip() if dp else '—'
-        field(story, "Date et lieu du PACS", pacs)
-        conj = f"{p.get('nomConjoint','').upper()} {p.get('prenomsConjoint','')}".strip()
-        field(story, "Partenaire", conj or '—')
-
-# Footer RGPD
-story.append(Spacer(1, 1*cm))
-story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#eeeeee'), spaceAfter=8))
-s_rgpd = ParagraphStyle('rgpd', fontSize=7, fontName='Helvetica',
-    textColor=colors.HexColor('#aaaaaa'), leading=10)
-story.append(Paragraph(
-    "Les données collectées sont traitées par le cabinet notarial Tagot dans le cadre de l'accomplissement des activités notariales. "
-    "Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et d'effacement. "
-    "Pour exercer ces droits : gregoire@tagot.fr",
-    s_rgpd))
-
-doc.build(story)
-print("OK")
-`;
-
-  const tmpScript = path.join(os.tmpdir(), `pdf_gen_${Date.now()}.py`);
-  const tmpOut = path.join(os.tmpdir(), `out_${Date.now()}.pdf`);
-
-  try {
-    fs.writeFileSync(tmpScript, script);
-    execSync(`python3 "${tmpScript}" "${tmpOut}" '${data.replace(/'/g, "\\'")}' "${titre}"`, {
-      timeout: 30000,
+      if (["M","I","S"].includes(sit)) {
+        const mariage = [formatDate(p.dateMariage), [p.cpMariage, p.villeMariage].filter(Boolean).join(" ")].filter(Boolean).join(" à ");
+        if (mariage) field("Date et lieu du mariage", mariage);
+        field("Régime matrimonial", regLabels[p.regime] || p.regime);
+        if (p.contratMariage) field("Contrat de mariage", "Oui");
+        const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
+        if (conj) field("Conjoint", conj);
+      }
+      if (["D","I"].includes(sit)) {
+        if (p.tribunal) field("Tribunal", p.tribunal);
+        if (p.dateDivorce) field("Date du jugement", formatDate(p.dateDivorce));
+        if (!["M","I","S"].includes(sit)) {
+          const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
+          if (conj) field("Ex-conjoint", conj);
+        }
+      }
+      if (sit === "V") {
+        const conj = [(p.nomVeuf||"").toUpperCase(), p.prenomsVeuf].filter(Boolean).join(" ");
+        if (conj) field("Conjoint décédé", conj);
+      }
+      if (sit === "P") {
+        const pacs = [formatDate(p.datePacs), [p.cpPacs, p.villePacs].filter(Boolean).join(" ")].filter(Boolean).join(" à ");
+        if (pacs) field("Date et lieu du PACS", pacs);
+        const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
+        if (conj) field("Partenaire", conj);
+      }
     });
-    const pdfBuffer = fs.readFileSync(tmpOut);
-    return pdfBuffer.toString("base64");
-  } finally {
-    try { fs.unlinkSync(tmpScript); } catch {}
-    try { fs.unlinkSync(tmpOut); } catch {}
-  }
+
+    // Footer RGPD
+    y += 20;
+    doc.moveTo(50, y).lineTo(50 + W, y).strokeColor("#eeeeee").lineWidth(0.5).stroke();
+    y += 8;
+    doc.fontSize(7).font("Helvetica").fillColor("#aaaaaa")
+      .text("Les données collectées sont traitées par le cabinet notarial Tagot dans le cadre de l'accomplissement des activités notariales. Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et d'effacement. Pour exercer ces droits : gregoire@tagot.fr", 50, y, { width: W });
+
+    doc.end();
+  });
 }
 
 // ─── Envoi email ────────────────────────────────────────
