@@ -98,9 +98,10 @@ app.post("/api/soumettre", async (req, res) => {
       }
       try {
         // b) Générer le XML et envoyer en second email
+        console.log("DONNÉES PERSONNES pour XML:", JSON.stringify(personnes, null, 2));
         const xmlResp = await client.messages.create({
-          model: "claude-sonnet-4-6",
-          max_tokens: 6000,
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 4000,
           messages: [{ role: "user", content: buildXmlPrompt(personnes) }],
         });
         let xml = xmlResp.content[0].text;
