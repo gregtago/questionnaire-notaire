@@ -30,26 +30,28 @@ app.post("/api/soumettre", async (req, res) => {
     // ── 1. Répondre immédiatement au client ────────────
     res.json({ ok: true });
 
-    // ── 2. Traitement en arrière-plan ──────────────────
-    (async () => {
+    // ── 2. Tout en arrière-plan ─────────────────────────
+    setImmediate(async () => {
+      if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) return;
       try {
-        // Générer le XML iNot
-        const xmlPrompt = buildXmlPrompt(personnes);
+        // a) Email immédiat avec les réponses (sans XML)
+        await sendEmail(null, personnes, type);
+      } catch (e) {
+        console.error("Erreur email réponses:", e.message);
+      }
+      try {
+        // b) Générer le XML et envoyer en second email
         const xmlResp = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 4000,
-          messages: [{ role: "user", content: xmlPrompt }],
+          messages: [{ role: "user", content: buildXmlPrompt(personnes) }],
         });
         const xml = xmlResp.content[0].text.trim();
-
-        // Envoyer l'email avec les réponses + XML
-        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-          await sendEmail(xml, personnes, type);
-        }
+        await sendXmlEmail(xml, personnes, type);
       } catch (e) {
-        console.error("Erreur traitement arrière-plan:", e.message);
+        console.error("Erreur XML:", e.message);
       }
-    })();
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message || "Erreur serveur" });
@@ -207,10 +209,6 @@ async function sendEmail(xml, personnes, type) {
         ${personnesHtml}
       </table>
 
-      <div style="margin-top:32px;padding-top:20px;border-top:1px solid #eee;">
-        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bbb;margin-bottom:10px;">Fichier XML iNot</div>
-        <pre style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px;font-size:10px;color:#666;overflow:auto;white-space:pre-wrap;word-break:break-all;">${xml.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>
-      </div>
     </div>
 
     <div style="background:#fafafa;padding:16px 32px;border-top:1px solid #eee;">
@@ -226,16 +224,31 @@ async function sendEmail(xml, personnes, type) {
     to: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr",
     subject: `Questionnaire ${typeLabel} — ${noms}`,
     html,
-    attachments: [
-      {
-        filename: `import_inot_${noms.toLowerCase().replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"")}.XML`,
-        content: xml,
-        contentType: "application/xml",
-      },
-    ],
+
   });
 
   return true;
+}
+
+// ─── Email XML iNot (second email) ─────────────────────
+async function sendXmlEmail(xml, personnes, type) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "ssl0.ovh.net",
+    port: 587,
+    secure: false,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
+  const typeLabels = { etatcivil:"État civil", acquereur:"Acquéreur", "vendeur-appartement":"Vendeur – Appartement", "vendeur-maison":"Vendeur – Maison", divorce:"Divorce", succession:"Succession" };
+  const noms = personnes.map(p => `${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim()).join(", ");
+  const typeLabel = typeLabels[type] || type;
+  const filename = `import_inot_${noms.toLowerCase().replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"")}.XML`;
+  await transporter.sendMail({
+    from: `"Cabinet Tagot" <${process.env.SMTP_USER}>`,
+    to: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr",
+    subject: `XML iNot — ${typeLabel} — ${noms}`,
+    text: `Fichier XML iNot en pièce jointe pour : ${noms}`,
+    attachments: [{ filename, content: xml, contentType: "application/xml" }],
+  });
 }
 
 app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
