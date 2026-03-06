@@ -117,34 +117,105 @@ app.post("/api/soumettre", async (req, res) => {
 
 // ─── Construction du prompt XML ────────────────────────
 function buildXmlPrompt(personnes) {
-  return `Tu es un assistant notarial. Génère un fichier XML iNot (format import généalogiste Genapi) à partir des données suivantes.
+  return `Tu es un assistant notarial. Génère un fichier XML iNot (format import généalogiste Genapi).
 
-RÈGLES XML iNot :
-- Structure : <?xml version="1.0" encoding="utf-8"?><iNova><iNot><Customer><Folder>...<\/Folder><\/Customer><\/iNot><\/iNova>
-- Une balise <Person info=""> par personne
-- NUMERO : 10000001, 10000002, etc.
-- TYPE : PP
-- Noms en MAJUSCULES, prénoms avec 1ère lettre majuscule
-- ACCORD : M (masculin) ou F (féminin) selon civilité
-- CODETITRE : M. / MME / MELLE
-- ETAT : C=célibataire, M=marié, D=divorcé, V=veuf, I=instance divorce, P=pacsé, S=séparé corps
+FORMAT OBLIGATOIRE — chaque champ utilise EXACTEMENT cette syntaxe :
+<Var key="CLE" name="CLE"><Value>valeur</Value></Var>
+
+Structure XML complète à produire :
+<?xml version="1.0" encoding="utf-8"?>
+<iNova><iNot><Customer><Folder>
+  <Person info="">
+    <Var key="NUMERO" name="NUMERO"><Value>10000001</Value></Var>
+    <Var key="TYPE" name="TYPE"><Value>PP</Value></Var>
+    <Var key="ADR1" name="ADR1"><Value></Value></Var>
+    <Var key="ADR2" name="ADR2"><Value></Value></Var>
+    <Var key="ADR3" name="ADR3"><Value></Value></Var>
+    <Var key="ADR4" name="ADR4"><Value></Value></Var>
+    <Var key="RCS" name="RCS"><Value></Value></Var>
+    <Var key="VILRCS" name="VILRCS"><Value></Value></Var>
+    <Var key="CPRCS" name="CPRCS"><Value></Value></Var>
+    <Var key="CPAYRCS" name="CPAYRCS"><Value></Value></Var>
+    <Var key="NUMMB" name="NUMMB"><Value></Value></Var>
+    <Var key="IDENMB" name="IDENMB"><Value></Value></Var>
+    <Var key="ACCORD" name="ACCORD"><Value>M ou F</Value></Var>
+    <Var key="ADR1MB" name="ADR1MB"><Value></Value></Var>
+    <Var key="ADR2MB" name="ADR2MB"><Value></Value></Var>
+    <Var key="CPMB" name="CPMB"><Value></Value></Var>
+    <Var key="VILLEMB" name="VILLEMB"><Value></Value></Var>
+    <Var key="PRESENCE" name="PRESENCE"><Value></Value></Var>
+    <Var key="INTCONJ" name="INTCONJ"><Value></Value></Var>
+    <Var key="PRECONJ" name="PRECONJ"><Value></Value></Var>
+    <Var key="JODATE" name="JODATE"><Value></Value></Var>
+    <Var key="CPVILMA" name="CPVILMA"><Value></Value></Var>
+    <Var key="NOTMA" name="NOTMA"><Value></Value></Var>
+    <Var key="HISTORIQUE" name="HISTORIQUE"><Value>O ou N</Value></Var>
+    <Var key="INTCONJPURIEL" name="INTCONJPURIEL"><Value></Value></Var>
+    <Var key="CODCRU" name="CODCRU"><Value></Value></Var>
+    <Var key="LVDCRU" name="LVDCRU"><Value></Value></Var>
+    <Var key="CPSTAT" name="CPSTAT"><Value></Value></Var>
+    <Var key="PREFDAT" name="PREFDAT"><Value></Value></Var>
+    <Var key="DEPTDO" name="DEPTDO"><Value>nom département domicile</Value></Var>
+    <Var key="CPAYDO" name="CPAYDO"><Value>FRANCE</Value></Var>
+    <Var key="CONJ" name="CONJ"><Value></Value></Var>
+    <Var key="ETAT" name="ETAT"><Value>C/M/D/V/I/P/S</Value></Var>
+    <Var key="CODETITRE" name="CIVILITY"><Value>M./MME/MELLE</Value></Var>
+    <Var key="NOMU" name="NOMU"><Value>NOM USUEL MAJUSCULES</Value></Var>
+    <Var key="PRENOMU" name="PRENOMU"><Value>Prénom usuel</Value></Var>
+    <Var key="PRENOM" name="PRENOM"><Value>Tous prénoms état civil</Value></Var>
+    <Var key="PROF" name="PROF"><Value></Value></Var>
+    <Var key="DATNA" name="DATNA"><Value>AAAAMMJJ</Value></Var>
+    <Var key="DEPTNA" name="DEPTNA"><Value>nom département naissance</Value></Var>
+    <Var key="CPAYNA" name="CPAYNA"><Value>FRANCE</Value></Var>
+    <Var key="DEPMOR" name="DEPMOR"><Value></Value></Var>
+    <Var key="NATION" name="NATION"><Value></Value></Var>
+    <Var key="INCAPABLE" name="INCAPABLE"><Value></Value></Var>
+    <Var key="TITRE" name="TITRE"><Value>Monsieur/Madame/Mademoiselle</Value></Var>
+    <Var key="DATMOR" name="DATMOR"><Value></Value></Var>
+    <Var key="DATMA" name="DATMA"><Value>AAAAMMJJ si marié/pacsé sinon vide</Value></Var>
+    <Var key="CPAYMA" name="CPAYMA"><Value>FR si applicable</Value></Var>
+    <Var key="ADR1IMP" name="ADR1IMP"><Value>= ADR1</Value></Var>
+    <Var key="ADR2IMP" name="ADR2IMP"><Value></Value></Var>
+    <Var key="CPIMP" name="CPIMP"><Value>= ADR3</Value></Var>
+    <Var key="VILLEIMP" name="VILLEIMP"><Value>= ADR4</Value></Var>
+    <Var key="CODERU" name="CODERU"><Value>CP naissance</Value></Var>
+    <Var key="LVNARU" name="LVNARU"><Value>VILLE NAISSANCE MAJUSCULES</Value></Var>
+    <Var key="NOM" name="NOM"><Value>NOM ÉTAT CIVIL MAJUSCULES</Value></Var>
+    <Var key="REGIME" name="REGIME"><Value>4/30/32/33/35</Value></Var>
+    <Var key="DATCONTR" name="DATCONTR"><Value></Value></Var>
+    <Var key="DATAN" name="DATAN"><Value></Value></Var>
+    <Var key="DATDECL" name="DATDECL"><Value></Value></Var>
+    <Var key="DATHOM" name="DATHOM"><Value></Value></Var>
+    <Var key="TGIME" name="TGIME"><Value></Value></Var>
+    <Var key="REGPRE" name="REGPRE"><Value></Value></Var>
+    <Var key="LIEME" name="LIEME"><Value></Value></Var>
+    <Var key="NOTME" name="NOTME"><Value></Value></Var>
+    <Var key="NOPME" name="NOPME"><Value></Value></Var>
+    <HistoriqueMarital />
+  </Person>
+</Folder></Customer></iNot></iNova>
+
+RÈGLES DE REMPLISSAGE :
+- ADR1 = adresse (voie), ADR3 = CP, ADR4 = ville
+- ACCORD : M si Monsieur, F si Madame ou Mademoiselle
+- ETAT : C=célibataire M=marié D=divorcé V=veuf I=instance P=pacsé S=séparé
 - HISTORIQUE : O si événement marital, N sinon
-- DATNA, DATMA, DAMAMA : format AAAAMMJJ
-- Régime : 4=sans contrat après 1966, 33=séparation biens, 32=communauté universelle, 35=participation acquêts, 30=communauté réduite acquêts
-- DEPTDO : nom du département (ex: Paris, Hérault)
-- HistoriqueMarital : vide si célibataire, sinon <Evenement> avec COTYMA, DAMAMA, LVT1MA, LNCOMA, LPCOMA
-- Pour marié : HISTORIQUE=O, Evenement COTYMA=M avec date et lieu mariage
-- Pour divorcé : HISTORIQUE=O, Evenement COTYMA=D (tribunal dans LVT1MA)
-- Pour veuf : HISTORIQUE=O, Evenement COTYMA=V
-- Pour pacsé : HISTORIQUE=O, Evenement COTYMA=P
-- Tous les champs obligatoires doivent être présents même vides
-- Adresse fiscale = adresse domicile si non précisée
+- DATNA/DATMA/DAMAMA : format AAAAMMJJ
+- REGIME : 4=sans contrat après 1966, 33=séparation biens, 32=communauté universelle, 35=participation acquêts, 30=communauté réduite acquêts. Vide si célibataire.
+- DEPTDO/DEPTNA : nom du département (ex: Paris, Hérault, Seine-et-Marne), pas le numéro
+- ADR1IMP/CPIMP/VILLEIMP = identiques à ADR1/ADR3/ADR4 si pas d'adresse fiscale distincte
+- Pour marié : HISTORIQUE=O, remplacer <HistoriqueMarital /> par :
+  <HistoriqueMarital><Evenement><Var key="COTYMA" name="COTYMA"><Value>M</Value></Var><Var key="DAMAMA" name="DAMAMA"><Value>AAAAMMJJ</Value></Var><Var key="LVT1MA" name="LVT1MA"><Value>lieu mariage</Value></Var><Var key="LNCOMA" name="LNCOMA"><Value>NOM conjoint</Value></Var><Var key="LPCOMA" name="LPCOMA"><Value>prénoms conjoint</Value></Var><Var key="COCRMA" name="COCRMA"><Value></Value></Var></Evenement></HistoriqueMarital>
+- Pour divorcé : même structure avec COTYMA=D, LVT1MA=tribunal
+- Tous les champs doivent être présents, même vides
+- NUMERO : 10000001 pour la 1ère personne, 10000002 pour la 2ème, etc.
 
-DONNÉES :
-${JSON.stringify(personnes, null, 2)}
+DONNÉES À TRANSFORMER :
+\${JSON.stringify(personnes, null, 2)}
 
 Réponds UNIQUEMENT avec le XML complet, sans texte avant ni après, sans balises markdown.`;
 }
+
 
 // ─── Envoi email via Brevo API ──────────────────────────
 async function sendEmail(xml, personnes, type) {
