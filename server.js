@@ -303,7 +303,7 @@ async function sendEmail(xml, pdfBase64, personnes, type) {
 
   await transporter.sendMail({
     from: process.env.SMTP_USER,
-    to: process.env.NOTAIRE_EMAIL || process.env.SMTP_USER,
+    to: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr",
     subject: `Questionnaire ${typeLabel} — ${noms}`,
     text: `Questionnaire ${typeLabel} complété par : ${noms}\n\nFichiers joints : XML iNot + PDF récapitulatif.`,
     attachments: [
