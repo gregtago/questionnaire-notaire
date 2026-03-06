@@ -2,7 +2,6 @@ const express = require("express");
 const Anthropic = require("@anthropic-ai/sdk");
 const nodemailer = require("nodemailer");
 const path = require("path");
-const PDFDocument = require("pdfkit");
 
 const app = express();
 app.use(express.json({ limit: "2mb" }));
@@ -37,16 +36,13 @@ app.post("/api/soumettre", async (req, res) => {
     });
     const xml = xmlResp.content[0].text.trim();
 
-    // ── 2. Générer le PDF récapitulatif ─────────────────
-    const pdfBase64 = await generatePdf(personnes, type);
-
-    // ── 3. Envoyer par email si configuré ───────────────
+    // ── 2. Envoyer par email si configuré ──────────────
     let emailSent = false;
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-      emailSent = await sendEmail(xml, pdfBase64, personnes, type);
+      emailSent = await sendEmail(xml, personnes, type);
     }
 
-    res.json({ xml, pdfBase64, emailSent });
+    res.json({ xml, emailSent });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message || "Erreur serveur" });
@@ -84,135 +80,8 @@ ${JSON.stringify(personnes, null, 2)}
 Réponds UNIQUEMENT avec le XML complet, sans texte avant ni après, sans balises markdown.`;
 }
 
-// ─── Génération PDF avec pdfkit (JS pur) ───────────────
-function generatePdf(personnes, type) {
-  return new Promise((resolve, reject) => {
-    const labels = {
-      etatcivil: "État civil",
-      acquereur: "Acquéreur",
-      "vendeur-appartement": "Vendeur – Appartement",
-      "vendeur-maison": "Vendeur – Maison",
-      divorce: "Divorce",
-      succession: "Succession",
-    };
-    const titre = labels[type] || "Questionnaire";
-    const sitLabels = { C:"Célibataire", M:"Marié(e)", D:"Divorcé(e)", V:"Veuf / Veuve", I:"En instance de divorce", P:"Pacsé(e)", S:"Séparé(e) de corps" };
-    const regLabels = { "4":"Sans contrat (régime légal)", "30":"Communauté réduite aux acquêts", "33":"Séparation de biens", "32":"Communauté universelle", "35":"Participation aux acquêts" };
-    const civLabels = { "M.":"Monsieur", "MME":"Madame", "MELLE":"Mademoiselle" };
-
-    const doc = new PDFDocument({ margin: 50, size: "A4" });
-    const chunks = [];
-    doc.on("data", c => chunks.push(c));
-    doc.on("end", () => resolve(Buffer.concat(chunks).toString("base64")));
-    doc.on("error", reject);
-
-    const W = doc.page.width - 100;
-    const today = new Date().toLocaleDateString("fr-FR");
-
-    // En-tête
-    doc.fontSize(18).font("Helvetica-Bold").fillColor("#111111").text(`Questionnaire — ${titre}`, 50, 50);
-    doc.fontSize(9).font("Helvetica").fillColor("#999999").text(`Reçu le ${today} · Cabinet Tagot — Grégoire Tagot, Notaire`, 50, 76);
-    doc.moveTo(50, 96).lineTo(50 + W, 96).strokeColor("#eeeeee").lineWidth(1).stroke();
-
-    let y = 112;
-
-    function section(title) {
-      if (y > doc.page.height - 120) { doc.addPage(); y = 50; }
-      y += 14;
-      doc.fontSize(7).font("Helvetica-Bold").fillColor("#bbbbbb").text(title.toUpperCase(), 50, y, { width: W });
-      y += 14;
-      doc.moveTo(50, y).lineTo(50 + W, y).strokeColor("#eeeeee").lineWidth(0.5).stroke();
-      y += 8;
-    }
-
-    function field(label, value) {
-      if (y > doc.page.height - 80) { doc.addPage(); y = 50; }
-      doc.fontSize(7).font("Helvetica").fillColor("#888888").text(label.toUpperCase(), 50, y, { width: W });
-      y += 11;
-      if (value) {
-        doc.fontSize(10).font("Helvetica").fillColor("#111111").text(value, 50, y, { width: W });
-        y += doc.heightOfString(value, { width: W, fontSize: 10 }) + 5;
-      } else {
-        doc.fontSize(10).font("Helvetica").fillColor("#cccccc").text("—", 50, y);
-        y += 16;
-      }
-    }
-
-    function formatDate(d) {
-      if (!d) return "";
-      try { return new Date(d).toLocaleDateString("fr-FR"); } catch { return d; }
-    }
-
-    personnes.forEach((p, i) => {
-      if (i > 0) {
-        y += 10;
-        doc.moveTo(50, y).lineTo(50 + W, y).strokeColor("#111111").lineWidth(2).stroke();
-        y += 18;
-      }
-      const nomComplet = `${civLabels[p.civilite] || ""} ${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim();
-      doc.fontSize(13).font("Helvetica-Bold").fillColor("#111111").text(nomComplet, 50, y, { width: W });
-      y += 22;
-
-      section("Identité");
-      field("Nom d'usage", (p.nom||"").toUpperCase());
-      if (p.nomNaissance) field("Nom de naissance", (p.nomNaissance||"").toUpperCase());
-      field("Prénoms", p.prenoms);
-      const naissance = [formatDate(p.dateNaissance), p.lieuNaissance, p.cpNaissance ? `(${p.cpNaissance})` : ""].filter(Boolean).join(" à ").replace(" à (", " (");
-      field("Date et lieu de naissance", naissance);
-      field("Profession", p.profession);
-      field("Nationalité", p.nationalite);
-
-      section("Coordonnées");
-      const adresse = [p.adresse, [p.cp, p.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-      field("Adresse", adresse);
-      field("Téléphone", p.tel);
-      field("E-mail", p.email);
-
-      section("Situation matrimoniale");
-      const sit = p.situation || "C";
-      field("Situation", sitLabels[sit] || sit);
-
-      if (["M","I","S"].includes(sit)) {
-        const mariage = [formatDate(p.dateMariage), [p.cpMariage, p.villeMariage].filter(Boolean).join(" ")].filter(Boolean).join(" à ");
-        if (mariage) field("Date et lieu du mariage", mariage);
-        field("Régime matrimonial", regLabels[p.regime] || p.regime);
-        if (p.contratMariage) field("Contrat de mariage", "Oui");
-        const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
-        if (conj) field("Conjoint", conj);
-      }
-      if (["D","I"].includes(sit)) {
-        if (p.tribunal) field("Tribunal", p.tribunal);
-        if (p.dateDivorce) field("Date du jugement", formatDate(p.dateDivorce));
-        if (!["M","I","S"].includes(sit)) {
-          const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
-          if (conj) field("Ex-conjoint", conj);
-        }
-      }
-      if (sit === "V") {
-        const conj = [(p.nomVeuf||"").toUpperCase(), p.prenomsVeuf].filter(Boolean).join(" ");
-        if (conj) field("Conjoint décédé", conj);
-      }
-      if (sit === "P") {
-        const pacs = [formatDate(p.datePacs), [p.cpPacs, p.villePacs].filter(Boolean).join(" ")].filter(Boolean).join(" à ");
-        if (pacs) field("Date et lieu du PACS", pacs);
-        const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
-        if (conj) field("Partenaire", conj);
-      }
-    });
-
-    // Footer RGPD
-    y += 20;
-    doc.moveTo(50, y).lineTo(50 + W, y).strokeColor("#eeeeee").lineWidth(0.5).stroke();
-    y += 8;
-    doc.fontSize(7).font("Helvetica").fillColor("#aaaaaa")
-      .text("Les données collectées sont traitées par le cabinet notarial Tagot dans le cadre de l'accomplissement des activités notariales. Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et d'effacement. Pour exercer ces droits : gregoire@tagot.fr", 50, y, { width: W });
-
-    doc.end();
-  });
-}
-
 // ─── Envoi email ────────────────────────────────────────
-async function sendEmail(xml, pdfBase64, personnes, type) {
+async function sendEmail(xml, personnes, type) {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "ssl0.ovh.net",
     port: 587,
@@ -223,8 +92,7 @@ async function sendEmail(xml, pdfBase64, personnes, type) {
     },
   });
 
-  const noms = personnes.map((p) => `${p.nom || ""} ${p.prenoms || ""}`.trim()).join(", ");
-  const labels = {
+  const typeLabels = {
     etatcivil: "État civil",
     acquereur: "Acquéreur",
     "vendeur-appartement": "Vendeur – Appartement",
@@ -232,23 +100,130 @@ async function sendEmail(xml, pdfBase64, personnes, type) {
     divorce: "Divorce",
     succession: "Succession",
   };
-  const typeLabel = labels[type] || type;
+  const sitLabels = { C:"Célibataire", M:"Marié(e)", D:"Divorcé(e)", V:"Veuf / Veuve", I:"En instance de divorce", P:"Pacsé(e)", S:"Séparé(e) de corps" };
+  const regLabels = { "4":"Sans contrat (régime légal)", "30":"Communauté réduite aux acquêts", "33":"Séparation de biens", "32":"Communauté universelle", "35":"Participation aux acquêts" };
+  const civLabels = { "M.":"Monsieur", "MME":"Madame", "MELLE":"Mademoiselle" };
+
+  const typeLabel = typeLabels[type] || type;
+  const noms = personnes.map(p => `${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim()).join(", ");
+  const today = new Date().toLocaleDateString("fr-FR");
+
+  function formatDate(d) {
+    if (!d) return "";
+    try { return new Date(d).toLocaleDateString("fr-FR"); } catch { return d; }
+  }
+
+  function row(label, value) {
+    if (!value) return "";
+    return `<tr>
+      <td style="padding:6px 12px 6px 0;font-size:12px;color:#888;white-space:nowrap;vertical-align:top;">${label}</td>
+      <td style="padding:6px 0;font-size:13px;color:#111;vertical-align:top;">${value}</td>
+    </tr>`;
+  }
+
+  function section(title) {
+    return `<tr><td colspan="2" style="padding:18px 0 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bbb;font-weight:bold;border-top:1px solid #eee;">${title}</td></tr>`;
+  }
+
+  let personnesHtml = personnes.map((p, i) => {
+    const sit = p.situation || "C";
+    let rows = "";
+
+    rows += section("Identité");
+    rows += row("Civilité", civLabels[p.civilite] || p.civilite);
+    rows += row("Nom d'usage", (p.nom||"").toUpperCase());
+    if (p.nomNaissance) rows += row("Nom de naissance", (p.nomNaissance||"").toUpperCase());
+    rows += row("Prénoms", p.prenoms);
+    const naiss = [formatDate(p.dateNaissance), p.lieuNaissance, p.cpNaissance ? `(${p.cpNaissance})` : ""].filter(Boolean).join(" — ");
+    rows += row("Date et lieu de naissance", naiss);
+    rows += row("Profession", p.profession);
+    rows += row("Nationalité", p.nationalite);
+
+    rows += section("Coordonnées");
+    const adresse = [p.adresse, [p.cp, p.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    rows += row("Adresse", adresse);
+    rows += row("Téléphone", p.tel);
+    rows += row("E-mail", p.email);
+
+    rows += section("Situation matrimoniale");
+    rows += row("Situation", sitLabels[sit] || sit);
+
+    if (["M","I","S"].includes(sit)) {
+      const mariage = [formatDate(p.dateMariage), [p.cpMariage, p.villeMariage].filter(Boolean).join(" ")].filter(Boolean).join(" — ");
+      rows += row("Date et lieu du mariage", mariage);
+      rows += row("Régime matrimonial", regLabels[p.regime] || p.regime);
+      if (p.contratMariage) rows += row("Contrat de mariage", "Oui");
+      const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
+      rows += row("Conjoint", conj);
+    }
+    if (["D","I"].includes(sit)) {
+      rows += row("Tribunal", p.tribunal);
+      rows += row("Date du jugement", formatDate(p.dateDivorce));
+      if (!["M"].includes(sit)) {
+        const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
+        rows += row("Ex-conjoint", conj);
+      }
+    }
+    if (sit === "V") {
+      const conj = [(p.nomVeuf||"").toUpperCase(), p.prenomsVeuf].filter(Boolean).join(" ");
+      rows += row("Conjoint décédé", conj);
+    }
+    if (sit === "P") {
+      const pacs = [formatDate(p.datePacs), [p.cpPacs, p.villePacs].filter(Boolean).join(" ")].filter(Boolean).join(" — ");
+      rows += row("Date et lieu du PACS", pacs);
+      const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
+      rows += row("Partenaire", conj);
+    }
+
+    const nomComplet = `${civLabels[p.civilite]||""} ${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim();
+    return `
+      ${i > 0 ? '<tr><td colspan="2" style="padding:24px 0 8px;"><hr style="border:none;border-top:2px solid #111;margin:0;" /></td></tr>' : ""}
+      <tr><td colspan="2" style="padding-bottom:8px;">
+        <span style="font-size:15px;font-weight:bold;color:#111;">${nomComplet}</span>
+      </td></tr>
+      ${rows}`;
+  }).join("");
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fafafa;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:#fff;border:1px solid #eee;border-radius:6px;overflow:hidden;">
+    
+    <div style="background:#111;padding:28px 32px;">
+      <div style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#888;margin-bottom:6px;">Cabinet Tagot — Notaire</div>
+      <div style="font-size:20px;font-weight:300;color:#fff;">Questionnaire ${typeLabel}</div>
+      <div style="font-size:12px;color:#666;margin-top:4px;">Reçu le ${today}</div>
+    </div>
+
+    <div style="padding:32px;">
+      <table style="width:100%;border-collapse:collapse;">
+        ${personnesHtml}
+      </table>
+
+      <div style="margin-top:32px;padding-top:20px;border-top:1px solid #eee;">
+        <div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bbb;margin-bottom:10px;">Fichier XML iNot</div>
+        <pre style="background:#fafafa;border:1px solid #eee;border-radius:4px;padding:12px;font-size:10px;color:#666;overflow:auto;white-space:pre-wrap;word-break:break-all;">${xml.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>
+      </div>
+    </div>
+
+    <div style="background:#fafafa;padding:16px 32px;border-top:1px solid #eee;">
+      <p style="margin:0;font-size:10px;color:#bbb;line-height:1.6;">
+        Questionnaire soumis via questionnaire.tagot.notaires.fr · Cabinet Tagot
+      </p>
+    </div>
+  </div>
+</body></html>`;
 
   await transporter.sendMail({
-    from: process.env.SMTP_USER,
+    from: `"Cabinet Tagot" <${process.env.SMTP_USER}>`,
     to: process.env.NOTAIRE_EMAIL || "office@tagot.notaires.fr",
     subject: `Questionnaire ${typeLabel} — ${noms}`,
-    text: `Questionnaire ${typeLabel} complété par : ${noms}\n\nFichiers joints : XML iNot + PDF récapitulatif.`,
+    html,
     attachments: [
       {
-        filename: `import_inot_${noms.toLowerCase().replace(/\s/g, "_")}.XML`,
+        filename: `import_inot_${noms.toLowerCase().replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"")}.XML`,
         content: xml,
         contentType: "application/xml",
-      },
-      {
-        filename: `questionnaire_${noms.toLowerCase().replace(/\s/g, "_")}.pdf`,
-        content: Buffer.from(pdfBase64, "base64"),
-        contentType: "application/pdf",
       },
     ],
   });

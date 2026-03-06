@@ -460,7 +460,6 @@ document.getElementById('btnSubmit').onclick = async () => {
         ${data.emailSent ? '<div class="email-badge">✓ Envoyé au cabinet par email</div>' : ''}
         <div class="result-btns">
           <button class="btn-dl" id="dlXml">Télécharger le XML iNot</button>
-          <button class="btn-dl secondary" id="dlPdf">Télécharger le PDF récapitulatif</button>
         </div>
         <details>
           <summary style="font-size:.75rem;color:#bbb;cursor:pointer;margin-bottom:.5rem;">Aperçu XML</summary>
@@ -474,11 +473,7 @@ document.getElementById('btnSubmit').onclick = async () => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = `import_inot_${noms}.XML`; a.click();
     };
-    document.getElementById('dlPdf').onclick = () => {
-      const blob = new Blob([Uint8Array.from(atob(data.pdfBase64),c=>c.charCodeAt(0))], {type:'application/pdf'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = `questionnaire_${noms}.pdf`; a.click();
-    };
+
 
     resultDiv.scrollIntoView({behavior:'smooth'});
   } catch(err) {
