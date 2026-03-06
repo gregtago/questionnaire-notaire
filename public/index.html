@@ -110,7 +110,7 @@
 
   <div class="actions">
     <p class="required-note">Les champs marqués * sont obligatoires.</p>
-    <button class="btn-submit" id="btnSubmit">Valider le questionnaire</button>
+    <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
   </div>
 
   <div id="result" style="display:none;"></div>
@@ -437,7 +437,7 @@ document.getElementById('btnSubmit').onclick = async () => {
   errorDiv.style.display = 'none';
 
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Génération en cours…';
+  btn.innerHTML = '<span class="spinner"></span>Envoi en cours…';
   resultDiv.style.display = 'none';
 
   try {
@@ -469,7 +469,7 @@ document.getElementById('btnSubmit').onclick = async () => {
     errorDiv.style.display = 'block';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Valider le questionnaire';
+    btn.textContent = 'Envoyer mes réponses';
   }
 };
 
