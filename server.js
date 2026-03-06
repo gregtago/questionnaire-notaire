@@ -255,7 +255,7 @@ s_rgpd = ParagraphStyle('rgpd', fontSize=7, fontName='Helvetica',
 story.append(Paragraph(
     "Les données collectées sont traitées par le cabinet notarial Tagot dans le cadre de l'accomplissement des activités notariales. "
     "Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et d'effacement. "
-    "Pour exercer ces droits : gregoiretagot@tagot.notaires.fr",
+    "Pour exercer ces droits : gregoire@tagot.fr",
     s_rgpd))
 
 doc.build(story)
@@ -281,7 +281,7 @@ print("OK")
 // ─── Envoi email ────────────────────────────────────────
 async function sendEmail(xml, pdfBase64, personnes, type) {
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.office365.com",
+    host: process.env.SMTP_HOST || "ssl0.ovh.net",
     port: 587,
     secure: false,
     auth: {
