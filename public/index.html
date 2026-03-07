@@ -564,38 +564,30 @@ function buildXml() {
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
 
-    // ETAT : même situation sur les deux fiches
+    // ETAT : M sur les deux fiches si couple marié
     const sit = isMain ? (p.ETAT || 'C') : mainSit;
     const showM = ['M','I','S'].includes(sit);
     const showD = ['D','I'].includes(isMain ? sit : mainSit);
 
-    // HISTORIQUE=O sur les deux fiches si couple actif
-    const hasH = lienActif ? (isMain ? p.HISTORIQUE === 'O' : true) : (p.HISTORIQUE === 'O');
+    // HistoriqueMarital : UNIQUEMENT sur la fiche principale (évite fiche fantôme)
+    // Fiche conjoint : ETAT=M, HISTORIQUE=N, HistoriqueMarital vide
+    const hasH = isMain && p.HISTORIQUE === 'O';
     const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
     const cp = p.ADR3 || '';
 
-    // CONJ : vide — le champ CONJ génère une fiche fantôme dans iNot
+    // CONJ : vide (crée une fiche fantôme dans iNot)
     const conjNum = '';
 
-    // L'autre personne du couple (noms croisés dans HistoriqueMarital)
-    const autrePersonne = isMain ? conjoint : persons[0];
-
-    // LNCOMA/LPCOMA : nom/prénom de l'autre personne
+    // LNCOMA/LPCOMA : nom/prénom du conjoint (uniquement sur fiche principale)
     let lnco = '', lpco = '', datEvt = '', lieuEvt = '';
     if (hasH) {
-      if (autrePersonne) {
-        lnco = (autrePersonne.NOMU||'').toUpperCase();
-        lpco = (autrePersonne.PRENOMU||'').trim();
-      } else {
-        lnco = (p.LNCOMA||'').toUpperCase();
-        lpco = (p.LPCOMA||'');
-      }
-      const mainP = persons[0];
-      datEvt = showD ? toInotDate(mainP.DATDIV) : toInotDate(mainP.DATMA);
-      lieuEvt = showD ? (mainP.TRIBUNAL||'') : (mainP.CPVILMA||'');
+      lnco = conjoint ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
+      lpco = conjoint ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
+      datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
+      lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
     }
 
-    // HistoriqueMarital
+    // HistoriqueMarital : plein sur principale, VIDE sur conjoint
     let histXml = '    <HistoriqueMarital />';
     if (hasH) {
       const cotyma = showD ? 'D' : sit;
