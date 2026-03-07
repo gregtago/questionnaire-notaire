@@ -80,9 +80,7 @@
     .dossier-btn { border: 2px solid #e5e5e5; border-radius: 8px; padding: 16px 14px; background: #fff; cursor: pointer; text-align: left; transition: border-color .15s, background .15s; }
     .dossier-btn:hover { border-color: #111; background: #fafafa; }
     .dossier-btn.selected { border-color: #111; background: #111; color: #fff; }
-    .dossier-btn .ico { font-size: 22px; margin-bottom: 8px; display: block; }
     .dossier-btn .lbl { font-size: 13px; font-weight: 600; letter-spacing: .03em; display: block; }
-    .dossier-btn .sub { font-size: 11px; opacity: .6; margin-top: 3px; display: block; }
     .rgpd-check { display: flex; align-items: flex-start; gap: 12px; margin-top: 20px; padding: 16px; background: #f8f8f8; border-radius: 6px; border: 1px solid #e5e5e5; }
     .rgpd-check input[type=checkbox] { margin-top: 3px; min-width: 16px; height: 16px; cursor: pointer; accent-color: #111; }
     .rgpd-check label { font-size: 11px; color: #666; line-height: 1.6; cursor: pointer; }
@@ -94,50 +92,32 @@
 
 <div class="header">
   <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
-  <h1 id="pageTitle">Bienvenue</h1>
-  <div class="subtitle" id="pageSub">Questionnaire en ligne</div>
+  <h1 id="pageTitle">Questionnaire</h1>
+  <div class="subtitle" id="pageSub"></div>
 </div>
 
 <!-- ÉCRAN 0 : Accueil / choix dossier + RGPD -->
 <div id="sAccueil" class="screen">
   <div class="card">
-    <h2>Votre dossier notarial</h2>
-    <p>Pour préparer votre rendez-vous, nous allons vous poser deux séries de questions&nbsp;:</p>
-    <ol style="font-size:13px;color:#555;line-height:2;padding-left:18px;margin:14px 0 20px;">
-      <li><strong>Votre état civil</strong> — identité, adresse, situation familiale</li>
-      <li><strong>Votre dossier</strong> — informations spécifiques à votre opération</li>
-    </ol>
-    <p style="font-size:13px;color:#555;margin-bottom:6px;">Quel est l'objet de votre dossier&nbsp;?</p>
+    <h2>Nature de votre dossier</h2>
     <div class="dossier-grid" id="dossierGrid">
       <button class="dossier-btn" data-type="achat" onclick="selectDossier(this)">
-        <span class="ico">🏠</span>
         <span class="lbl">Achat immobilier</span>
-        <span class="sub">Acquisition d'un bien</span>
       </button>
       <button class="dossier-btn" data-type="vente-maison" onclick="selectDossier(this)">
-        <span class="ico">🔑</span>
         <span class="lbl">Vente — Maison</span>
-        <span class="sub">Cession d'une maison</span>
       </button>
       <button class="dossier-btn" data-type="vente-appartement" onclick="selectDossier(this)">
-        <span class="ico">🏢</span>
         <span class="lbl">Vente — Appartement</span>
-        <span class="sub">Cession d'un appartement</span>
       </button>
       <button class="dossier-btn" data-type="divorce" onclick="selectDossier(this)">
-        <span class="ico">⚖️</span>
         <span class="lbl">Divorce</span>
-        <span class="sub">Consentement mutuel</span>
       </button>
       <button class="dossier-btn" data-type="succession" onclick="selectDossier(this)">
-        <span class="ico">📋</span>
         <span class="lbl">Succession</span>
-        <span class="sub">Règlement de succession</span>
       </button>
       <button class="dossier-btn" data-type="autre" onclick="selectDossier(this)">
-        <span class="ico">📁</span>
         <span class="lbl">Autre</span>
-        <span class="sub">Autre opération</span>
       </button>
     </div>
 
