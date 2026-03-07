@@ -449,14 +449,16 @@ async function sendEmail(xml, personnes, type) {
   const typeLabels = { etatcivil:"État civil", acquereur:"Acquéreur", "vendeur-appartement":"Vendeur – Appartement", "vendeur-maison":"Vendeur – Maison", divorce:"Divorce", succession:"Succession" };
   const sitLabels = { C:"Célibataire", M:"Marié(e)", D:"Divorcé(e)", V:"Veuf / Veuve", I:"En instance de divorce", P:"Pacsé(e)", S:"Séparé(e) de corps" };
   const regLabels = { "4":"Sans contrat (régime légal)", "30":"Communauté réduite aux acquêts", "33":"Séparation de biens", "32":"Communauté universelle", "35":"Participation aux acquêts" };
-  const civLabels = { "M.":"Monsieur", "MME":"Madame", "MELLE":"Mademoiselle" };
 
   const typeLabel = typeLabels[type] || type;
-  const noms = personnes.map(p => `${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim()).join(", ");
+  // Nouveaux champs iNot : NOMU, PRENOMU, TITRE
+  const noms = personnes.map(p => `${p.NOMU||""} ${p.PRENOMU||""}`.trim()).join(", ");
   const today = new Date().toLocaleDateString("fr-FR");
 
-  function formatDate(d) {
+  function formatInotDate(d) {
+    // AAAAMMJJ → JJ/MM/AAAA
     if (!d) return "";
+    if (d.length === 8) return d.slice(6)+"/"+d.slice(4,6)+"/"+d.slice(0,4);
     try { return new Date(d).toLocaleDateString("fr-FR"); } catch { return d; }
   }
   function row(label, value) {
@@ -468,51 +470,52 @@ async function sendEmail(xml, personnes, type) {
   }
 
   const personnesHtml = personnes.map((p, i) => {
-    const sit = p.situation || "C";
+    const sit = p.ETAT || "C";
     let rows = "";
     rows += section("Identité");
-    rows += row("Civilité", civLabels[p.civilite] || p.civilite);
-    rows += row("Nom d'usage", (p.nom||"").toUpperCase());
-    if (p.nomNaissance) rows += row("Nom de naissance", (p.nomNaissance||"").toUpperCase());
-    rows += row("Prénoms", p.prenoms);
-    const naiss = [formatDate(p.dateNaissance), p.lieuNaissance, p.cpNaissance ? `(${p.cpNaissance})` : ""].filter(Boolean).join(" — ");
-    rows += row("Date et lieu de naissance", naiss);
-    rows += row("Profession", p.profession);
-    rows += row("Nationalité", p.nationalite);
-    rows += section("Coordonnées");
-    const adresse = [p.adresse, [p.cp, p.ville].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-    rows += row("Adresse", adresse);
-    rows += row("Téléphone", p.tel);
-    rows += row("E-mail", p.email);
-    rows += section("Situation matrimoniale");
-    rows += row("Situation", sitLabels[sit] || sit);
-    if (["M","I","S"].includes(sit)) {
-      const mariage = [formatDate(p.dateMariage), [p.cpMariage, p.villeMariage].filter(Boolean).join(" ")].filter(Boolean).join(" — ");
-      rows += row("Date et lieu du mariage", mariage);
-      rows += row("Régime matrimonial", regLabels[p.regime] || p.regime);
-      if (p.contratMariage) rows += row("Contrat de mariage", "Oui");
-      const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
-      rows += row("Conjoint", conj);
-    }
-    if (["D","I"].includes(sit)) {
-      rows += row("Tribunal", p.tribunal);
-      rows += row("Date du jugement", formatDate(p.dateDivorce));
-      if (!["M"].includes(sit)) {
-        const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
-        rows += row("Ex-conjoint", conj);
+    rows += row("Civilité", p.TITRE);
+    rows += row("Nom d'usage", p.NOMU);
+    if (p.NOM && p.NOM !== p.NOMU) rows += row("Nom de naissance", p.NOM);
+    rows += row("Prénoms", p.PRENOM || p.PRENOMU);
+    const naiss = [formatInotDate(p.DATNA), p.LVNARU, p.CODERU ? `(${p.CODERU})` : ""].filter(Boolean).join(" — ");
+    rows += row("Naissance", naiss);
+    rows += row("Profession", p.PROF);
+    rows += row("Nationalité", p.NATION);
+    rows += section("Adresse et contact");
+    const adr = [p.ADR1, p.ADR2, [p.ADR3, p.ADR4].filter(Boolean).join(" "), p.CPAYDO && p.CPAYDO !== "FRANCE" ? p.CPAYDO : ""].filter(Boolean).join(", ");
+    rows += row("Adresse", adr);
+    rows += row("Téléphone", p.TEL);
+    rows += row("E-mail", p.EMAIL);
+    if (p._role !== "conjoint") {
+      rows += section("Situation matrimoniale");
+      rows += row("Situation", sitLabels[sit] || sit);
+      if (["M","I","S"].includes(sit)) {
+        rows += row("Date du mariage", formatInotDate(p.DATMA));
+        rows += row("Lieu du mariage", p.CPVILMA);
+        rows += row("Régime", regLabels[p.REGIME] || p.REGIME);
+        const conj = [p.LNCOMA, p.LPCOMA].filter(Boolean).join(" ");
+        if (conj) rows += row("Conjoint", conj);
       }
+      if (["D","I"].includes(sit)) {
+        rows += row("Date du divorce", formatInotDate(p.DATDIV));
+        rows += row("Tribunal", p.TRIBUNAL);
+        const conj = [p.LNCOMA, p.LPCOMA].filter(Boolean).join(" ");
+        if (conj) rows += row("Ex-conjoint", conj);
+      }
+      if (sit === "V") {
+        const conj = [p.LNCOMA, p.LPCOMA].filter(Boolean).join(" ");
+        if (conj) rows += row("Conjoint décédé", conj);
+      }
+      if (sit === "P") {
+        rows += row("Date du PACS", formatInotDate(p.DATMA));
+        rows += row("Lieu du PACS", p.CPVILMA);
+        const conj = [p.LNCOMA, p.LPCOMA].filter(Boolean).join(" ");
+        if (conj) rows += row("Partenaire", conj);
+      }
+    } else {
+      rows += `<tr><td colspan="2" style="font-size:11px;color:#aaa;padding:6px 0;font-style:italic;">Conjoint / Partenaire</td></tr>`;
     }
-    if (sit === "V") {
-      const conj = [(p.nomVeuf||"").toUpperCase(), p.prenomsVeuf].filter(Boolean).join(" ");
-      rows += row("Conjoint décédé", conj);
-    }
-    if (sit === "P") {
-      const pacs = [formatDate(p.datePacs), [p.cpPacs, p.villePacs].filter(Boolean).join(" ")].filter(Boolean).join(" — ");
-      rows += row("Date et lieu du PACS", pacs);
-      const conj = [(p.nomConjoint||"").toUpperCase(), p.prenomsConjoint].filter(Boolean).join(" ");
-      rows += row("Partenaire", conj);
-    }
-    const nomComplet = `${civLabels[p.civilite]||""} ${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim();
+    const nomComplet = `${p.TITRE||""} ${p.NOMU||""} ${p.PRENOMU||""}`.trim();
     return `${i > 0 ? '<tr><td colspan="2" style="padding:24px 0 8px;"><hr style="border:none;border-top:2px solid #111;margin:0;" /></td></tr>' : ""}
       <tr><td colspan="2" style="padding-bottom:8px;"><span style="font-size:15px;font-weight:bold;color:#111;">${nomComplet}</span></td></tr>${rows}`;
   }).join("");
@@ -549,9 +552,13 @@ async function sendXmlEmail(xml, personnes, type) {
   if (!apiKey) throw new Error("BREVO_API_KEY manquante");
 
   const typeLabels = { etatcivil:"État civil", acquereur:"Acquéreur", "vendeur-appartement":"Vendeur – Appartement", "vendeur-maison":"Vendeur – Maison", divorce:"Divorce", succession:"Succession" };
-  const noms = personnes.map(p => `${(p.nom||"").toUpperCase()} ${p.prenoms||""}`.trim()).join(", ");
+  // Nom de fichier basé sur les nouveaux champs
+  const noms = personnes.map(p => `${p.NOMU||""} ${p.PRENOMU||""}`.trim()).join(", ");
   const typeLabel = typeLabels[type] || type;
-  const filename = `import_inot_${noms.toLowerCase().replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"")}.XML`;
+  const slug = noms.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/\s+/g,"_").replace(/[^a-z0-9_]/g,"");
+  const filename = `import_inot_${slug}.XML`;
 
   const brevo = new BrevoClient({ apiKey });
   await brevo.transactionalEmails.sendTransacEmail({
