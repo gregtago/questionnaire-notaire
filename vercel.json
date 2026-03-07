@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/otp/envoyer", "destination": "/api/otp/envoyer" },
+    { "source": "/api/otp/verifier", "destination": "/api/otp/verifier" },
+    { "source": "/api/soumettre", "destination": "/api/soumettre" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
+  ]
+}

@@ -130,6 +130,7 @@
 
 // ── État global ───────────────────────────────────────────
 let email0 = '';
+let otpToken = '';
 let persons = [newPerson('personne')];
 let hasConj = false;
 let activeIdx = 0;
@@ -590,6 +591,7 @@ document.getElementById('btnSend').onclick = async () => {
     if (!r.ok) throw new Error(d.error||'Erreur');
     email0 = em;
     persons[0].EMAIL = em;
+    otpToken = d.token || '';
     document.getElementById('sEmail').style.display = 'none';
     document.getElementById('sCode').style.display = 'block';
     document.getElementById('otpMsg').textContent = `Code envoyé à ${em}. Vérifiez vos spams si besoin.`;
@@ -612,7 +614,7 @@ document.getElementById('btnVerify').onclick = async () => {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Vérification…';
   try {
-    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code}) });
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code, token:otpToken}) });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error||'Code incorrect');
     document.getElementById('sCode').style.display='none';
