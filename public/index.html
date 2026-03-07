@@ -35,6 +35,8 @@
     .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
     .field label .req { color: #c0392b; }
     .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .hidden { display: none; }
+    .info-note { font-size: 12px; color: #27ae60; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 12px; margin-top: 4px; }
     .field input, .field select { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; }
     .field input:focus, .field select:focus { border-color: #111; }
     .field input.ro { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
@@ -373,9 +375,9 @@ function formHtml(p, i) {
           <input type="text" data-f="CPVILMA" value="${x(p.CPVILMA)}">
         </div>
       </div>
-      <div class="row2">
+      <div class="row2${hasConj ? ' hidden' : ''}">
         <div class="field">
-          <label>Nom du conjoint</label>
+          <label>Nom du conjoint${hasConj ? '' : ' <span class="opt">(ou créez sa fiche ci-dessous)</span>'}</label>
           <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
         </div>
         <div class="field">
@@ -383,6 +385,7 @@ function formHtml(p, i) {
           <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
         </div>
       </div>
+      ${hasConj ? `<div class="info-note">✓ Fiche conjoint créée — les informations seront reprises automatiquement.</div>` : ''}
       <div class="field">
         <label>Régime matrimonial</label>
         <select data-f="REGIME">
@@ -529,8 +532,13 @@ function vr(key, val) {
 }
 
 function buildXml() {
+  // Numéros iNot : personne principale = 10000001, conjoint = 10000002
+  const numOf = (idx) => String(10000001 + idx);
+  const conjoint = persons.find(p => p._role === 'conjoint');
+  const conjIdx  = conjoint ? persons.indexOf(conjoint) : -1;
+
   const xmlPersons = persons.map((p, i) => {
-    const num = String(10000001 + i);
+    const num = numOf(i);
     const sit = p.ETAT || 'C';
     const showM = ['M','I','S'].includes(sit);
     const showD = ['D','I'].includes(sit);
@@ -539,6 +547,15 @@ function buildXml() {
     const adr1do = p.ADR1 || '';
     const cp = p.ADR3 || '';
     const vil = p.ADR4 || '';
+
+    // Si c'est la personne principale et qu'une fiche conjoint existe,
+    // utiliser ses données dans l'historique marital
+    const isMain = p._role !== 'conjoint';
+    const hasConjFiche = isMain && conjoint;
+    const lnco = hasConjFiche ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
+    const lpco = hasConjFiche ? ((conjoint.PRENOMU||'')+' '+(conjoint.AUTPREN||'')).trim() : (p.LPCOMA||'');
+    // Numéro du conjoint lié (champ CONJ)
+    const conjNum = hasConjFiche ? numOf(conjIdx) : '';
 
     let histXml = '    <HistoriqueMarital />';
     if (hasH) {
@@ -550,8 +567,8 @@ function buildXml() {
         ${vr('COTYMA', cotyma)}
         ${vr('DAMAMA', datEvt)}
         ${vr('LVT1MA', lieuEvt)}
-        ${vr('LNCOMA', (p.LNCOMA||'').toUpperCase())}
-        ${vr('LPCOMA', p.LPCOMA)}
+        ${vr('LNCOMA', lnco)}
+        ${vr('LPCOMA', lpco)}
         ${vr('COCRMA', '')}
       </Evenement>
     </HistoriqueMarital>`;
@@ -589,7 +606,7 @@ ${vr('CPSTAT', '')}
 ${vr('PREFDAT', '')}
 ${vr('DEPTDO', p.DEPTDO || dept(cp))}
 ${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
-${vr('CONJ', '')}
+${vr('CONJ', conjNum)}
 ${vr('ETAT', sit)}
 ${vr('CODETITRE', p.CODETITRE)}
 ${vr('NOMU', p.NOMU)}
