@@ -564,33 +564,27 @@ function buildXml() {
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
 
-    // Pour la fiche conjoint : reprendre la situation de la personne principale
+    // Situation : même code pour les deux fiches
     const sit = isMain ? (p.ETAT || 'C') : (lienActif ? mainSit : 'C');
     const showM = ['M','I','S'].includes(sit);
     const showD = ['D','I'].includes(sit);
-    // HISTORIQUE = O si événement marital actif
-    const hasH = isMain ? p.HISTORIQUE === 'O' : lienActif;
+
+    // Historique : uniquement sur la fiche principale
+    // La fiche conjoint a HISTORIQUE=N et HistoriqueMarital vide (évite fiche fantôme)
+    const hasH = isMain && p.HISTORIQUE === 'O';
     const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
     const cp = p.ADR3 || '';
 
-    // LNCOMA/LPCOMA : toujours remplis selon le skill
-    // - fiche principale : nom/prénom du conjoint (fiche ou saisie manuelle)
-    // - fiche conjoint : nom/prénom de la personne principale
-    let lnco, lpco, datEvt, lieuEvt;
-    if (isMain) {
+    // LNCOMA/LPCOMA : uniquement sur la fiche principale
+    let lnco = '', lpco = '', datEvt = '', lieuEvt = '';
+    if (isMain && hasH) {
       lnco = conjoint ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
       lpco = conjoint ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
       datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
       lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
-    } else {
-      // Fiche conjoint : pointer vers la personne principale
-      lnco = (persons[0].NOMU||'').toUpperCase();
-      lpco = (persons[0].PRENOMU||'').trim();
-      datEvt = toInotDate(persons[0].DATMA);
-      lieuEvt = persons[0].CPVILMA || '';
     }
 
-    // CONJ : uniquement sur la fiche principale (pas de lien réciproque → évite fiche fantôme)
+    // CONJ : uniquement sur la fiche principale
     const conjNum = isMain && conjoint && lienActif ? numOf(conjIdx) : '';
 
     // HistoriqueMarital
@@ -631,7 +625,7 @@ ${vr('PRESENCE', '')}
 ${vr('INTCONJ', '')}
 ${vr('PRECONJ', '')}
 ${vr('JODATE', '')}
-${vr('CPVILMA', isMain ? (p.CPVILMA||'') : (persons[0].CPVILMA||''))}
+${vr('CPVILMA', isMain ? (p.CPVILMA||'') : '')}
 ${vr('NOTMA', '')}
 ${vr('HISTORIQUE', hasH ? 'O' : 'N')}
 ${vr('INTCONJPURIEL', '')}
@@ -656,8 +650,8 @@ ${vr('NATION', p.NATION)}
 ${vr('INCAPABLE', '')}
 ${vr('TITRE', p.TITRE)}
 ${vr('DATMOR', '')}
-${vr('DATMA', showM ? (isMain ? toInotDate(p.DATMA) : toInotDate(persons[0].DATMA)) : '')}
-${vr('CPAYMA', showM ? 'FR' : '')}
+${vr('DATMA', showM && isMain ? toInotDate(p.DATMA) : '')}
+${vr('CPAYMA', showM && isMain ? 'FR' : '')}
 ${vr('ADR1IMP', p.ADR1IMP)}
 ${vr('ADR2IMP', '')}
 ${vr('CPIMP', p.CPIMP)}
