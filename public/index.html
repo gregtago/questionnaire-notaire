@@ -298,7 +298,15 @@ function buildPageHtml(p0, p1) {
   const labelP2 = sit==='M' ? 'Conjoint(e)' : sit==='P' ? 'Partenaire de PACS' : 'Concubin(e)';
 
   return `
-  <!-- SITUATION MATRIMONIALE EN PREMIER -->
+  <!-- PERSONNE PRINCIPALE -->
+  <div class="person-block">
+    <div class="person-header">
+      <div class="person-header-title">Votre état civil</div>
+    </div>
+    ${blocIdentite(p0, 0)}
+  </div>
+
+  <!-- SITUATION MATRIMONIALE -->
   <div class="sec" data-idx="0">
     <div class="sec-title">Situation matrimoniale</div>
     <div class="field">
@@ -399,14 +407,6 @@ function buildPageHtml(p0, p1) {
     </div>
   </div>
 
-  <!-- PERSONNE PRINCIPALE -->
-  <div class="person-block">
-    <div class="person-header">
-      <div class="person-header-title">Votre état civil</div>
-    </div>
-    ${blocIdentite(p0, 0)}
-  </div>
-
   <!-- 2ÈME PERSONNE — apparaît si M / P / concubin -->
   ${showP2 && p1 ? `
   <div class="person-block conjoint-block">
@@ -475,6 +475,10 @@ function bindAll() {
       const f = el.dataset.f;
       let v = el.value;
       if (['NOMU','NOM','LVNARU','ADR4'].includes(f)) { v = v.toUpperCase(); el.value = v; }
+      if (['PRENOMU','AUTPREN'].includes(f)) {
+        v = v.replace(/\b\w/g, c => c.toUpperCase()).replace(/\B\w/g, c => c.toLowerCase());
+        el.value = v;
+      }
       persons[i][f] = v;
       // Calculs dérivés
       if (f === 'ADR3') persons[i].DEPTDO = dept(v);
