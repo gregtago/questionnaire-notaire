@@ -118,10 +118,6 @@
   <div class="form-wrap">
     <div id="tabs" class="tabs"></div>
     <div id="forms"></div>
-    <div id="addConj" class="add-conjoint" onclick="addConjoint()">
-      <span style="font-size:18px">+</span>
-      <span>Ajouter une deuxième personne</span>
-    </div>
     <div class="submit-sec">
       <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
       <div class="ferr" id="ferr"></div>
@@ -202,12 +198,11 @@ function x(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-const SITS = { C:'Célibataire', M:'Marié(e)', D:'Divorcé(e)', V:'Veuf / Veuve', I:'En instance de divorce', P:'Pacsé(e)', S:'Séparé(e) de corps' };
+const SITS = { C:'Célibataire', M:'Marié(e)', D:'Divorcé(e)', V:'Veuf / Veuve', I:'En instance de divorce', P:'Pacsé(e)', S:'Séparé(e) de corps', K:'En concubinage' };
 
 // ── Rendu ─────────────────────────────────────────────────
 function renderAll() {
   renderForms();
-  document.getElementById('addConj').style.display = hasConj ? 'none' : 'flex';
 }
 
 function renderTabs() {} // plus d'onglets
@@ -221,16 +216,20 @@ function renderForms() {
 }
 
 // ── Page unique ───────────────────────────────────────────
+// Situations qui déclenchent l'affichage d'une 2ème personne
+const SHOW_P2 = ['M','P','K']; // Marié, Pacsé, Concubin
+
 function buildPageHtml(p0, p1) {
   const sit = p0.ETAT || 'C';
   const showM = ['M','I','S'].includes(sit);
   const showD = ['D','I'].includes(sit);
   const showV = sit === 'V';
   const showP = sit === 'P';
+  const showP2 = SHOW_P2.includes(sit);
   const isFR = !p0.CPAYDO || p0.CPAYDO.toUpperCase() === 'FRANCE';
   const conjIdx = p1 ? persons.indexOf(p1) : -1;
 
-  // Bloc identité (réutilisable)
+  // Bloc identité complet (identité + contact)
   const blocIdentite = (p, i) => `
   <div class="sec" data-idx="${i}">
     <div class="field">
@@ -295,73 +294,11 @@ function buildPageHtml(p0, p1) {
     </div>
   </div>`;
 
+  // Label de la 2ème personne selon situation
+  const labelP2 = sit==='M' ? 'Conjoint(e)' : sit==='P' ? 'Partenaire de PACS' : 'Concubin(e)';
+
   return `
-  <!-- PERSONNE PRINCIPALE -->
-  <div class="person-block">
-    <div class="person-header">
-      <div class="person-header-title">Votre état civil</div>
-    </div>
-    ${blocIdentite(p0, 0)}
-  </div>
-
-  ${p1 ? `
-  <!-- CONJOINT -->
-  <div class="person-block conjoint-block">
-    <div class="person-header">
-      <div class="person-header-title">Deuxième personne</div>
-      <button onclick="removeConjoint()" class="btn-remove-conj">✕ Supprimer</button>
-    </div>
-    ${blocIdentite(p1, conjIdx)}
-  </div>
-  ` : ''}
-
-  <!-- ADRESSE COMMUNE -->
-  <div class="sec" data-idx="0">
-    <div class="sec-title">Adresse domicile${p1 ? ' — commune aux deux' : ''}</div>
-    <div class="field">
-      <label>Adresse (numéro et voie) <span class="req">*</span></label>
-      <input type="text" data-f="ADR1" value="${x(p0.ADR1)}" autocomplete="street-address">
-    </div>
-    <div class="field">
-      <label>Complément d'adresse</label>
-      <input type="text" data-f="ADR2" value="${x(p0.ADR2)}">
-    </div>
-    <div class="row3">
-      <div class="field">
-        <label>Code postal${isFR?' <span class="req">*</span>':''}</label>
-        <input type="text" data-f="ADR3" value="${x(p0.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
-      </div>
-      <div class="field">
-        <label>Ville <span class="req">*</span></label>
-        <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
-      </div>
-      <div class="field">
-        <label>Pays</label>
-        <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
-      </div>
-    </div>
-  </div>
-
-  <!-- CENTRE DES IMPÔTS -->
-  <div class="sec" data-idx="0">
-    <div class="sec-title">Adresse du centre des impôts dont vous dépendez</div>
-    <div class="field">
-      <label>Adresse</label>
-      <input type="text" data-f="ADR1IMP" value="${x(p0.ADR1IMP)}">
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>Code postal</label>
-        <input type="text" data-f="CPIMP" value="${x(p0.CPIMP)}" maxlength="5" inputmode="numeric">
-      </div>
-      <div class="field">
-        <label>Ville</label>
-        <input type="text" data-f="VILLEIMP" value="${x(p0.VILLEIMP)}">
-      </div>
-    </div>
-  </div>
-
-  <!-- SITUATION MATRIMONIALE -->
+  <!-- SITUATION MATRIMONIALE EN PREMIER -->
   <div class="sec" data-idx="0">
     <div class="sec-title">Situation matrimoniale</div>
     <div class="field">
@@ -384,16 +321,16 @@ function buildPageHtml(p0, p1) {
           <input type="text" data-f="CPVILMA" value="${x(p0.CPVILMA)}">
         </div>
       </div>
-      ${!p1 ? `<div class="row2">
+      ${!showP2 ? `<div class="row2">
         <div class="field">
-          <label>Nom du conjoint <span class="opt">(ou créez sa fiche ci-dessous)</span></label>
+          <label>Nom du conjoint</label>
           <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
         </div>
         <div class="field">
           <label>Prénoms du conjoint</label>
           <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
-      </div>` : `<div class="info-note">✓ Fiche de la 2ème personne créée — les informations seront reprises automatiquement.</div>`}
+      </div>` : ''}
       <div class="field">
         <label>Régime matrimonial</label>
         <select data-f="REGIME">
@@ -459,16 +396,70 @@ function buildPageHtml(p0, p1) {
           <input type="text" data-f="CPVILMA" value="${x(p0.CPVILMA)}">
         </div>
       </div>
-      ${!p1 ? `<div class="row2">
-        <div class="field">
-          <label>Nom du partenaire</label>
-          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
-        </div>
-        <div class="field">
-          <label>Prénoms du partenaire</label>
-          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
-        </div>
-      </div>` : `<div class="info-note">✓ Fiche de la 2ème personne créée — les informations seront reprises automatiquement.</div>`}
+    </div>
+  </div>
+
+  <!-- PERSONNE PRINCIPALE -->
+  <div class="person-block">
+    <div class="person-header">
+      <div class="person-header-title">Votre état civil</div>
+    </div>
+    ${blocIdentite(p0, 0)}
+  </div>
+
+  <!-- 2ÈME PERSONNE — apparaît si M / P / concubin -->
+  ${showP2 && p1 ? `
+  <div class="person-block conjoint-block">
+    <div class="person-header">
+      <div class="person-header-title">${labelP2}</div>
+    </div>
+    ${blocIdentite(p1, conjIdx)}
+  </div>
+  ` : ''}
+
+  <!-- ADRESSE COMMUNE -->
+  <div class="sec" data-idx="0">
+    <div class="sec-title">Adresse domicile${showP2 && p1 ? ' — commune aux deux' : ''}</div>
+    <div class="field">
+      <label>Adresse (numéro et voie) <span class="req">*</span></label>
+      <input type="text" data-f="ADR1" value="${x(p0.ADR1)}" autocomplete="street-address">
+    </div>
+    <div class="field">
+      <label>Complément d'adresse</label>
+      <input type="text" data-f="ADR2" value="${x(p0.ADR2)}">
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Code postal${isFR?' <span class="req">*</span>':''}</label>
+        <input type="text" data-f="ADR3" value="${x(p0.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville <span class="req">*</span></label>
+        <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
+      </div>
+      <div class="field">
+        <label>Pays</label>
+        <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTRE DES IMPÔTS -->
+  <div class="sec" data-idx="0">
+    <div class="sec-title">Adresse du centre des impôts dont vous dépendez</div>
+    <div class="field">
+      <label>Adresse</label>
+      <input type="text" data-f="ADR1IMP" value="${x(p0.ADR1IMP)}">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Code postal</label>
+        <input type="text" data-f="CPIMP" value="${x(p0.CPIMP)}" maxlength="5" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville</label>
+        <input type="text" data-f="VILLEIMP" value="${x(p0.VILLEIMP)}">
+      </div>
     </div>
   </div>`;
 }
@@ -517,6 +508,19 @@ function bindAll() {
       }
       if (f === 'ETAT') {
         persons[i].HISTORIQUE = ['M','D','V','I','P','S'].includes(v) ? 'O' : 'N';
+        // Créer ou supprimer la 2ème personne selon la situation
+        const needsP2 = SHOW_P2.includes(v);
+        if (needsP2 && !hasConj) {
+          hasConj = true;
+          const p0 = persons[0];
+          const c = newPerson('conjoint');
+          c.ADR1 = p0.ADR1; c.ADR2 = p0.ADR2; c.ADR3 = p0.ADR3; c.ADR4 = p0.ADR4;
+          c.DEPTDO = p0.DEPTDO; c.CPAYDO = p0.CPAYDO;
+          persons.push(c);
+        } else if (!needsP2 && hasConj) {
+          hasConj = false;
+          persons = persons.filter(p => p._role !== 'conjoint');
+        }
       }
       renderForms();
     };
@@ -524,18 +528,10 @@ function bindAll() {
 }
 
 // ── Conjoint ──────────────────────────────────────────────
-function addConjoint() {
-  if (hasConj) return;
-  hasConj = true;
-  const p0 = persons[0];
-  const c = newPerson('conjoint');
-  // Copier l'adresse de la personne principale
-  c.ADR1 = p0.ADR1; c.ADR2 = p0.ADR2; c.ADR3 = p0.ADR3; c.ADR4 = p0.ADR4;
-  c.DEPTDO = p0.DEPTDO; c.CPAYDO = p0.CPAYDO;
-  persons.push(c);
-  renderAll();
-}
 function removeConjoint() {
+  // Repasser la situation en Célibataire si on supprime manuellement
+  persons[0].ETAT = 'C';
+  persons[0].HISTORIQUE = 'N';
   hasConj = false;
   persons = persons.filter(p => p._role !== 'conjoint');
   renderAll();
