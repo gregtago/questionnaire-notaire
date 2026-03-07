@@ -476,7 +476,13 @@ function bindAll() {
       let v = el.value;
       if (['NOMU','NOM','LVNARU','ADR4'].includes(f)) { v = v.toUpperCase(); el.value = v; }
       if (['PRENOMU','AUTPREN'].includes(f)) {
-        v = v.replace(/\b\w/g, c => c.toUpperCase()).replace(/\B\w/g, c => c.toLowerCase());
+        // Majuscule après début, espace, tiret, apostrophe — et après tout caractère non-lettre
+        v = v.replace(/./gu, (c, idx, str) => {
+          if (idx === 0) return c.toUpperCase();
+          const prev = str[idx - 1];
+          const isSep = /[\s\-']/u.test(prev);
+          return isSep ? c.toUpperCase() : c.toLowerCase();
+        });
         el.value = v;
       }
       persons[i][f] = v;
