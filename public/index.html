@@ -515,6 +515,10 @@ function buildXml() {
     const showM = ['M','I','S'].includes(sit);
     const showD = ['D','I'].includes(sit);
     const hasH = p.HISTORIQUE === 'O';
+    const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
+    const adr1do = p.ADR1 || '';
+    const cp = p.ADR3 || '';
+    const vil = p.ADR4 || '';
 
     let histXml = '    <HistoriqueMarital />';
     if (hasH) {
@@ -533,39 +537,72 @@ function buildXml() {
     </HistoriqueMarital>`;
     }
 
-    const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
-
     return `  <Person info="">
 ${vr('NUMERO', num)}
 ${vr('TYPE', 'PP')}
-${vr('ADR1', p.ADR1)}
+${vr('ADR1', adr1do)}
 ${vr('ADR2', p.ADR2)}
-${vr('ADR3', p.ADR3)}
-${vr('ADR4', p.ADR4)}
+${vr('ADR3', cp)}
+${vr('ADR4', vil)}
 ${vr('RCS', '')}
+${vr('VILRCS', '')}
+${vr('CPRCS', '')}
+${vr('CPAYRCS', '')}
+${vr('NUMMB', '')}
+${vr('IDENMB', '')}
 ${vr('ACCORD', p.ACCORD)}
-${vr('DEPTDO', p.DEPTDO || dept(p.ADR3))}
+${vr('ADR1MB', '')}
+${vr('ADR2MB', '')}
+${vr('CPMB', '')}
+${vr('VILLEMB', '')}
+${vr('PRESENCE', '')}
+${vr('INTCONJ', '')}
+${vr('PRECONJ', '')}
+${vr('JODATE', '')}
+${vr('CPVILMA', p.CPVILMA)}
+${vr('NOTMA', '')}
+${vr('HISTORIQUE', hasH ? 'O' : 'N')}
+${vr('INTCONJPURIEL', '')}
+${vr('CODCRU', '')}
+${vr('LVDCRU', '')}
+${vr('CPSTAT', '')}
+${vr('PREFDAT', '')}
+${vr('DEPTDO', p.DEPTDO || dept(cp))}
 ${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
+${vr('CONJ', '')}
 ${vr('ETAT', sit)}
 ${vr('CODETITRE', p.CODETITRE)}
 ${vr('NOMU', p.NOMU)}
 ${vr('PRENOMU', (p.PRENOMU||'').trim())}
 ${vr('PRENOM', prenomComplet)}
-${vr('NOM', p.NOM || p.NOMU)}
 ${vr('PROF', p.PROF)}
 ${vr('DATNA', toInotDate(p.DATNA))}
-${vr('LVNARU', p.LVNARU)}
-${vr('CODERU', p.CODERU)}
 ${vr('DEPTNA', p.DEPTNA || dept(p.CODERU))}
 ${vr('CPAYNA', p.CPAYNA || 'FRANCE')}
+${vr('DEPMOR', '')}
 ${vr('NATION', p.NATION)}
+${vr('INCAPABLE', '')}
 ${vr('TITRE', p.TITRE)}
-${vr('HISTORIQUE', p.HISTORIQUE || 'N')}
-${vr('DATMA', toInotDate(p.DATMA))}
-${vr('CPVILMA', p.CPVILMA)}
+${vr('DATMOR', '')}
+${vr('DATMA', showM ? toInotDate(p.DATMA) : '')}
+${vr('CPAYMA', showM ? 'FR' : '')}
+${vr('ADR1IMP', adr1do)}
+${vr('ADR2IMP', p.ADR2)}
+${vr('CPIMP', cp)}
+${vr('VILLEIMP', vil)}
+${vr('CODERU', p.CODERU)}
+${vr('LVNARU', p.LVNARU)}
+${vr('NOM', p.NOM || p.NOMU)}
 ${vr('REGIME', showM ? (p.REGIME||'4') : '')}
-${vr('TEL', p.TEL)}
-${vr('EMAIL', p.EMAIL)}
+${vr('DATCONTR', '')}
+${vr('DATAN', '')}
+${vr('DATDECL', '')}
+${vr('DATHOM', '')}
+${vr('TGIME', '')}
+${vr('REGPRE', '')}
+${vr('LIEME', '')}
+${vr('NOTME', '')}
+${vr('NOPME', '')}
 ${histXml}
   </Person>`;
   });
