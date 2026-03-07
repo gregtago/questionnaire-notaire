@@ -37,6 +37,14 @@
     .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
     .hidden { display: none; }
     .info-note { font-size: 12px; color: #27ae60; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 12px; margin-top: 4px; }
+    .person-block { margin-bottom: 6px; }
+    .person-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: #111; color: #fff; border-radius: 6px 6px 0 0; margin-bottom: 0; }
+    .person-header .person-header-title { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+    .person-block > .sec { border-radius: 0 0 6px 6px; border-top: none; margin-bottom: 0; }
+    .conjoint-block .person-header { background: #2c4a6e; }
+    .conjoint-block > .sec { border-color: #2c4a6e33; }
+    .btn-remove-conj { background: none; border: 1px solid rgba(255,255,255,.3); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer; letter-spacing: .05em; }
+    .btn-remove-conj:hover { background: rgba(255,255,255,.15); }
     .field input, .field select { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; }
     .field input:focus, .field select:focus { border-color: #111; }
     .field input.ro { background: #f5f5f5; color: #aaa; cursor: not-allowed; }
@@ -220,10 +228,11 @@ function buildPageHtml(p0, p1) {
   const showV = sit === 'V';
   const showP = sit === 'P';
   const isFR = !p0.CPAYDO || p0.CPAYDO.toUpperCase() === 'FRANCE';
+  const conjIdx = p1 ? persons.indexOf(p1) : -1;
 
-  const identite = (p, i, label) => `
+  // Bloc identité (réutilisable)
+  const blocIdentite = (p, i) => `
   <div class="sec" data-idx="${i}">
-    <div class="sec-title">${label}</div>
     <div class="field">
       <label>Civilité <span class="req">*</span></label>
       <div class="btns">
@@ -274,11 +283,6 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="NATION" value="${x(p.NATION)}">
       </div>
     </div>
-  </div>`;
-
-  const contact = (p, i, label) => `
-  <div class="sec" data-idx="${i}">
-    <div class="sec-title">${label}</div>
     <div class="row2">
       <div class="field">
         <label>Téléphone <span class="req">*</span></label>
@@ -291,19 +295,24 @@ function buildPageHtml(p0, p1) {
     </div>
   </div>`;
 
-  // Trouver l'index du conjoint dans persons[]
-  const conjIdx = p1 ? persons.indexOf(p1) : -1;
-
   return `
-  ${identite(p0, 0, 'Votre identité')}
-  ${p1 ? `
-  <div class="sec conj-header-sec">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div class="sec-title" style="margin:0">Identité du conjoint / partenaire</div>
-      <button onclick="removeConjoint()" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;">✕ Supprimer</button>
+  <!-- PERSONNE PRINCIPALE -->
+  <div class="person-block">
+    <div class="person-header">
+      <div class="person-header-title">Votre état civil</div>
     </div>
+    ${blocIdentite(p0, 0)}
   </div>
-  ${identite(p1, conjIdx, '')}
+
+  ${p1 ? `
+  <!-- CONJOINT -->
+  <div class="person-block conjoint-block">
+    <div class="person-header">
+      <div class="person-header-title">État civil du conjoint / partenaire</div>
+      <button onclick="removeConjoint()" class="btn-remove-conj">✕ Supprimer</button>
+    </div>
+    ${blocIdentite(p1, conjIdx)}
+  </div>
   ` : ''}
 
   <!-- ADRESSE COMMUNE -->
@@ -332,9 +341,6 @@ function buildPageHtml(p0, p1) {
       </div>
     </div>
   </div>
-
-  ${contact(p0, 0, 'Votre contact')}
-  ${p1 ? contact(p1, conjIdx, 'Contact du conjoint / partenaire') : ''}
 
   <!-- CENTRE DES IMPÔTS -->
   <div class="sec" data-idx="0">
