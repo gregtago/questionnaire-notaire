@@ -158,6 +158,7 @@ function newPerson(role) {
     DEPTDO: '',
     CPAYDO: 'FRANCE',  // pays domicile
     TEL: '', EMAIL: '',
+    ADR1IMP: '', CPIMP: '', VILLEIMP: '', // centre des impôts
     // Situation (personne principale seulement)
     ETAT: 'C',
     HISTORIQUE: 'N',
@@ -326,6 +327,25 @@ function formHtml(p, i) {
       <div class="field">
         <label>Email${i===0?` <span class="req">*</span>`:''}</label>
         <input type="email" data-f="EMAIL" value="${x(p.EMAIL)}"${i===0&&email0?` class="ro" readonly`:''} autocomplete="email">
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTRE DES IMPÔTS -->
+  <div class="sec">
+    <div class="sec-title">Centre des impôts <span class="opt">(si différent du domicile)</span></div>
+    <div class="field">
+      <label>Adresse</label>
+      <input type="text" data-f="ADR1IMP" value="${x(p.ADR1IMP)}">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Code postal</label>
+        <input type="text" data-f="CPIMP" value="${x(p.CPIMP)}" maxlength="5" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville</label>
+        <input type="text" data-f="VILLEIMP" value="${x(p.VILLEIMP)}">
       </div>
     </div>
   </div>
@@ -586,10 +606,10 @@ ${vr('TITRE', p.TITRE)}
 ${vr('DATMOR', '')}
 ${vr('DATMA', showM ? toInotDate(p.DATMA) : '')}
 ${vr('CPAYMA', showM ? 'FR' : '')}
-${vr('ADR1IMP', '')}
+${vr('ADR1IMP', p.ADR1IMP)}
 ${vr('ADR2IMP', '')}
-${vr('CPIMP', '')}
-${vr('VILLEIMP', '')}
+${vr('CPIMP', p.CPIMP)}
+${vr('VILLEIMP', p.VILLEIMP)}
 ${vr('CODERU', p.CODERU)}
 ${vr('LVNARU', p.LVNARU)}
 ${vr('NOM', p.NOM || p.NOMU)}
