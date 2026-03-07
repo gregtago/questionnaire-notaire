@@ -74,18 +74,89 @@
     .conj-header span { font-size: 13px; color: #888; font-style: italic; }
     .conj-header button { background: none; border: none; color: #c0392b; font-size: 13px; cursor: pointer; }
     @media(max-width:600px){ .row2,.row3{ grid-template-columns:1fr; } .header{ padding: 20px; } }
+    /* Écran accueil */
+    .dossier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+    @media(max-width:500px){ .dossier-grid { grid-template-columns: 1fr; } }
+    .dossier-btn { border: 2px solid #e5e5e5; border-radius: 8px; padding: 16px 14px; background: #fff; cursor: pointer; text-align: left; transition: border-color .15s, background .15s; }
+    .dossier-btn:hover { border-color: #111; background: #fafafa; }
+    .dossier-btn.selected { border-color: #111; background: #111; color: #fff; }
+    .dossier-btn .ico { font-size: 22px; margin-bottom: 8px; display: block; }
+    .dossier-btn .lbl { font-size: 13px; font-weight: 600; letter-spacing: .03em; display: block; }
+    .dossier-btn .sub { font-size: 11px; opacity: .6; margin-top: 3px; display: block; }
+    .rgpd-check { display: flex; align-items: flex-start; gap: 12px; margin-top: 20px; padding: 16px; background: #f8f8f8; border-radius: 6px; border: 1px solid #e5e5e5; }
+    .rgpd-check input[type=checkbox] { margin-top: 3px; min-width: 16px; height: 16px; cursor: pointer; accent-color: #111; }
+    .rgpd-check label { font-size: 11px; color: #666; line-height: 1.6; cursor: pointer; }
+    .rgpd-check strong { color: #111; font-size: 11px; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
 <div class="header">
   <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
-  <h1 id="pageTitle">Questionnaire état civil</h1>
-  <div class="subtitle" id="pageSub">Veuillez d'abord vérifier votre adresse email.</div>
+  <h1 id="pageTitle">Bienvenue</h1>
+  <div class="subtitle" id="pageSub">Questionnaire en ligne</div>
+</div>
+
+<!-- ÉCRAN 0 : Accueil / choix dossier + RGPD -->
+<div id="sAccueil" class="screen">
+  <div class="card">
+    <h2>Votre dossier notarial</h2>
+    <p>Pour préparer votre rendez-vous, nous allons vous poser deux séries de questions&nbsp;:</p>
+    <ol style="font-size:13px;color:#555;line-height:2;padding-left:18px;margin:14px 0 20px;">
+      <li><strong>Votre état civil</strong> — identité, adresse, situation familiale</li>
+      <li><strong>Votre dossier</strong> — informations spécifiques à votre opération</li>
+    </ol>
+    <p style="font-size:13px;color:#555;margin-bottom:6px;">Quel est l'objet de votre dossier&nbsp;?</p>
+    <div class="dossier-grid" id="dossierGrid">
+      <button class="dossier-btn" data-type="achat" onclick="selectDossier(this)">
+        <span class="ico">🏠</span>
+        <span class="lbl">Achat immobilier</span>
+        <span class="sub">Acquisition d'un bien</span>
+      </button>
+      <button class="dossier-btn" data-type="vente-maison" onclick="selectDossier(this)">
+        <span class="ico">🔑</span>
+        <span class="lbl">Vente — Maison</span>
+        <span class="sub">Cession d'une maison</span>
+      </button>
+      <button class="dossier-btn" data-type="vente-appartement" onclick="selectDossier(this)">
+        <span class="ico">🏢</span>
+        <span class="lbl">Vente — Appartement</span>
+        <span class="sub">Cession d'un appartement</span>
+      </button>
+      <button class="dossier-btn" data-type="divorce" onclick="selectDossier(this)">
+        <span class="ico">⚖️</span>
+        <span class="lbl">Divorce</span>
+        <span class="sub">Consentement mutuel</span>
+      </button>
+      <button class="dossier-btn" data-type="succession" onclick="selectDossier(this)">
+        <span class="ico">📋</span>
+        <span class="lbl">Succession</span>
+        <span class="sub">Règlement de succession</span>
+      </button>
+      <button class="dossier-btn" data-type="autre" onclick="selectDossier(this)">
+        <span class="ico">📁</span>
+        <span class="lbl">Autre</span>
+        <span class="sub">Autre opération</span>
+      </button>
+    </div>
+
+    <div class="rgpd-check">
+      <input type="checkbox" id="cbRgpd" onchange="checkRgpd()">
+      <label for="cbRgpd">
+        <strong>Protection des données personnelles</strong><br>
+        L'Office notarial traite vos données personnelles pour l'accomplissement des activités notariales, en application de l'ordonnance n°45-2590 du 2 novembre 1945. Ces données pourront être transmises aux administrations habilitées (DGFiP, fichiers notariaux, établissements financiers concernés). Conformément au RGPD (UE) 2016/679 et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement de vos données, exerçable auprès de l'Office notarial.<br><br>
+        <strong>J'ai pris connaissance de cette information et j'accepte que mes données soient traitées dans le cadre de mon dossier notarial.</strong>
+      </label>
+    </div>
+
+    <button class="btn" id="btnAccueil" style="margin-top:20px" disabled onclick="validerAccueil()">COMMENCER</button>
+    <div class="err" id="eAccueil"></div>
+  </div>
 </div>
 
 <!-- ÉCRAN 1 : Email -->
-<div id="sEmail" class="screen">
+<div id="sEmail" class="screen" style="display:none">
   <div class="card">
     <h2>Vérification email</h2>
     <p>Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.</p>
@@ -121,9 +192,8 @@
     <div class="submit-sec">
       <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
       <div class="ferr" id="ferr"></div>
-      <div class="rgpd">
-        <strong style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;">Mention sur la protection des données personnelles</strong><br><br>
-        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales, les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
+      <div class="rgpd" style="font-size:11px;color:#aaa;">
+        ✓ Mentions RGPD acceptées en début de questionnaire.
       </div>
     </div>
   </div>
@@ -133,6 +203,38 @@
 
 <script>
 'use strict';
+
+// --- Écran accueil ---
+let typeDossier = '';
+const DOSSIER_LABELS = {
+  'achat': 'Achat immobilier',
+  'vente-maison': 'Vente — Maison',
+  'vente-appartement': 'Vente — Appartement',
+  'divorce': 'Divorce',
+  'succession': 'Succession',
+  'autre': 'Autre dossier'
+};
+
+function selectDossier(btn) {
+  document.querySelectorAll('.dossier-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  typeDossier = btn.dataset.type;
+  checkRgpd();
+}
+
+function checkRgpd() {
+  const ok = typeDossier && document.getElementById('cbRgpd').checked;
+  document.getElementById('btnAccueil').disabled = !ok;
+}
+
+function validerAccueil() {
+  if (!typeDossier || !document.getElementById('cbRgpd').checked) return;
+  document.getElementById('pageTitle').textContent = 'État civil';
+  document.getElementById('pageSub').textContent = DOSSIER_LABELS[typeDossier] + ' · Vérifiez votre adresse email';
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+
 
 // ── État global ───────────────────────────────────────────
 let email0 = '';
