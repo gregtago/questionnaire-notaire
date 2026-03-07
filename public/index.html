@@ -517,7 +517,8 @@ function bindAll() {
         persons[i].ACCORD = v==='Monsieur'?'M':'F';
       }
       if (f === 'ETAT') {
-        persons[i].HISTORIQUE = ['M','D','V','I','P','S'].includes(v) ? 'O' : 'N';
+        // HistoriqueMarital = uniquement pour remariage (D/V/I/S = union passée à rappeler)
+        persons[i].HISTORIQUE = ['D','V','I','S'].includes(v) ? 'O' : 'N';
         // Créer ou supprimer la 2ème personne selon la situation
         const needsP2 = SHOW_P2.includes(v);
         if (needsP2 && !hasConj) {
