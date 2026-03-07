@@ -573,8 +573,10 @@ function buildXml() {
     // utiliser ses données dans l'historique marital
     const isMain = p._role !== 'conjoint';
     const hasConjFiche = isMain && conjoint;
-    const lnco = hasConjFiche ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
-    const lpco = hasConjFiche ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
+    // Si fiche conjoint présente : laisser LNCOMA/LPCOMA vides (iNot utilise CONJ pour le lien)
+    // Sinon : utiliser les champs saisis manuellement
+    const lnco = hasConjFiche ? '' : (p.LNCOMA||'').toUpperCase();
+    const lpco = hasConjFiche ? '' : (p.LPCOMA||'');
     // Numéro du conjoint lié (champ CONJ) — réciproque pour le conjoint si marié/pacsé
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
