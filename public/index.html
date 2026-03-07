@@ -120,7 +120,7 @@
     <div id="forms"></div>
     <div id="addConj" class="add-conjoint" onclick="addConjoint()">
       <span style="font-size:18px">+</span>
-      <span>Ajouter le conjoint / partenaire</span>
+      <span>Ajouter une deuxième personne</span>
     </div>
     <div class="submit-sec">
       <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
@@ -308,7 +308,7 @@ function buildPageHtml(p0, p1) {
   <!-- CONJOINT -->
   <div class="person-block conjoint-block">
     <div class="person-header">
-      <div class="person-header-title">État civil du conjoint / partenaire</div>
+      <div class="person-header-title">Deuxième personne</div>
       <button onclick="removeConjoint()" class="btn-remove-conj">✕ Supprimer</button>
     </div>
     ${blocIdentite(p1, conjIdx)}
@@ -393,7 +393,7 @@ function buildPageHtml(p0, p1) {
           <label>Prénoms du conjoint</label>
           <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
-      </div>` : `<div class="info-note">✓ Fiche conjoint créée — les informations seront reprises automatiquement.</div>`}
+      </div>` : `<div class="info-note">✓ Fiche de la 2ème personne créée — les informations seront reprises automatiquement.</div>`}
       <div class="field">
         <label>Régime matrimonial</label>
         <select data-f="REGIME">
@@ -468,7 +468,7 @@ function buildPageHtml(p0, p1) {
           <label>Prénoms du partenaire</label>
           <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
-      </div>` : `<div class="info-note">✓ Fiche partenaire créée — les informations seront reprises automatiquement.</div>`}
+      </div>` : `<div class="info-note">✓ Fiche de la 2ème personne créée — les informations seront reprises automatiquement.</div>`}
     </div>
   </div>`;
 }
@@ -621,7 +621,7 @@ ${vr('CPSTAT', '')}
 ${vr('PREFDAT', '')}
 ${vr('DEPTDO', p.DEPTDO || dept(cp))}
 ${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
-${vr('CONJ', conjNum)}
+${vr('CONJ', showM || sit === 'P' ? conjNum : '')}
 ${vr('ETAT', sit)}
 ${vr('CODETITRE', p.CODETITRE)}
 ${vr('NOMU', p.NOMU)}
@@ -722,7 +722,7 @@ document.getElementById('btnSubmit').onclick = async () => {
   // Validation
   for (let i=0; i<persons.length; i++) {
     const p = persons[i];
-    const n = p._role==='conjoint' ? 'Conjoint' : 'Vous';
+    const n = p._role==='conjoint' ? '2ème personne' : 'Vous';
     if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
     if (!p.NOMU)    return showErr(`${n} : nom obligatoire.`, i);
     if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
