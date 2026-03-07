@@ -564,9 +564,10 @@ function buildXml() {
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
 
-    // Situation : même code pour les deux fiches
-    const sit = isMain ? (p.ETAT || 'C') : (lienActif ? mainSit : 'C');
-    const showM = ['M','I','S'].includes(sit);
+    // Situation affichée dans le formulaire = même que principale
+    // Mais dans le XML : fiche conjoint reste C + HISTORIQUE=N (iNot déduit le lien via CONJ)
+    const sit = isMain ? (p.ETAT || 'C') : 'C';
+    const showM = ['M','I','S'].includes(isMain ? sit : (persons[0].ETAT||'C'));
     const showD = ['D','I'].includes(sit);
 
     // Historique : uniquement sur la fiche principale
@@ -659,7 +660,7 @@ ${vr('VILLEIMP', p.VILLEIMP)}
 ${vr('CODERU', p.CODERU)}
 ${vr('LVNARU', p.LVNARU)}
 ${vr('NOM', p.NOM || p.NOMU)}
-${vr('REGIME', showM ? (p.REGIME||'4') : '')}
+${vr('REGIME', showM && isMain ? (p.REGIME||'4') : '')}
 ${vr('DATCONTR', '')}
 ${vr('DATAN', '')}
 ${vr('DATDECL', '')}
