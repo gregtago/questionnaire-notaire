@@ -198,50 +198,38 @@ const SITS = { C:'Célibataire', M:'Marié(e)', D:'Divorcé(e)', V:'Veuf / Veuve
 
 // ── Rendu ─────────────────────────────────────────────────
 function renderAll() {
-  renderTabs();
   renderForms();
   document.getElementById('addConj').style.display = hasConj ? 'none' : 'flex';
 }
 
-function renderTabs() {
-  document.getElementById('tabs').innerHTML = persons.map((p, i) => {
-    const lbl = p.NOMU ? p.NOMU : (p._role==='conjoint' ? 'Conjoint / Partenaire' : 'Personne');
-    return `<div class="tab${i===activeIdx?' active':''}" onclick="activeIdx=${i};renderAll()">${x(lbl)}</div>`;
-  }).join('');
-}
+function renderTabs() {} // plus d'onglets
 
 function renderForms() {
-  document.getElementById('forms').innerHTML = persons.map((p, i) => formHtml(p, i)).join('');
+  const p0 = persons[0];
+  const p1 = hasConj ? persons.find(p => p._role === 'conjoint') : null;
+  document.getElementById('tabs').innerHTML = '';
+  document.getElementById('forms').innerHTML = buildPageHtml(p0, p1);
   bindAll();
 }
 
-function formHtml(p, i) {
-  const isConj = p._role === 'conjoint';
-  const sit = p.ETAT || 'C';
+// ── Page unique ───────────────────────────────────────────
+function buildPageHtml(p0, p1) {
+  const sit = p0.ETAT || 'C';
   const showM = ['M','I','S'].includes(sit);
   const showD = ['D','I'].includes(sit);
   const showV = sit === 'V';
   const showP = sit === 'P';
-  const isFR = !p.CPAYDO || p.CPAYDO.toUpperCase() === 'FRANCE';
+  const isFR = !p0.CPAYDO || p0.CPAYDO.toUpperCase() === 'FRANCE';
 
-  return `<div data-idx="${i}" style="${i===activeIdx?'':'display:none'}">
-
-  ${isConj ? `<div class="conj-header">
-    <span>Conjoint / Partenaire</span>
-    <button onclick="removeConjoint()">✕ Supprimer</button>
-  </div>` : ''}
-
-  <!-- IDENTITÉ -->
-  <div class="sec">
-    <div class="sec-title">Identité</div>
-
+  const identite = (p, i, label) => `
+  <div class="sec" data-idx="${i}">
+    <div class="sec-title">${label}</div>
     <div class="field">
       <label>Civilité <span class="req">*</span></label>
       <div class="btns">
         ${['Monsieur','Madame','Mademoiselle'].map(c=>`<button type="button" class="choice${p.TITRE===c?' on':''}" data-f="TITRE" data-v="${c}">${c}</button>`).join('')}
       </div>
     </div>
-
     <div class="row2">
       <div class="field">
         <label>Nom d'usage <span class="req">*</span></label>
@@ -252,7 +240,6 @@ function formHtml(p, i) {
         <input type="text" data-f="NOM" value="${x(p.NOM)}">
       </div>
     </div>
-
     <div class="row2">
       <div class="field">
         <label>Prénom usuel <span class="req">*</span></label>
@@ -263,7 +250,6 @@ function formHtml(p, i) {
         <input type="text" data-f="AUTPREN" value="${x(p.AUTPREN)}">
       </div>
     </div>
-
     <div class="row3">
       <div class="field">
         <label>Date de naissance <span class="req">*</span></label>
@@ -278,7 +264,6 @@ function formHtml(p, i) {
         <input type="text" data-f="CODERU" value="${x(p.CODERU)}" maxlength="5" inputmode="numeric">
       </div>
     </div>
-
     <div class="row2">
       <div class="field">
         <label>Profession</label>
@@ -289,71 +274,89 @@ function formHtml(p, i) {
         <input type="text" data-f="NATION" value="${x(p.NATION)}">
       </div>
     </div>
-  </div>
+  </div>`;
 
-  <!-- ADRESSE -->
-  <div class="sec">
-    <div class="sec-title">Adresse domicile</div>
-    <div class="field">
-      <label>Adresse (numéro et voie) <span class="req">*</span></label>
-      <input type="text" data-f="ADR1" value="${x(p.ADR1)}" autocomplete="street-address">
-    </div>
-    <div class="field">
-      <label>Complément d'adresse</label>
-      <input type="text" data-f="ADR2" value="${x(p.ADR2)}">
-    </div>
-    <div class="row3">
-      <div class="field">
-        <label>Code postal${isFR?` <span class="req">*</span>`:''}</label>
-        <input type="text" data-f="ADR3" value="${x(p.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
-      </div>
-      <div class="field">
-        <label>Ville <span class="req">*</span></label>
-        <input type="text" data-f="ADR4" value="${x(p.ADR4)}">
-      </div>
-      <div class="field">
-        <label>Pays</label>
-        <input type="text" data-f="CPAYDO" value="${x(p.CPAYDO||'FRANCE')}">
-      </div>
-    </div>
-  </div>
-
-  <!-- CONTACT -->
-  <div class="sec">
-    <div class="sec-title">Contact</div>
+  const contact = (p, i, label) => `
+  <div class="sec" data-idx="${i}">
+    <div class="sec-title">${label}</div>
     <div class="row2">
       <div class="field">
         <label>Téléphone <span class="req">*</span></label>
         <input type="tel" data-f="TEL" value="${x(p.TEL)}" autocomplete="tel">
       </div>
       <div class="field">
-        <label>Email${i===0?` <span class="req">*</span>`:''}</label>
-        <input type="email" data-f="EMAIL" value="${x(p.EMAIL)}"${i===0&&email0?` class="ro" readonly`:''} autocomplete="email">
+        <label>Email${i===0?' <span class="req">*</span>':''}</label>
+        <input type="email" data-f="EMAIL" value="${x(p.EMAIL)}"${i===0&&email0?' class="ro" readonly':''} autocomplete="email">
+      </div>
+    </div>
+  </div>`;
+
+  // Trouver l'index du conjoint dans persons[]
+  const conjIdx = p1 ? persons.indexOf(p1) : -1;
+
+  return `
+  ${identite(p0, 0, 'Votre identité')}
+  ${p1 ? `
+  <div class="sec conj-header-sec">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="sec-title" style="margin:0">Identité du conjoint / partenaire</div>
+      <button onclick="removeConjoint()" style="background:none;border:none;color:#c0392b;font-size:13px;cursor:pointer;">✕ Supprimer</button>
+    </div>
+  </div>
+  ${identite(p1, conjIdx, '')}
+  ` : ''}
+
+  <!-- ADRESSE COMMUNE -->
+  <div class="sec" data-idx="0">
+    <div class="sec-title">Adresse domicile${p1 ? ' — commune aux deux' : ''}</div>
+    <div class="field">
+      <label>Adresse (numéro et voie) <span class="req">*</span></label>
+      <input type="text" data-f="ADR1" value="${x(p0.ADR1)}" autocomplete="street-address">
+    </div>
+    <div class="field">
+      <label>Complément d'adresse</label>
+      <input type="text" data-f="ADR2" value="${x(p0.ADR2)}">
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Code postal${isFR?' <span class="req">*</span>':''}</label>
+        <input type="text" data-f="ADR3" value="${x(p0.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville <span class="req">*</span></label>
+        <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
+      </div>
+      <div class="field">
+        <label>Pays</label>
+        <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
       </div>
     </div>
   </div>
 
+  ${contact(p0, 0, 'Votre contact')}
+  ${p1 ? contact(p1, conjIdx, 'Contact du conjoint / partenaire') : ''}
+
   <!-- CENTRE DES IMPÔTS -->
-  <div class="sec">
+  <div class="sec" data-idx="0">
     <div class="sec-title">Adresse du centre des impôts dont vous dépendez</div>
     <div class="field">
       <label>Adresse</label>
-      <input type="text" data-f="ADR1IMP" value="${x(p.ADR1IMP)}">
+      <input type="text" data-f="ADR1IMP" value="${x(p0.ADR1IMP)}">
     </div>
     <div class="row2">
       <div class="field">
         <label>Code postal</label>
-        <input type="text" data-f="CPIMP" value="${x(p.CPIMP)}" maxlength="5" inputmode="numeric">
+        <input type="text" data-f="CPIMP" value="${x(p0.CPIMP)}" maxlength="5" inputmode="numeric">
       </div>
       <div class="field">
         <label>Ville</label>
-        <input type="text" data-f="VILLEIMP" value="${x(p.VILLEIMP)}">
+        <input type="text" data-f="VILLEIMP" value="${x(p0.VILLEIMP)}">
       </div>
     </div>
   </div>
 
-  <!-- SITUATION MATRIMONIALE — personne principale seulement -->
-  ${!isConj ? `<div class="sec">
+  <!-- SITUATION MATRIMONIALE -->
+  <div class="sec" data-idx="0">
     <div class="sec-title">Situation matrimoniale</div>
     <div class="field">
       <label>Situation <span class="req">*</span></label>
@@ -362,38 +365,37 @@ function formHtml(p, i) {
       </div>
     </div>
 
-    <!-- Marié / En instance / Séparé de corps -->
+    <!-- Marié / En instance / Séparé -->
     <div class="cond${showM?' show':''}">
       <div class="sec-title">Détails du mariage</div>
       <div class="row2">
         <div class="field">
           <label>Date du mariage</label>
-          <input type="date" data-f="DATMA" value="${x(p.DATMA)}">
+          <input type="date" data-f="DATMA" value="${x(p0.DATMA)}">
         </div>
         <div class="field">
           <label>Lieu (CP + commune)</label>
-          <input type="text" data-f="CPVILMA" value="${x(p.CPVILMA)}">
+          <input type="text" data-f="CPVILMA" value="${x(p0.CPVILMA)}">
         </div>
       </div>
-      <div class="row2${hasConj ? ' hidden' : ''}">
+      ${!p1 ? `<div class="row2">
         <div class="field">
-          <label>Nom du conjoint${hasConj ? '' : ' <span class="opt">(ou créez sa fiche ci-dessous)</span>'}</label>
-          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
+          <label>Nom du conjoint <span class="opt">(ou créez sa fiche ci-dessous)</span></label>
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
         </div>
         <div class="field">
           <label>Prénoms du conjoint</label>
-          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
-      </div>
-      ${hasConj ? `<div class="info-note">✓ Fiche conjoint créée — les informations seront reprises automatiquement.</div>` : ''}
+      </div>` : `<div class="info-note">✓ Fiche conjoint créée — les informations seront reprises automatiquement.</div>`}
       <div class="field">
         <label>Régime matrimonial</label>
         <select data-f="REGIME">
-          <option value="4"${p.REGIME==='4'?' selected':''}>Sans contrat — communauté légale (après 01/02/1966)</option>
-          <option value="33"${p.REGIME==='33'?' selected':''}>Séparation de biens</option>
-          <option value="32"${p.REGIME==='32'?' selected':''}>Communauté universelle</option>
-          <option value="30"${p.REGIME==='30'?' selected':''}>Communauté réduite aux acquêts (contrat)</option>
-          <option value="35"${p.REGIME==='35'?' selected':''}>Participation aux acquêts</option>
+          <option value="4"${p0.REGIME==='4'?' selected':''}>Sans contrat — communauté légale (après 01/02/1966)</option>
+          <option value="33"${p0.REGIME==='33'?' selected':''}>Séparation de biens</option>
+          <option value="32"${p0.REGIME==='32'?' selected':''}>Communauté universelle</option>
+          <option value="30"${p0.REGIME==='30'?' selected':''}>Communauté réduite aux acquêts (contrat)</option>
+          <option value="35"${p0.REGIME==='35'?' selected':''}>Participation aux acquêts</option>
         </select>
       </div>
     </div>
@@ -404,21 +406,21 @@ function formHtml(p, i) {
       <div class="row2">
         <div class="field">
           <label>Date du divorce</label>
-          <input type="date" data-f="DATDIV" value="${x(p.DATDIV)}">
+          <input type="date" data-f="DATDIV" value="${x(p0.DATDIV)}">
         </div>
         <div class="field">
           <label>Tribunal</label>
-          <input type="text" data-f="TRIBUNAL" value="${x(p.TRIBUNAL)}">
+          <input type="text" data-f="TRIBUNAL" value="${x(p0.TRIBUNAL)}">
         </div>
       </div>
       <div class="row2">
         <div class="field">
           <label>Nom de l'ex-conjoint</label>
-          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
         </div>
         <div class="field">
           <label>Prénoms de l'ex-conjoint</label>
-          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
       </div>
     </div>
@@ -429,11 +431,11 @@ function formHtml(p, i) {
       <div class="row2">
         <div class="field">
           <label>Nom</label>
-          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
         </div>
         <div class="field">
           <label>Prénoms</label>
-          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
       </div>
     </div>
@@ -444,39 +446,38 @@ function formHtml(p, i) {
       <div class="row2">
         <div class="field">
           <label>Date du PACS</label>
-          <input type="date" data-f="DATMA" value="${x(p.DATMA)}">
+          <input type="date" data-f="DATMA" value="${x(p0.DATMA)}">
         </div>
         <div class="field">
           <label>Lieu (CP + commune)</label>
-          <input type="text" data-f="CPVILMA" value="${x(p.CPVILMA)}">
+          <input type="text" data-f="CPVILMA" value="${x(p0.CPVILMA)}">
         </div>
       </div>
-      <div class="row2">
+      ${!p1 ? `<div class="row2">
         <div class="field">
           <label>Nom du partenaire</label>
-          <input type="text" data-f="LNCOMA" value="${x(p.LNCOMA)}">
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
         </div>
         <div class="field">
           <label>Prénoms du partenaire</label>
-          <input type="text" data-f="LPCOMA" value="${x(p.LPCOMA)}">
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
         </div>
-      </div>
+      </div>` : `<div class="info-note">✓ Fiche partenaire créée — les informations seront reprises automatiquement.</div>`}
     </div>
-
-  </div>` : ''}
-
-</div>`;
+  </div>`;
+}
 }
 
 // ── Binding ───────────────────────────────────────────────
 function bindAll() {
   document.querySelectorAll('[data-f]').forEach(el => {
     if (el.tagName === 'BUTTON') return;
-    const i = +el.closest('[data-idx]').dataset.idx;
+    const sec = el.closest('[data-idx]');
+    if (!sec) return;
+    const i = +sec.dataset.idx;
     const update = () => {
       const f = el.dataset.f;
       let v = el.value;
-      // Majuscules automatiques
       if (['NOMU','NOM','LVNARU','ADR4'].includes(f)) { v = v.toUpperCase(); el.value = v; }
       persons[i][f] = v;
       // Calculs dérivés
@@ -487,14 +488,20 @@ function bindAll() {
         const au = persons[i].AUTPREN || '';
         persons[i].PRENOM = (pu + (au ? ' ' + au : '')).trim();
       }
-      if (f === 'NOMU') renderTabs();
+      // Synchroniser l'adresse vers le conjoint
+      if (i === 0 && ['ADR1','ADR2','ADR3','ADR4','CPAYDO','DEPTDO'].includes(f) && hasConj) {
+        const conj = persons.find(p => p._role === 'conjoint');
+        if (conj) conj[f] = v;
+      }
     };
     el.addEventListener('input', update);
     el.addEventListener('change', update);
   });
 
   document.querySelectorAll('button.choice').forEach(btn => {
-    const i = +btn.closest('[data-idx]').dataset.idx;
+    const sec = btn.closest('[data-idx]');
+    if (!sec) return;
+    const i = +sec.dataset.idx;
     btn.onclick = () => {
       const f = btn.dataset.f;
       const v = btn.dataset.v;
@@ -515,14 +522,17 @@ function bindAll() {
 function addConjoint() {
   if (hasConj) return;
   hasConj = true;
-  persons.push(newPerson('conjoint'));
-  activeIdx = 1;
+  const p0 = persons[0];
+  const c = newPerson('conjoint');
+  // Copier l'adresse de la personne principale
+  c.ADR1 = p0.ADR1; c.ADR2 = p0.ADR2; c.ADR3 = p0.ADR3; c.ADR4 = p0.ADR4;
+  c.DEPTDO = p0.DEPTDO; c.CPAYDO = p0.CPAYDO;
+  persons.push(c);
   renderAll();
 }
 function removeConjoint() {
   hasConj = false;
   persons = persons.filter(p => p._role !== 'conjoint');
-  activeIdx = 0;
   renderAll();
 }
 
@@ -714,9 +724,11 @@ document.getElementById('btnSubmit').onclick = async () => {
     if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
     if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
     if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
-    if (!p.ADR1 || !p.ADR4) return showErr(`${n} : adresse incomplète.`, i);
-    if (!p.TEL)     return showErr(`${n} : téléphone obligatoire.`, i);
-    if (i===0 && !p.EMAIL) return showErr(`Email obligatoire.`, i);
+    if (p._role !== 'conjoint') {
+      if (!p.ADR1 || !p.ADR4) return showErr(`Adresse incomplète.`, i);
+      if (!p.TEL) return showErr(`Téléphone obligatoire.`, i);
+      if (i===0 && !p.EMAIL) return showErr(`Email obligatoire.`, i);
+    }
   }
 
   const btn = document.getElementById('btnSubmit');
@@ -745,8 +757,6 @@ document.getElementById('btnSubmit').onclick = async () => {
 };
 
 function showErr(msg, idx) {
-  activeIdx = idx;
-  renderAll();
   const ferr = document.getElementById('ferr');
   ferr.textContent = msg;
   ferr.style.display = 'block';
