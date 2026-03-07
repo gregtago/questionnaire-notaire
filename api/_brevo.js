@@ -45,7 +45,7 @@ async function sendAll(personnes, xml, type) {
     rows += row("Nationalité", p.NATION);
     rows += sec("Adresse et contact");
     rows += row("Adresse", [p.ADR1, p.ADR2, [p.ADR3, p.ADR4].filter(Boolean).join(" "), p.CPAYDO && p.CPAYDO !== "FRANCE" ? p.CPAYDO : ""].filter(Boolean).join(", "));
-    rows += row("Téléphone", p.TEL);
+    rows += row("Téléphone", (p.TEL||"").replace(/[_\s]/g, ""));
     rows += row("E-mail", p.EMAIL);
     if (p._role !== "conjoint") {
       rows += sec("Situation matrimoniale");

@@ -462,7 +462,7 @@ function bindAll() {
       if (f === 'PRENOMU' || f === 'AUTPREN') {
         const pu = persons[i].PRENOMU || '';
         const au = persons[i].AUTPREN || '';
-        persons[i].PRENOM = au ? pu + ' ' + au : pu;
+        persons[i].PRENOM = (pu + (au ? ' ' + au : '')).trim();
       }
       if (f === 'NOMU') renderTabs();
     };
@@ -533,7 +533,7 @@ function buildXml() {
     </HistoriqueMarital>`;
     }
 
-    const prenomComplet = p.AUTPREN ? (p.PRENOMU+' '+p.AUTPREN) : p.PRENOMU;
+    const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
 
     return `  <Person info="">
 ${vr('NUMERO', num)}
@@ -549,7 +549,7 @@ ${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
 ${vr('ETAT', sit)}
 ${vr('CODETITRE', p.CODETITRE)}
 ${vr('NOMU', p.NOMU)}
-${vr('PRENOMU', p.PRENOMU)}
+${vr('PRENOMU', (p.PRENOMU||'').trim())}
 ${vr('PRENOM', prenomComplet)}
 ${vr('NOM', p.NOM || p.NOMU)}
 ${vr('PROF', p.PROF)}
