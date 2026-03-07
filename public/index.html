@@ -144,9 +144,18 @@
     <div class="rgpd-check">
       <input type="checkbox" id="cbRgpd" onchange="checkRgpd()">
       <label for="cbRgpd">
-        <strong>Protection des données personnelles</strong><br>
-        L'Office notarial traite vos données personnelles pour l'accomplissement des activités notariales, en application de l'ordonnance n°45-2590 du 2 novembre 1945. Ces données pourront être transmises aux administrations habilitées (DGFiP, fichiers notariaux, établissements financiers concernés). Conformément au RGPD (UE) 2016/679 et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement de vos données, exerçable auprès de l'Office notarial.<br><br>
-        <strong>J'ai pris connaissance de cette information et j'accepte que mes données soient traitées dans le cadre de mon dossier notarial.</strong>
+        <strong>Protection des données personnelles</strong><br><br>
+        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales, les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.<br><br>
+        <strong>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</strong>
+      </label>
+    </div>
+
+    <div class="rgpd-check" style="margin-top:10px">
+      <input type="checkbox" id="cbLre" onchange="checkRgpd()">
+      <label for="cbLre">
+        <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+        Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.<br><br>
+        <strong>J'accepte de recevoir des recommandés électroniques à mon adresse email.</strong>
       </label>
     </div>
 
@@ -223,7 +232,9 @@ function selectDossier(btn) {
 }
 
 function checkRgpd() {
-  const ok = typeDossier && document.getElementById('cbRgpd').checked;
+  const ok = typeDossier
+    && document.getElementById('cbRgpd').checked
+    && document.getElementById('cbLre').checked;
   document.getElementById('btnAccueil').disabled = !ok;
 }
 
