@@ -606,10 +606,10 @@ function buildXml() {
     return `  <Person info="">
 ${vr('NUMERO', num)}
 ${vr('TYPE', 'PP')}
-${vr('ADR1', adr1do)}
-${vr('ADR2', p.ADR2)}
+${vr('ADR1', p.ADR1||'')}
+${vr('ADR2', p.ADR2||'')}
 ${vr('ADR3', cp)}
-${vr('ADR4', vil)}
+${vr('ADR4', p.ADR4||'')}
 ${vr('RCS', '')}
 ${vr('VILRCS', '')}
 ${vr('CPRCS', '')}
