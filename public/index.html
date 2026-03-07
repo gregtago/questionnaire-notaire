@@ -574,9 +574,13 @@ function buildXml() {
     const isMain = p._role !== 'conjoint';
     const hasConjFiche = isMain && conjoint;
     const lnco = hasConjFiche ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
-    const lpco = hasConjFiche ? ((conjoint.PRENOMU||'')+' '+(conjoint.AUTPREN||'')).trim() : (p.LPCOMA||'');
-    // Numéro du conjoint lié (champ CONJ)
-    const conjNum = hasConjFiche ? numOf(conjIdx) : '';
+    const lpco = hasConjFiche ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
+    // Numéro du conjoint lié (champ CONJ) — réciproque pour le conjoint si marié/pacsé
+    const mainSit = persons[0].ETAT || 'C';
+    const lienActif = ['M','I','S','P'].includes(mainSit);
+    const conjNum = isMain
+      ? (hasConjFiche && lienActif ? numOf(conjIdx) : '')
+      : (lienActif ? numOf(0) : '');
 
     let histXml = '    <HistoriqueMarital />';
     if (hasH) {
@@ -627,7 +631,7 @@ ${vr('CPSTAT', '')}
 ${vr('PREFDAT', '')}
 ${vr('DEPTDO', p.DEPTDO || dept(cp))}
 ${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
-${vr('CONJ', showM || sit === 'P' ? conjNum : '')}
+${vr('CONJ', conjNum)}
 ${vr('ETAT', sit)}
 ${vr('CODETITRE', p.CODETITRE)}
 ${vr('NOMU', p.NOMU)}
