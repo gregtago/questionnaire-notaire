@@ -564,29 +564,36 @@ function buildXml() {
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
 
-    // Situation affichée dans le formulaire = même que principale
-    // Mais dans le XML : fiche conjoint reste C + HISTORIQUE=N (iNot déduit le lien via CONJ)
-    const sit = isMain ? (p.ETAT || 'C') : 'C';
-    const showM = ['M','I','S'].includes(isMain ? sit : (persons[0].ETAT||'C'));
-    const showD = ['D','I'].includes(sit);
+    // ETAT : même situation sur les deux fiches
+    const sit = isMain ? (p.ETAT || 'C') : mainSit;
+    const showM = ['M','I','S'].includes(sit);
+    const showD = ['D','I'].includes(isMain ? sit : mainSit);
 
-    // Historique : uniquement sur la fiche principale
-    // La fiche conjoint a HISTORIQUE=N et HistoriqueMarital vide (évite fiche fantôme)
-    const hasH = isMain && p.HISTORIQUE === 'O';
+    // HISTORIQUE=O sur les deux fiches si couple actif
+    const hasH = lienActif ? (isMain ? p.HISTORIQUE === 'O' : true) : (p.HISTORIQUE === 'O');
     const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
     const cp = p.ADR3 || '';
 
-    // LNCOMA/LPCOMA : uniquement sur la fiche principale
-    let lnco = '', lpco = '', datEvt = '', lieuEvt = '';
-    if (isMain && hasH) {
-      lnco = conjoint ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
-      lpco = conjoint ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
-      datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
-      lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
-    }
+    // CONJ : vide — le champ CONJ génère une fiche fantôme dans iNot
+    const conjNum = '';
 
-    // CONJ : uniquement sur la fiche principale
-    const conjNum = isMain && conjoint && lienActif ? numOf(conjIdx) : '';
+    // L'autre personne du couple (noms croisés dans HistoriqueMarital)
+    const autrePersonne = isMain ? conjoint : persons[0];
+
+    // LNCOMA/LPCOMA : nom/prénom de l'autre personne
+    let lnco = '', lpco = '', datEvt = '', lieuEvt = '';
+    if (hasH) {
+      if (autrePersonne) {
+        lnco = (autrePersonne.NOMU||'').toUpperCase();
+        lpco = (autrePersonne.PRENOMU||'').trim();
+      } else {
+        lnco = (p.LNCOMA||'').toUpperCase();
+        lpco = (p.LPCOMA||'');
+      }
+      const mainP = persons[0];
+      datEvt = showD ? toInotDate(mainP.DATDIV) : toInotDate(mainP.DATMA);
+      lieuEvt = showD ? (mainP.TRIBUNAL||'') : (mainP.CPVILMA||'');
+    }
 
     // HistoriqueMarital
     let histXml = '    <HistoriqueMarital />';
