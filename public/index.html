@@ -577,12 +577,10 @@ function buildXml() {
     // Sinon : utiliser les champs saisis manuellement
     const lnco = hasConjFiche ? '' : (p.LNCOMA||'').toUpperCase();
     const lpco = hasConjFiche ? '' : (p.LPCOMA||'');
-    // Numéro du conjoint lié (champ CONJ) — réciproque pour le conjoint si marié/pacsé
+    // CONJ : uniquement sur la fiche principale → la fiche conjoint reste sans lien (iNot le déduit)
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
-    const conjNum = isMain
-      ? (hasConjFiche && lienActif ? numOf(conjIdx) : '')
-      : (lienActif ? numOf(0) : '');
+    const conjNum = isMain && hasConjFiche && lienActif ? numOf(conjIdx) : '';
 
     let histXml = '    <HistoriqueMarital />';
     if (hasH) {
