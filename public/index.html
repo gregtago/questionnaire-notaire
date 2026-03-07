@@ -81,16 +81,16 @@
     .dossier-btn:hover { border-color: #555; background: #555; color: #fff; }
     .dossier-btn.selected { border-color: #111; background: #111; color: #fff; }
     .dossier-btn .lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; display: block; }
-    .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; }
+    .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; font-size: 11px; color: #666; line-height: 1.6; }
     .rgpd-check.checked { border-color: #111; background: #fafafa; }
     .rgpd-check input[type=checkbox] { display: none; }
-    .rgpd-check label { display: flex; align-items: flex-start; gap: 14px; cursor: pointer; }
-    .rgpd-check label .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; margin-top: 1px; flex-shrink: 0; }
-    .rgpd-check label .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
-    .rgpd-check input[type=checkbox]:checked + label .toggle { background: #111; }
-    .rgpd-check input[type=checkbox]:checked + label .toggle::after { left: 18px; }
-    .rgpd-check .txt { font-size: 11px; color: #666; line-height: 1.6; }
     .rgpd-check strong { color: #111; font-size: 11px; }
+    .rgpd-accept { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; cursor: pointer; }
+    .rgpd-accept em { font-style: normal; font-size: 11px; font-weight: 600; color: #111; }
+    .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
     .btn:disabled { background: #ccc; cursor: not-allowed; }
   </style>
 </head>
@@ -130,23 +130,21 @@
 
     <div class="rgpd-check" id="wrapRgpd">
       <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-      <label for="cbRgpd">
+      <strong>Protection des données personnelles</strong><br><br>
+      L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales, les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
+      <label class="rgpd-accept" for="cbRgpd">
+        <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
         <span class="toggle"></span>
-        <span class="txt"><strong>Protection des données personnelles</strong><br><br>
-        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales, les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.<br><br>
-        <strong>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</strong>
-        </span>
       </label>
     </div>
 
     <div class="rgpd-check" id="wrapLre" style="margin-top:10px">
       <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-      <label for="cbLre">
+      <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+      Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.
+      <label class="rgpd-accept" for="cbLre">
+        <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
         <span class="toggle"></span>
-        <span class="txt"><strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
-        Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.<br><br>
-        <strong>J'accepte de recevoir des recommandés électroniques à mon adresse email.</strong>
-        </span>
       </label>
     </div>
 
