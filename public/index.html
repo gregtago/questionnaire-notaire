@@ -560,33 +560,43 @@ function buildXml() {
 
   const xmlPersons = persons.map((p, i) => {
     const num = numOf(i);
-    const sit = p.ETAT || 'C';
-    const showM = ['M','I','S'].includes(sit);
-    const showD = ['D','I'].includes(sit);
-    const hasH = p.HISTORIQUE === 'O';
-    const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
-    const adr1do = p.ADR1 || '';
-    const cp = p.ADR3 || '';
-    const vil = p.ADR4 || '';
-
-    // Si c'est la personne principale et qu'une fiche conjoint existe,
-    // utiliser ses données dans l'historique marital
     const isMain = p._role !== 'conjoint';
-    const hasConjFiche = isMain && conjoint;
-    // Si fiche conjoint présente : laisser LNCOMA/LPCOMA vides (iNot utilise CONJ pour le lien)
-    // Sinon : utiliser les champs saisis manuellement
-    const lnco = hasConjFiche ? '' : (p.LNCOMA||'').toUpperCase();
-    const lpco = hasConjFiche ? '' : (p.LPCOMA||'');
-    // CONJ : uniquement sur la fiche principale → la fiche conjoint reste sans lien (iNot le déduit)
     const mainSit = persons[0].ETAT || 'C';
     const lienActif = ['M','I','S','P'].includes(mainSit);
-    const conjNum = isMain && hasConjFiche && lienActif ? numOf(conjIdx) : '';
 
+    // Pour la fiche conjoint : reprendre la situation de la personne principale
+    const sit = isMain ? (p.ETAT || 'C') : (lienActif ? mainSit : 'C');
+    const showM = ['M','I','S'].includes(sit);
+    const showD = ['D','I'].includes(sit);
+    // HISTORIQUE = O si événement marital actif
+    const hasH = isMain ? p.HISTORIQUE === 'O' : lienActif;
+    const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
+    const cp = p.ADR3 || '';
+
+    // LNCOMA/LPCOMA : toujours remplis selon le skill
+    // - fiche principale : nom/prénom du conjoint (fiche ou saisie manuelle)
+    // - fiche conjoint : nom/prénom de la personne principale
+    let lnco, lpco, datEvt, lieuEvt;
+    if (isMain) {
+      lnco = conjoint ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
+      lpco = conjoint ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
+      datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
+      lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
+    } else {
+      // Fiche conjoint : pointer vers la personne principale
+      lnco = (persons[0].NOMU||'').toUpperCase();
+      lpco = (persons[0].PRENOMU||'').trim();
+      datEvt = toInotDate(persons[0].DATMA);
+      lieuEvt = persons[0].CPVILMA || '';
+    }
+
+    // CONJ : uniquement sur la fiche principale (pas de lien réciproque → évite fiche fantôme)
+    const conjNum = isMain && conjoint && lienActif ? numOf(conjIdx) : '';
+
+    // HistoriqueMarital
     let histXml = '    <HistoriqueMarital />';
     if (hasH) {
       const cotyma = showD ? 'D' : sit;
-      const datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
-      const lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
       histXml = `    <HistoriqueMarital>
       <Evenement>
         ${vr('COTYMA', cotyma)}
@@ -621,7 +631,7 @@ ${vr('PRESENCE', '')}
 ${vr('INTCONJ', '')}
 ${vr('PRECONJ', '')}
 ${vr('JODATE', '')}
-${vr('CPVILMA', p.CPVILMA)}
+${vr('CPVILMA', isMain ? (p.CPVILMA||'') : (persons[0].CPVILMA||''))}
 ${vr('NOTMA', '')}
 ${vr('HISTORIQUE', hasH ? 'O' : 'N')}
 ${vr('INTCONJPURIEL', '')}
@@ -646,7 +656,7 @@ ${vr('NATION', p.NATION)}
 ${vr('INCAPABLE', '')}
 ${vr('TITRE', p.TITRE)}
 ${vr('DATMOR', '')}
-${vr('DATMA', showM ? toInotDate(p.DATMA) : '')}
+${vr('DATMA', showM ? (isMain ? toInotDate(p.DATMA) : toInotDate(persons[0].DATMA)) : '')}
 ${vr('CPAYMA', showM ? 'FR' : '')}
 ${vr('ADR1IMP', p.ADR1IMP)}
 ${vr('ADR2IMP', '')}
