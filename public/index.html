@@ -80,6 +80,8 @@
     .dossier-btn { border: 1px solid #ddd; border-radius: 4px; padding: 13px 16px; background: #fff; cursor: pointer; text-align: left; transition: all .15s; color: #333; }
     .dossier-btn:hover { border-color: #555; background: #555; color: #fff; }
     .dossier-btn.selected { border-color: #111; background: #111; color: #fff; }
+    .dossier-btn.locked { pointer-events: none; opacity: .5; }
+    .dossier-btn.selected.locked { opacity: 1; cursor: default; }
     .dossier-btn .lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; display: block; }
     .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; font-size: 11px; color: #666; line-height: 1.6; }
     .rgpd-check.checked { border-color: #111; background: #fafafa; }
@@ -202,6 +204,14 @@
 <script>
 'use strict';
 
+// --- Paramètres URL ---
+// ?dossier=achat   → type pré-sélectionné et verrouillé
+// ?etatcivil=0     → sections état civil masquées
+const _urlParams = new URLSearchParams(window.location.search);
+const URL_DOSSIER    = _urlParams.get('dossier') || '';   // ex: 'achat'
+const URL_ETATCIVIL  = _urlParams.get('etatcivil');       // '0' = masqué
+const SKIP_ETATCIVIL = URL_ETATCIVIL === '0';
+
 // --- Écran accueil ---
 let typeDossier = '';
 const DOSSIER_LABELS = {
@@ -234,6 +244,21 @@ function validerAccueil() {
   document.getElementById('sAccueil').style.display = 'none';
   document.getElementById('sEmail').style.display = 'block';
 }
+
+function initAccueil() {
+  if (!URL_DOSSIER) return;
+  // Pré-sélectionner et verrouiller le type de dossier
+  const btn = document.querySelector(`.dossier-btn[data-type="${URL_DOSSIER}"]`);
+  if (btn) {
+    btn.classList.add('selected');
+    typeDossier = URL_DOSSIER;
+  }
+  // Verrouiller tous les boutons
+  document.querySelectorAll('.dossier-btn').forEach(b => b.classList.add('locked'));
+  // Mettre à jour le bouton COMMENCER
+  checkRgpd();
+}
+document.addEventListener('DOMContentLoaded', initAccueil);
 
 
 // ── État global ───────────────────────────────────────────
@@ -401,12 +426,13 @@ function buildPageHtml(p0, p1) {
 
   return `
   <!-- PERSONNE PRINCIPALE -->
+  ${!SKIP_ETATCIVIL ? `
   <div class="person-block">
     <div class="person-header">
       <div class="person-header-title">Votre état civil</div>
     </div>
     ${blocIdentite(p0, 0)}
-  </div>
+  </div>` : ''}
 
   <!-- SITUATION MATRIMONIALE -->
   <div class="sec" data-idx="0">
@@ -840,12 +866,14 @@ document.getElementById('btnSubmit').onclick = async () => {
   for (let i=0; i<persons.length; i++) {
     const p = persons[i];
     const n = p._role==='conjoint' ? '2ème personne' : 'Vous';
-    if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
-    if (!p.NOMU)    return showErr(`${n} : nom obligatoire.`, i);
-    if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
-    if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
-    if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
-    if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+    if (!SKIP_ETATCIVIL) {
+      if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
+      if (!p.NOMU)    return showErr(`${n} : nom obligatoire.`, i);
+      if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
+      if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
+      if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
+      if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+    }
     if (p._role !== 'conjoint') {
       if (!p.ADR1 || !p.ADR4) return showErr(`Adresse incomplète.`, i);
       if (!p.TEL) return showErr(`Téléphone obligatoire.`, i);
