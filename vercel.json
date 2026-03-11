@@ -3,6 +3,8 @@
     { "source": "/api/otp/envoyer", "destination": "/api/otp/envoyer" },
     { "source": "/api/otp/verifier", "destination": "/api/otp/verifier" },
     { "source": "/api/soumettre", "destination": "/api/soumettre" },
+    { "source": "/api/soumettre-succession", "destination": "/api/soumettre-succession" },
+    { "source": "/succession", "destination": "/public/succession.html" },
     { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
