@@ -198,7 +198,7 @@ module.exports = async (req, res) => {
     <div style="padding:28px 30px;">
       <p style="font-size:14px;color:#555;margin:0 0 20px;">Bonjour,<br><br>Suite à votre questionnaire, voici la liste des pièces à nous faire parvenir.</p>
       <table style="width:100%;border-collapse:collapse;">${piecesHtml}</table>
-      <p style="font-size:12px;color:#999;margin-top:24px;">Vous pouvez nous les adresser par email à <a href="mailto:office@tagot.notaires.fr" style="color:#555;">office@tagot.notaires.fr</a> ou les déposer directement à l'étude.</p>
+      <p style="font-size:12px;color:#999;margin-top:24px;">Merci d'adresser vos pièces à <a href="mailto:office@tagot.notaires.fr" style="color:#333;font-weight:600;">office@tagot.notaires.fr</a> ou de les déposer directement à l'étude (2 rue Dante, 75005 Paris).</p>
     </div>
     <div style="background:#f5f5f5;padding:14px 30px;border-top:1px solid #eee;">
       <p style="margin:0;font-size:10px;color:#bbb;">Grégoire TAGOT | notaire — 2 rue Dante, 75005 Paris</p>
