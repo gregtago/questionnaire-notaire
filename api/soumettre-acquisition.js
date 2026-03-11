@@ -1,9 +1,16 @@
-const { BrevoClient } = require('@getbrevo/brevo');
+const nodemailer = require('nodemailer');
 
-const SENDER  = { name: 'Grégoire TAGOT | notaire', email: process.env.SENDER_EMAIL || 'gregoire@tagot.fr' };
-const NOTAIRE = process.env.NOTAIRE_EMAIL || 'gregoire@tagot.fr';
+const NOTAIRE = process.env.NOTAIRE_EMAIL || process.env.SMTP_USER;
+const FROM    = `"Grégoire TAGOT | notaire" <${process.env.SMTP_USER}>`;
 
-function brevo() { return new BrevoClient({ apiKey: process.env.BREVO_API_KEY }); }
+function transporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'ssl0.ovh.net',
+    port: parseInt(process.env.SMTP_PORT || '465'),
+    secure: true,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  });
+}
 
 function fmtDate(d) {
   if (!d) return '';
@@ -154,12 +161,12 @@ module.exports = async (req, res) => {
 </body></html>`;
 
   try {
-    await brevo().transactionalEmails.sendTransacEmail({
-      sender: SENDER,
-      to: [{ email: NOTAIRE }],
-      replyTo: email ? { email } : undefined,
+    await transporter().sendMail({
+      from: FROM,
+      to: NOTAIRE,
+      replyTo: email || undefined,
       subject: `Questionnaire Acquisition — ${nomAcq} — ${adresseBien}`,
-      htmlContent
+      html: htmlContent
     });
     return res.status(200).json({ ok: true });
   } catch(e) {
