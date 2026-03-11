@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire Succession — Grégoire TAGOT | notaire</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
+    .header { background: #111; color: #fff; padding: 28px 32px 24px; }
+    .header .cabinet { font-size: 19px; letter-spacing: .05em; color: rgba(255,255,255,.85); margin-bottom: 8px; font-weight: 500; }
+    .header h1 { font-size: 24px; font-weight: 300; }
+    .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+    .screen { max-width: 520px; margin: 60px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p { color: #777; font-size: 14px; margin-bottom: 28px; }
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; }
+    .fg input:focus { border-color: #111; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-ghost { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .otp-input { text-align: center; font-size: 28px; letter-spacing: .3em; font-weight: 600; }
+
+    /* Formulaire */
+    .form-wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+
+    /* Barre de progression */
+    .progress-bar-wrap { background: #e5e5e5; border-radius: 4px; height: 4px; margin-bottom: 28px; }
+    .progress-bar { height: 4px; background: #111; border-radius: 4px; transition: width .3s; }
+    .progress-label { font-size: 11px; color: #aaa; margin-bottom: 8px; letter-spacing: .06em; text-transform: uppercase; }
+
+    /* Navigation sections */
+    .section-nav { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .sec-nav-btn { padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 12px; cursor: pointer; background: #fff; color: #888; white-space: nowrap; }
+    .sec-nav-btn.active { background: #111; color: #fff; border-color: #111; }
+    .sec-nav-btn.done { border-color: #111; color: #111; }
+
+    .sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; margin-bottom: 14px; }
+    .sec-title { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #bbb; margin-bottom: 18px; }
+    .sec-heading { font-size: 16px; font-weight: 500; color: #111; margin-bottom: 6px; }
+    .sec-desc { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
+    .field label .req { color: #c0392b; }
+    .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; font-family: inherit; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #111; }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .choice { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; }
+    .choice.on { background: #111; color: #fff; border-color: #111; }
+    .cond { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .cond.show { display: block; }
+    .hidden { display: none; }
+
+    /* Blocs répétables */
+    .repeat-block { border: 1px solid #e5e5e5; border-radius: 6px; padding: 20px; margin-bottom: 12px; position: relative; background: #fafafa; }
+    .repeat-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .repeat-block-num { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #888; }
+    .btn-remove { background: none; border: 1px solid #e0e0e0; color: #aaa; font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+    .btn-remove:hover { border-color: #c0392b; color: #c0392b; }
+    .btn-add { display: flex; align-items: center; gap: 8px; padding: 11px 18px; background: #fff; border: 1px dashed #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; color: #666; width: 100%; margin-top: 4px; }
+    .btn-add:hover { border-color: #888; color: #111; }
+    .btn-add::before { content: '+'; font-size: 18px; line-height: 1; }
+
+    /* Navigation bas de page */
+    .form-nav { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-prev { flex: 1; padding: 12px; background: #fff; color: #111; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-prev:hover { border-color: #111; }
+    .btn-next { flex: 2; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-next:hover { background: #333; }
+
+    .submit-sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; }
+    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-submit:hover { background: #333; }
+    .btn-submit:disabled { background: #999; cursor: not-allowed; }
+    .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
+    .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+
+    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm .icon { font-size: 44px; margin-bottom: 14px; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; }
+
+    footer { text-align: center; padding: 28px 20px; font-size: 11px; color: #bbb; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    /* Accueil RGPD */
+    .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; font-size: 11px; color: #666; line-height: 1.6; }
+    .rgpd-check.checked { border-color: #111; background: #fafafa; }
+    .rgpd-check input[type=checkbox] { display: none; }
+    .rgpd-check strong { color: #111; font-size: 11px; }
+    .rgpd-accept { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; cursor: pointer; }
+    .rgpd-accept em { font-style: normal; font-size: 11px; font-weight: 600; color: #111; }
+    .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
+
+    @media(max-width:600px){ .row2,.row3{ grid-template-columns:1fr; } .header{ padding: 20px; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
+  <h1 id="pageTitle">Succession</h1>
+  <div class="subtitle" id="pageSub"></div>
+</div>
+
+<!-- ÉCRAN 0 : Accueil RGPD -->
+<div id="sAccueil" class="screen">
+  <div class="card">
+    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">Afin de préparer votre dossier de succession dans les meilleures conditions, nous vous invitons à compléter ce questionnaire. Renseignez les informations demandées sur le défunt, les héritiers et les biens composant la succession.</p>
+
+    <div class="rgpd-check" id="wrapRgpd">
+      <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Protection des données personnelles</strong><br><br>
+      L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Ces données seront susceptibles d'être transférées aux destinataires suivants : les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux des activités notariales, les offices notariaux participant ou concourant à l'acte, les établissements financiers concernés. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
+      <label class="rgpd-accept" for="cbRgpd">
+        <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+
+    <div class="rgpd-check" id="wrapLre" style="margin-top:10px">
+      <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+      Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.
+      <label class="rgpd-accept" for="cbLre">
+        <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+
+    <button class="btn" id="btnAccueil" style="margin-top:20px" disabled onclick="validerAccueil()">COMMENCER</button>
+    <div class="err" id="eAccueil"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 1 : Email -->
+<div id="sEmail" class="screen" style="display:none">
+  <div class="card">
+    <h2>Vérification email</h2>
+    <p>Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.</p>
+    <div class="fg">
+      <label>Adresse email <span style="color:#c0392b">*</span></label>
+      <input type="email" id="iEmail" autocomplete="email">
+    </div>
+    <button class="btn" id="btnSend">ENVOYER LE CODE</button>
+    <div class="err" id="eEmail"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 2 : Code OTP -->
+<div id="sCode" class="screen" style="display:none">
+  <div class="card">
+    <h2>Code de vérification</h2>
+    <p id="otpMsg">Saisissez le code reçu par email.</p>
+    <div class="fg">
+      <label>Code à 6 chiffres</label>
+      <input type="text" id="iCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    </div>
+    <button class="btn" id="btnVerify">VALIDER</button>
+    <div class="err" id="eCode"></div>
+    <br><button class="btn-ghost" id="btnResend">Renvoyer le code</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 3 : Formulaire -->
+<div id="sForm" style="display:none">
+  <div class="form-wrap">
+    <div class="progress-label" id="progressLabel"></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div id="formContent"></div>
+    <div class="form-nav" id="formNav"></div>
+    <div class="submit-sec" id="submitSec" style="display:none">
+      <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
+      <div class="ferr" id="ferr"></div>
+      <div class="rgpd-note">✓ Mentions RGPD acceptées en début de questionnaire.</div>
+    </div>
+  </div>
+</div>
+
+<footer>questionnaire.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
+
+<script>
+'use strict';
+
+// ── État global ───────────────────────────────────────────
+let email0 = '';
+let otpToken = '';
+let currentSection = 0;
+
+// Données du formulaire
+const D = {
+  // Section 1 : Défunt
+  defunt: {
+    civilite: '', nom: '', nomNaissance: '', prenoms: '',
+    dateNaissance: '', lieuNaissance: '', nationalite: '',
+    profession: '', numSecu: '', dateDeces: '', lieuDeces: '', adresse: ''
+  },
+  // Section 2 : Situation familiale
+  situation: {
+    etat: '', // C M P D V
+    dateMariage: '', lieuMariage: '', contratMariage: '', regimeMatrimonial: '', notaireContrat: ''
+  },
+  // Section 3 : Conjoint survivant
+  conjoint: {
+    afficher: false,
+    nom: '', prenoms: '', dateNaissance: '', lieuNaissance: '',
+    nationalite: '', profession: '', adresse: '', tel: '', email: ''
+  },
+  // Section 4 : Héritiers
+  heritiers: [],
+  // Section 5 : Dispositions
+  dispositions: {
+    testament: '', donationEntreEpoux: '', donationsAnterieures: '',
+    donations: []
+  },
+  // Section 6 : Comptes bancaires
+  banques: { comptes: [], coffreFort: '', assuranceVie: '' },
+  // Section 7 : Biens immobiliers
+  immobilier: { biens: [] },
+  // Section 8 : Autres actifs
+  autresActifs: {
+    vehicules: '', vehiculesDetail: '',
+    partsSociete: '', partsSocieteDetail: '',
+    crypto: '', cryptoDetail: '',
+    oeuvres: '', oeuvresDetail: '',
+    fondsCommerce: '', fondsCommerceDetail: ''
+  },
+  // Section 9 : Dettes
+  dettes: {
+    emprunts: '', empruntsDetail: '',
+    caution: '', cautionDetail: '',
+    factures: '', facturesDetail: '',
+    redressement: '', redressementDetail: ''
+  },
+  // Section 10 : Fiscalité
+  fiscalite: {
+    ir: '', irDetail: '',
+    ifi: '', ifiDetail: '',
+    taxesLocales: '', taxesLocalesDetail: ''
+  }
+};
+
+const SECTIONS = [
+  { id: 's1', title: 'Personne décédée' },
+  { id: 's2', title: 'Situation familiale' },
+  { id: 's3', title: 'Conjoint survivant' },
+  { id: 's4', title: 'Héritiers' },
+  { id: 's5', title: 'Dispositions' },
+  { id: 's6', title: 'Comptes bancaires' },
+  { id: 's7', title: 'Biens immobiliers' },
+  { id: 's8', title: 'Autres actifs' },
+  { id: 's9', title: 'Dettes' },
+  { id: 's10', title: 'Fiscalité' }
+];
+
+// ── Accueil ───────────────────────────────────────────────
+function checkRgpd() {
+  const ok = document.getElementById('cbRgpd').checked && document.getElementById('cbLre').checked;
+  document.getElementById('btnAccueil').disabled = !ok;
+}
+
+function validerAccueil() {
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+
+// ── OTP ───────────────────────────────────────────────────
+document.getElementById('btnSend').onclick = async () => {
+  const email = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!email || !email.includes('@')) { err.textContent = 'Adresse email invalide.'; return; }
+  err.textContent = '';
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('btnSend').textContent = 'Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    email0 = email;
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${email}. Saisissez-le ci-dessous.`;
+  } catch(e) {
+    err.textContent = e.message;
+  } finally {
+    document.getElementById('btnSend').disabled = false;
+    document.getElementById('btnSend').textContent = 'ENVOYER LE CODE';
+  }
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length !== 6) { err.textContent = 'Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  document.getElementById('btnVerify').disabled = true;
+  try {
+    const r = await fetch('/api/otp/verifier', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email0, code })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Code incorrect');
+    otpToken = d.token || '';
+    D.defunt.email = email0;
+    document.getElementById('sCode').style.display = 'none';
+    document.getElementById('sForm').style.display = 'block';
+    document.getElementById('pageSub').style.display = 'none';
+    renderSection(0);
+  } catch(e) {
+    err.textContent = e.message;
+  } finally {
+    document.getElementById('btnVerify').disabled = false;
+  }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+  document.getElementById('iCode').value = '';
+};
+
+// ── Rendu des sections ────────────────────────────────────
+function updateProgress(idx) {
+  const total = SECTIONS.length;
+  const pct = Math.round(((idx + 1) / total) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Étape ${idx + 1} sur ${total} — ${SECTIONS[idx].title}`;
+}
+
+function renderSection(idx) {
+  currentSection = idx;
+  updateProgress(idx);
+  const content = document.getElementById('formContent');
+  const nav = document.getElementById('formNav');
+  const submitSec = document.getElementById('submitSec');
+  const isLast = idx === SECTIONS.length - 1;
+
+  content.innerHTML = buildSectionHtml(idx);
+  bindSection(idx);
+
+  nav.innerHTML = `
+    ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx - 1})">← Précédent</button>` : ''}
+    ${!isLast ? `<button class="btn-next" onclick="nextSection(${idx})">Suivant →</button>` : ''}
+  `;
+  submitSec.style.display = isLast ? 'block' : 'none';
+  window.scrollTo(0, 0);
+}
+
+function nextSection(idx) {
+  renderSection(idx + 1);
+}
+
+// ── Constructeurs HTML par section ───────────────────────
+function buildSectionHtml(idx) {
+  switch(idx) {
+    case 0: return buildS1();
+    case 1: return buildS2();
+    case 2: return buildS3();
+    case 3: return buildS4();
+    case 4: return buildS5();
+    case 5: return buildS6();
+    case 6: return buildS7();
+    case 7: return buildS8();
+    case 8: return buildS9();
+    case 9: return buildS10();
+    default: return '';
+  }
+}
+
+function x(v) { return (v || '').replace(/"/g, '&quot;'); }
+
+// Section 1 : Personne décédée
+function buildS1() {
+  const d = D.defunt;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Informations sur la personne décédée</div>
+    <div class="sec-desc">Renseignez l'état civil complet du défunt.</div>
+    <div class="row3">
+      <div class="field">
+        <label>Nom d'usage <span class="req">*</span></label>
+        <input type="text" data-d="defunt.nom" value="${x(d.nom)}">
+      </div>
+      <div class="field">
+        <label>Nom de naissance <span class="opt">(si différent)</span></label>
+        <input type="text" data-d="defunt.nomNaissance" value="${x(d.nomNaissance)}">
+      </div>
+      <div class="field">
+        <label>Prénoms <span class="req">*</span></label>
+        <input type="text" data-d="defunt.prenoms" value="${x(d.prenoms)}">
+      </div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Date de naissance</label>
+        <input type="date" data-d="defunt.dateNaissance" value="${x(d.dateNaissance)}">
+      </div>
+      <div class="field">
+        <label>Lieu de naissance</label>
+        <input type="text" data-d="defunt.lieuNaissance" value="${x(d.lieuNaissance)}">
+      </div>
+      <div class="field">
+        <label>Nationalité</label>
+        <input type="text" data-d="defunt.nationalite" value="${x(d.nationalite)}">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Profession</label>
+        <input type="text" data-d="defunt.profession" value="${x(d.profession)}">
+      </div>
+      <div class="field">
+        <label>N° de sécurité sociale</label>
+        <input type="text" data-d="defunt.numSecu" value="${x(d.numSecu)}" inputmode="numeric" maxlength="15">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Date du décès <span class="req">*</span></label>
+        <input type="date" data-d="defunt.dateDeces" value="${x(d.dateDeces)}">
+      </div>
+      <div class="field">
+        <label>Lieu du décès <span class="req">*</span></label>
+        <input type="text" data-d="defunt.lieuDeces" value="${x(d.lieuDeces)}">
+      </div>
+    </div>
+    <div class="field">
+      <label>Dernière adresse</label>
+      <input type="text" data-d="defunt.adresse" value="${x(d.adresse)}">
+    </div>
+  </div>`;
+}
+
+// Section 2 : Situation familiale
+function buildS2() {
+  const s = D.situation;
+  const e = s.etat;
+  const showCouple = ['M','P'].includes(e);
+  return `
+  <div class="sec">
+    <div class="sec-heading">Situation familiale</div>
+    <div class="sec-desc">Quelle était la situation familiale du défunt au moment du décès ?</div>
+    <div class="field">
+      <label>Situation <span class="req">*</span></label>
+      <div class="btns">
+        ${[['C','Célibataire'],['M','Marié(e)'],['P','Pacsé(e)'],['D','Divorcé(e)'],['V','Veuf / Veuve']].map(([k,v])=>
+          `<button type="button" class="choice${e===k?' on':''}" data-etat="${k}">${v}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="cond${showCouple?' show':''}" id="condCouple">
+      <div class="sec-title">Détails du mariage / PACS</div>
+      <div class="row2">
+        <div class="field">
+          <label>Date du mariage / PACS</label>
+          <input type="date" data-d="situation.dateMariage" value="${x(s.dateMariage)}">
+        </div>
+        <div class="field">
+          <label>Lieu</label>
+          <input type="text" data-d="situation.lieuMariage" value="${x(s.lieuMariage)}">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Contrat de mariage</label>
+          <div class="btns">
+            ${[['oui','Oui'],['non','Non']].map(([k,v])=>
+              `<button type="button" class="choice${s.contratMariage===k?' on':''}" data-contrat="${k}">${v}</button>`
+            ).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Régime matrimonial</label>
+          <select data-d="situation.regimeMatrimonial">
+            <option value="">— Sélectionner —</option>
+            <option value="communaute_legale"${s.regimeMatrimonial==='communaute_legale'?' selected':''}>Communauté réduite aux acquêts (régime légal)</option>
+            <option value="separation"${s.regimeMatrimonial==='separation'?' selected':''}>Séparation de biens</option>
+            <option value="communaute_universelle"${s.regimeMatrimonial==='communaute_universelle'?' selected':''}>Communauté universelle</option>
+            <option value="participation"${s.regimeMatrimonial==='participation'?' selected':''}>Participation aux acquêts</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notaire du contrat <span class="opt">(si contrat)</span></label>
+        <input type="text" data-d="situation.notaireContrat" value="${x(s.notaireContrat)}">
+      </div>
+    </div>
+  </div>`;
+}
+
+// Section 3 : Conjoint survivant
+function buildS3() {
+  const c = D.conjoint;
+  const show = ['M','P'].includes(D.situation.etat);
+  if (!show) {
+    return `<div class="sec"><div class="sec-heading">Conjoint survivant</div>
+      <p style="color:#aaa;font-size:13px;padding:8px 0;">Sans objet selon la situation familiale renseignée.</p></div>`;
+  }
+  return `
+  <div class="sec">
+    <div class="sec-heading">Conjoint ou partenaire survivant</div>
+    <div class="row2">
+      <div class="field">
+        <label>Nom <span class="req">*</span></label>
+        <input type="text" data-d="conjoint.nom" value="${x(c.nom)}">
+      </div>
+      <div class="field">
+        <label>Prénoms <span class="req">*</span></label>
+        <input type="text" data-d="conjoint.prenoms" value="${x(c.prenoms)}">
+      </div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Date de naissance</label>
+        <input type="date" data-d="conjoint.dateNaissance" value="${x(c.dateNaissance)}">
+      </div>
+      <div class="field">
+        <label>Lieu de naissance</label>
+        <input type="text" data-d="conjoint.lieuNaissance" value="${x(c.lieuNaissance)}">
+      </div>
+      <div class="field">
+        <label>Nationalité</label>
+        <input type="text" data-d="conjoint.nationalite" value="${x(c.nationalite)}">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Profession</label>
+        <input type="text" data-d="conjoint.profession" value="${x(c.profession)}">
+      </div>
+      <div class="field">
+        <label>Téléphone</label>
+        <input type="tel" data-d="conjoint.tel" value="${x(c.tel)}">
+      </div>
+    </div>
+    <div class="field">
+      <label>Adresse</label>
+      <input type="text" data-d="conjoint.adresse" value="${x(c.adresse)}">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" data-d="conjoint.email" value="${x(c.email)}">
+    </div>
+  </div>`;
+}
+
+// Section 4 : Héritiers
+function buildS4() {
+  if (!D.heritiers.length) D.heritiers.push(newHeritier());
+  return `
+  <div class="sec">
+    <div class="sec-heading">Héritiers</div>
+    <div class="sec-desc">Renseignez les coordonnées de chaque héritier. Vous pouvez en ajouter autant que nécessaire.</div>
+    <div id="heritiersList">
+      ${D.heritiers.map((h, i) => buildHeritierBlock(h, i)).join('')}
+    </div>
+    <button class="btn-add" onclick="addHeritier()">Ajouter un héritier</button>
+  </div>`;
+}
+
+function newHeritier() {
+  return { nom:'', prenoms:'', dateNaissance:'', lieuNaissance:'', adresse:'', tel:'', email:'', lien:'' };
+}
+
+function buildHeritierBlock(h, i) {
+  return `
+  <div class="repeat-block" id="heritier_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Héritier ${i+1}</span>
+      ${i > 0 ? `<button class="btn-remove" onclick="removeHeritier(${i})">Supprimer</button>` : ''}
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nom</label><input type="text" data-h="${i}.nom" value="${x(h.nom)}"></div>
+      <div class="field"><label>Prénoms</label><input type="text" data-h="${i}.prenoms" value="${x(h.prenoms)}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Date de naissance</label><input type="date" data-h="${i}.dateNaissance" value="${x(h.dateNaissance)}"></div>
+      <div class="field"><label>Lieu de naissance</label><input type="text" data-h="${i}.lieuNaissance" value="${x(h.lieuNaissance)}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Téléphone</label><input type="tel" data-h="${i}.tel" value="${x(h.tel)}"></div>
+      <div class="field"><label>Email</label><input type="email" data-h="${i}.email" value="${x(h.email)}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Adresse</label><input type="text" data-h="${i}.adresse" value="${x(h.adresse)}"></div>
+      <div class="field">
+        <label>Lien avec le défunt</label>
+        <select data-h="${i}.lien">
+          <option value="">— Sélectionner —</option>
+          ${[['enfant','Enfant'],['conjoint','Conjoint(e)'],['parent','Parent'],['frere_soeur','Frère / Sœur'],['autre','Autre']].map(([k,v])=>
+            `<option value="${k}"${h.lien===k?' selected':''}>${v}</option>`
+          ).join('')}
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addHeritier() {
+  D.heritiers.push(newHeritier());
+  document.getElementById('heritiersList').innerHTML = D.heritiers.map((h,i) => buildHeritierBlock(h,i)).join('');
+  bindHeritiers();
+}
+
+function removeHeritier(i) {
+  D.heritiers.splice(i, 1);
+  document.getElementById('heritiersList').innerHTML = D.heritiers.map((h,i) => buildHeritierBlock(h,i)).join('');
+  bindHeritiers();
+}
+
+// Section 5 : Dispositions
+function buildS5() {
+  const d = D.dispositions;
+  const showDons = d.donationsAnterieures === 'oui';
+  return `
+  <div class="sec">
+    <div class="sec-heading">Dispositions du défunt</div>
+    <div class="sec-desc">Ces informations sont essentielles pour déterminer les droits de chaque héritier.</div>
+    <div class="field">
+      <label>Testament</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
+          `<button type="button" class="choice${d.testament===k?' on':''}" data-dis="testament" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Donation entre époux (donation au dernier vivant)</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
+          `<button type="button" class="choice${d.donationEntreEpoux===k?' on':''}" data-dis="donationEntreEpoux" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Donations antérieures consenties</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
+          `<button type="button" class="choice${d.donationsAnterieures===k?' on':''}" data-dis="donationsAnterieures" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="cond${showDons?' show':''}" id="condDons">
+      <div class="sec-title">Détail des donations</div>
+      <div id="donationsList">
+        ${(d.donations||[]).map((don, i) => buildDonationBlock(don, i)).join('')}
+      </div>
+      <button class="btn-add" onclick="addDonation()">Ajouter une donation</button>
+    </div>
+  </div>`;
+}
+
+function newDonation() { return { date:'', montant:'', beneficiaire:'', type:'' }; }
+
+function buildDonationBlock(don, i) {
+  return `
+  <div class="repeat-block" id="donation_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Donation ${i+1}</span>
+      <button class="btn-remove" onclick="removeDonation(${i})">Supprimer</button>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Date</label><input type="date" data-don="${i}.date" value="${x(don.date)}"></div>
+      <div class="field"><label>Montant</label><input type="text" data-don="${i}.montant" value="${x(don.montant)}" placeholder="ex : 50 000 €"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Bénéficiaire</label><input type="text" data-don="${i}.beneficiaire" value="${x(don.beneficiaire)}"></div>
+      <div class="field"><label>Type</label>
+        <select data-don="${i}.type">
+          <option value="">— Sélectionner —</option>
+          ${[['manuel','Don manuel'],['partage','Donation-partage'],['immobilier','Donation immobilière'],['assurance_vie','Assurance-vie'],['autre','Autre']].map(([k,v])=>
+            `<option value="${k}"${don.type===k?' selected':''}>${v}</option>`
+          ).join('')}
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addDonation() {
+  D.dispositions.donations.push(newDonation());
+  document.getElementById('donationsList').innerHTML = D.dispositions.donations.map((d,i) => buildDonationBlock(d,i)).join('');
+  bindDonations();
+}
+
+function removeDonation(i) {
+  D.dispositions.donations.splice(i, 1);
+  document.getElementById('donationsList').innerHTML = D.dispositions.donations.map((d,i) => buildDonationBlock(d,i)).join('');
+  bindDonations();
+}
+
+// Section 6 : Comptes bancaires
+function buildS6() {
+  const b = D.banques;
+  if (!b.comptes.length) b.comptes.push(newCompte());
+  return `
+  <div class="sec">
+    <div class="sec-heading">Comptes bancaires</div>
+    <div class="sec-desc">Listez les comptes bancaires, livrets et placements connus du défunt.</div>
+    <div id="comptesList">
+      ${b.comptes.map((c, i) => buildCompteBlock(c, i)).join('')}
+    </div>
+    <button class="btn-add" onclick="addCompte()">Ajouter un compte</button>
+    <div style="margin-top:20px;padding-top:20px;border-top:1px solid #eee;">
+      <div class="field">
+        <label>Coffre-fort bancaire</label>
+        <div class="btns">
+          ${[['oui','Oui'],['non','Non']].map(([k,v])=>
+            `<button type="button" class="choice${b.coffreFort===k?' on':''}" data-banq="coffreFort" data-v="${k}">${v}</button>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="field">
+        <label>Contrat(s) d'assurance-vie</label>
+        <div class="btns">
+          ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
+            `<button type="button" class="choice${b.assuranceVie===k?' on':''}" data-banq="assuranceVie" data-v="${k}">${v}</button>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function newCompte() { return { banque:'', ville:'', type:'' }; }
+
+function buildCompteBlock(c, i) {
+  return `
+  <div class="repeat-block" id="compte_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Compte ${i+1}</span>
+      ${i > 0 ? `<button class="btn-remove" onclick="removeCompte(${i})">Supprimer</button>` : ''}
+    </div>
+    <div class="row3">
+      <div class="field"><label>Banque</label><input type="text" data-cpt="${i}.banque" value="${x(c.banque)}"></div>
+      <div class="field"><label>Ville</label><input type="text" data-cpt="${i}.ville" value="${x(c.ville)}"></div>
+      <div class="field"><label>Type</label>
+        <select data-cpt="${i}.type">
+          <option value="">— Type —</option>
+          ${[['courant','Compte courant'],['livret','Livret'],['pea','PEA'],['titre','Compte-titres'],['autre','Autre']].map(([k,v])=>
+            `<option value="${k}"${c.type===k?' selected':''}>${v}</option>`
+          ).join('')}
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addCompte() {
+  D.banques.comptes.push(newCompte());
+  document.getElementById('comptesList').innerHTML = D.banques.comptes.map((c,i) => buildCompteBlock(c,i)).join('');
+  bindComptes();
+}
+
+function removeCompte(i) {
+  D.banques.comptes.splice(i, 1);
+  document.getElementById('comptesList').innerHTML = D.banques.comptes.map((c,i) => buildCompteBlock(c,i)).join('');
+  bindComptes();
+}
+
+// Section 7 : Biens immobiliers
+function buildS7() {
+  const im = D.immobilier;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Biens immobiliers</div>
+    <div class="sec-desc">Listez les biens immobiliers dont le défunt était propriétaire, en tout ou partie.</div>
+    ${im.biens.length === 0 ? '' : `<div id="biensList">${im.biens.map((b,i) => buildBienBlock(b,i)).join('')}</div>`}
+    ${im.biens.length === 0 ? `<div id="biensList"></div>` : ''}
+    <button class="btn-add" onclick="addBien()">Ajouter un bien immobilier</button>
+  </div>`;
+}
+
+function newBien() { return { adresse:'', type:'', quotePart:'', loue:'', valeur:'' }; }
+
+function buildBienBlock(b, i) {
+  return `
+  <div class="repeat-block" id="bien_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Bien ${i+1}</span>
+      <button class="btn-remove" onclick="removeBien(${i})">Supprimer</button>
+    </div>
+    <div class="field"><label>Adresse</label><input type="text" data-bi="${i}.adresse" value="${x(b.adresse)}"></div>
+    <div class="row3">
+      <div class="field"><label>Type</label>
+        <select data-bi="${i}.type">
+          <option value="">— Type —</option>
+          ${[['maison','Maison'],['appartement','Appartement'],['terrain','Terrain'],['commerce','Local commercial'],['autre','Autre']].map(([k,v])=>
+            `<option value="${k}"${b.type===k?' selected':''}>${v}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Quote-part détenue</label><input type="text" data-bi="${i}.quotePart" value="${x(b.quotePart)}" placeholder="ex : 100% ou 1/2"></div>
+      <div class="field"><label>Valeur estimée</label><input type="text" data-bi="${i}.valeur" value="${x(b.valeur)}" placeholder="ex : 250 000 €"></div>
+    </div>
+    <div class="field">
+      <label>Bien loué</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>
+          `<button type="button" class="choice${b.loue===k?' on':''}" data-bien="${i}" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function addBien() {
+  D.immobilier.biens.push(newBien());
+  document.getElementById('biensList').innerHTML = D.immobilier.biens.map((b,i) => buildBienBlock(b,i)).join('');
+  bindBiens();
+}
+
+function removeBien(i) {
+  D.immobilier.biens.splice(i, 1);
+  document.getElementById('biensList').innerHTML = D.immobilier.biens.map((b,i) => buildBienBlock(b,i)).join('');
+  bindBiens();
+}
+
+// Section 8 : Autres actifs
+function buildS8() {
+  const a = D.autresActifs;
+  const items = [
+    ['vehicules','Véhicules (voiture, moto, bateau…)', 'Marque, modèle, immatriculation'],
+    ['partsSociete','Parts de société ou actions','Dénomination, % de détention'],
+    ['crypto','Cryptomonnaies','Préciser si possible'],
+    ['oeuvres',"Œuvres d'art ou objets de valeur",'Description sommaire'],
+    ['fondsCommerce','Fonds de commerce','Activité, adresse']
+  ];
+  return `
+  <div class="sec">
+    <div class="sec-heading">Autres actifs</div>
+    <div class="sec-desc">Signalez tout autre bien ou actif composant la succession.</div>
+    ${items.map(([key, label, placeholder]) => `
+    <div class="field">
+      <label>${label}</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>
+          `<button type="button" class="choice${a[key]===k?' on':''}" data-aa="${key}" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+      <div class="cond${a[key]==='oui'?' show':''}" id="cond_${key}">
+        <input type="text" data-d="autresActifs.${key}Detail" value="${x(a[key+'Detail'])}" placeholder="${placeholder}">
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// Section 9 : Dettes
+function buildS9() {
+  const d = D.dettes;
+  const items = [
+    ['emprunts','Emprunts bancaires en cours','Banque, capital restant dû'],
+    ['caution','Engagement de caution','En faveur de qui, montant'],
+    ['factures','Factures impayées ou dettes courantes','Nature et montant estimé'],
+    ['redressement','Redressement fiscal ou contrôle en cours','Préciser']
+  ];
+  return `
+  <div class="sec">
+    <div class="sec-heading">Dettes et passif</div>
+    <div class="sec-desc">Les dettes du défunt viennent en déduction de l'actif successoral.</div>
+    ${items.map(([key, label, placeholder]) => `
+    <div class="field">
+      <label>${label}</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>
+          `<button type="button" class="choice${d[key]===k?' on':''}" data-det="${key}" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+      <div class="cond${d[key]==='oui'?' show':''}" id="conddet_${key}">
+        <input type="text" data-d="dettes.${key}Detail" value="${x(d[key+'Detail'])}" placeholder="${placeholder}">
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// Section 10 : Fiscalité
+function buildS10() {
+  const f = D.fiscalite;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Situation fiscale</div>
+    <div class="sec-desc">Ces informations permettent de compléter la déclaration de succession.</div>
+    <div class="field">
+      <label>Déclaration d'impôt sur le revenu en cours (année du décès)</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','À déposer'],['non','Déjà déposée'],['inconnu','Je ne sais pas']].map(([k,v])=>
+          `<button type="button" class="choice${f.ir===k?' on':''}" data-fisc="ir" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+      <div class="cond${f.ir==='oui'?' show':''}" id="condfir">
+        <input type="text" data-d="fiscalite.irDetail" value="${x(f.irDetail)}" placeholder="Précisions">
+      </div>
+    </div>
+    <div class="field">
+      <label>Impôt sur la fortune immobilière (IFI)</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
+          `<button type="button" class="choice${f.ifi===k?' on':''}" data-fisc="ifi" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+      <div class="cond${f.ifi==='oui'?' show':''}" id="condfifi">
+        <input type="text" data-d="fiscalite.ifiDetail" value="${x(f.ifiDetail)}" placeholder="Valeur patrimoine IFI estimée">
+      </div>
+    </div>
+    <div class="field">
+      <label>Taxes locales (TF, CFE…) à régulariser</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
+          `<button type="button" class="choice${f.taxesLocales===k?' on':''}" data-fisc="taxesLocales" data-v="${k}">${v}</button>`
+        ).join('')}
+      </div>
+      <div class="cond${f.taxesLocales==='oui'?' show':''}" id="condfTaxes">
+        <input type="text" data-d="fiscalite.taxesLocalesDetail" value="${x(f.taxesLocalesDetail)}" placeholder="Précisions">
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Binding génériques ────────────────────────────────────
+function setNested(obj, path, val) {
+  const parts = path.split('.');
+  let cur = obj;
+  for (let i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
+  cur[parts[parts.length - 1]] = val;
+}
+
+function bindSection(idx) {
+  // Champs data-d (champs simples dans D)
+  document.querySelectorAll('[data-d]').forEach(el => {
+    el.oninput = () => setNested(D, el.dataset.d, el.value);
+  });
+  if (idx === 1) bindS2();
+  if (idx === 3) bindHeritiers();
+  if (idx === 4) { bindDispositions(); bindDonations(); }
+  if (idx === 5) { bindComptes(); bindBanqChoices(); }
+  if (idx === 6) bindBiens();
+  if (idx === 7) bindAA();
+  if (idx === 8) bindDettes();
+  if (idx === 9) bindFisc();
+}
+
+function bindS2() {
+  document.querySelectorAll('[data-etat]').forEach(btn => {
+    btn.onclick = () => {
+      D.situation.etat = btn.dataset.etat;
+      document.querySelectorAll('[data-etat]').forEach(b => b.classList.toggle('on', b===btn));
+      const showCouple = ['M','P'].includes(D.situation.etat);
+      document.getElementById('condCouple').classList.toggle('show', showCouple);
+    };
+  });
+  document.querySelectorAll('[data-contrat]').forEach(btn => {
+    btn.onclick = () => {
+      D.situation.contratMariage = btn.dataset.contrat;
+      document.querySelectorAll('[data-contrat]').forEach(b => b.classList.toggle('on', b===btn));
+    };
+  });
+}
+
+function bindHeritiers() {
+  document.querySelectorAll('[data-h]').forEach(el => {
+    el.oninput = () => {
+      const [i, key] = el.dataset.h.split('.');
+      D.heritiers[+i][key] = el.value;
+    };
+    el.onchange = () => {
+      const [i, key] = el.dataset.h.split('.');
+      D.heritiers[+i][key] = el.value;
+    };
+  });
+}
+
+function bindDispositions() {
+  document.querySelectorAll('[data-dis]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.dis;
+      D.dispositions[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-dis="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      if (key === 'donationsAnterieures') {
+        document.getElementById('condDons').classList.toggle('show', btn.dataset.v === 'oui');
+        if (btn.dataset.v === 'oui' && !D.dispositions.donations.length) {
+          D.dispositions.donations.push(newDonation());
+          document.getElementById('donationsList').innerHTML = D.dispositions.donations.map((d,i) => buildDonationBlock(d,i)).join('');
+          bindDonations();
+        }
+      }
+    };
+  });
+}
+
+function bindDonations() {
+  document.querySelectorAll('[data-don]').forEach(el => {
+    el.oninput = () => { const [i,k] = el.dataset.don.split('.'); D.dispositions.donations[+i][k] = el.value; };
+    el.onchange = () => { const [i,k] = el.dataset.don.split('.'); D.dispositions.donations[+i][k] = el.value; };
+  });
+}
+
+function bindComptes() {
+  document.querySelectorAll('[data-cpt]').forEach(el => {
+    el.oninput = () => { const [i,k] = el.dataset.cpt.split('.'); D.banques.comptes[+i][k] = el.value; };
+    el.onchange = () => { const [i,k] = el.dataset.cpt.split('.'); D.banques.comptes[+i][k] = el.value; };
+  });
+}
+
+function bindBanqChoices() {
+  document.querySelectorAll('[data-banq]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.banq;
+      D.banques[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-banq="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+    };
+  });
+}
+
+function bindBiens() {
+  document.querySelectorAll('[data-bi]').forEach(el => {
+    el.oninput = () => { const [i,k] = el.dataset.bi.split('.'); D.immobilier.biens[+i][k] = el.value; };
+    el.onchange = () => { const [i,k] = el.dataset.bi.split('.'); D.immobilier.biens[+i][k] = el.value; };
+  });
+  document.querySelectorAll('[data-bien]').forEach(btn => {
+    btn.onclick = () => {
+      const i = +btn.dataset.bien;
+      D.immobilier.biens[i].loue = btn.dataset.v;
+      document.querySelectorAll(`[data-bien="${i}"]`).forEach(b => b.classList.toggle('on', b===btn));
+    };
+  });
+}
+
+function bindAA() {
+  const keys = ['vehicules','partsSociete','crypto','oeuvres','fondsCommerce'];
+  document.querySelectorAll('[data-aa]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.aa;
+      D.autresActifs[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-aa="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      document.getElementById('cond_'+key).classList.toggle('show', btn.dataset.v === 'oui');
+    };
+  });
+  document.querySelectorAll('[data-d^="autresActifs"]').forEach(el => {
+    el.oninput = () => setNested(D, el.dataset.d, el.value);
+  });
+}
+
+function bindDettes() {
+  document.querySelectorAll('[data-det]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.det;
+      D.dettes[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-det="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      document.getElementById('conddet_'+key).classList.toggle('show', btn.dataset.v === 'oui');
+    };
+  });
+  document.querySelectorAll('[data-d^="dettes"]').forEach(el => {
+    el.oninput = () => setNested(D, el.dataset.d, el.value);
+  });
+}
+
+function bindFisc() {
+  document.querySelectorAll('[data-fisc]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.fisc;
+      D.fiscalite[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-fisc="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      const condMap = { ir:'condfir', ifi:'condfifi', taxesLocales:'condfTaxes' };
+      document.getElementById(condMap[key]).classList.toggle('show', btn.dataset.v === 'oui');
+    };
+  });
+  document.querySelectorAll('[data-d^="fiscalite"]').forEach(el => {
+    el.oninput = () => setNested(D, el.dataset.d, el.value);
+  });
+}
+
+// ── Envoi ─────────────────────────────────────────────────
+function showErr(msg) {
+  const el = document.getElementById('ferr');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('btnSubmit').onclick = async () => {
+  const ferr = document.getElementById('ferr');
+  ferr.style.display = 'none';
+
+  if (!D.defunt.nom) return showErr('Nom du défunt obligatoire.');
+  if (!D.defunt.dateDeces) return showErr('Date du décès obligatoire.');
+  if (!D.defunt.lieuDeces) return showErr('Lieu du décès obligatoire.');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+
+  try {
+    const r = await fetch('/api/soumettre-succession', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: D, email: email0 })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+      <div class="icon">✓</div>
+      <h2>Questionnaire envoyé</h2>
+      <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+    </div></div>`;
+  } catch(e) {
+    showErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = 'Envoyer mes réponses';
+  }
+};
+</script>
+</body>
+</html>
