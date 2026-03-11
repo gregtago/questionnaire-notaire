@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire Vente d'une maison — Grégoire TAGOT | notaire</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
+    .header { background: #111; color: #fff; padding: 28px 32px 24px; }
+    .header .cabinet { font-size: 19px; letter-spacing: .05em; color: rgba(255,255,255,.85); margin-bottom: 8px; font-weight: 500; }
+    .header h1 { font-size: 24px; font-weight: 300; }
+    .screen { max-width: 520px; margin: 60px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p { color: #777; font-size: 14px; margin-bottom: 28px; }
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; }
+    .fg input:focus { border-color: #111; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-ghost { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .otp-input { text-align: center; font-size: 28px; letter-spacing: .3em; font-weight: 600; }
+    .form-wrap { max-width: 700px; margin: 0 auto; padding: 28px 20px 80px; }
+    .progress-bar-wrap { background: #e5e5e5; border-radius: 4px; height: 4px; margin-bottom: 28px; }
+    .progress-bar { height: 4px; background: #111; border-radius: 4px; transition: width .3s; }
+    .progress-label { font-size: 11px; color: #aaa; margin-bottom: 8px; letter-spacing: .06em; text-transform: uppercase; }
+    .sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; margin-bottom: 14px; }
+    .sec-heading { font-size: 16px; font-weight: 500; color: #111; margin-bottom: 6px; }
+    .sec-desc { font-size: 13px; color: #888; margin-bottom: 18px; }
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
+    .field label .req { color: #c0392b; }
+    .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; font-family: inherit; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #111; }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .choice { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; }
+    .choice.on { background: #111; color: #fff; border-color: #111; }
+    .cond { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .cond.show { display: block; }
+    .checkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-top: 6px; }
+    .checkitem { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 13px; color: #444; background: #fff; }
+    .checkitem.on { border-color: #111; background: #f5f5f5; font-weight: 500; color: #111; }
+    .checkitem input[type=checkbox] { display: none; }
+    .checkitem::before { content: '○'; font-size: 14px; color: #ccc; flex-shrink: 0; }
+    .checkitem.on::before { content: '●'; color: #111; }
+    .note { font-size: 12px; color: #888; background: #f8f8f6; border-left: 3px solid #ddd; padding: 10px 14px; border-radius: 0 4px 4px 0; margin-top: 10px; line-height: 1.6; }
+    .note strong { color: #555; }
+    .epoux-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .epoux-bloc { border: 1px solid #e5e5e5; border-radius: 6px; padding: 20px; }
+    .epoux-bloc-title { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #fff; background: #111; padding: 8px 14px; border-radius: 4px 4px 0 0; margin: -20px -20px 18px; }
+    .epoux-bloc-title.v2 { background: #2c4a6e; }
+    .form-nav { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-prev { flex: 1; padding: 12px; background: #fff; color: #111; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-prev:hover { border-color: #111; }
+    .btn-next { flex: 2; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-next:hover { background: #333; }
+    .submit-sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; }
+    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-submit:hover { background: #333; }
+    .btn-submit:disabled { background: #999; cursor: not-allowed; }
+    .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
+    .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm .icon { font-size: 44px; margin-bottom: 14px; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; }
+    footer { text-align: center; padding: 28px 20px; font-size: 11px; color: #bbb; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; font-size: 11px; color: #666; line-height: 1.6; }
+    .rgpd-check.checked { border-color: #111; }
+    .rgpd-check input[type=checkbox] { display: none; }
+    .rgpd-check strong { color: #111; font-size: 11px; }
+    .rgpd-accept { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; cursor: pointer; }
+    .rgpd-accept em { font-style: normal; font-size: 11px; font-weight: 600; color: #111; }
+    .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
+    @media(max-width:640px){ .epoux-grid,.row2,.row3{ grid-template-columns:1fr; } .header{ padding:20px; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
+  <h1>Vente d'une maison</h1>
+</div>
+
+<!-- ÉCRAN 0 : RGPD -->
+<div id="sAccueil" class="screen">
+  <div class="card">
+    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">Ce questionnaire nous permet de préparer votre acte de vente. La loi impose au vendeur une obligation d'information et de transparence envers l'acquéreur. Merci de le compléter avec soin.</p>
+    <div class="rgpd-check" id="wrapRgpd">
+      <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Protection des données personnelles</strong><br><br>
+      L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
+      <label class="rgpd-accept" for="cbRgpd">
+        <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+    <div class="rgpd-check" id="wrapLre" style="margin-top:10px">
+      <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+      Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal.
+      <label class="rgpd-accept" for="cbLre">
+        <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+    <button class="btn" id="btnAccueil" style="margin-top:20px" disabled onclick="validerAccueil()">COMMENCER</button>
+    <div class="err" id="eAccueil"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 1 : Email -->
+<div id="sEmail" class="screen" style="display:none">
+  <div class="card">
+    <h2>Vérification email</h2>
+    <p>Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.</p>
+    <div class="fg">
+      <label>Adresse email <span style="color:#c0392b">*</span></label>
+      <input type="email" id="iEmail" autocomplete="email">
+    </div>
+    <button class="btn" id="btnSend">ENVOYER LE CODE</button>
+    <div class="err" id="eEmail"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 2 : OTP -->
+<div id="sCode" class="screen" style="display:none">
+  <div class="card">
+    <h2>Code de vérification</h2>
+    <p id="otpMsg">Saisissez le code reçu par email.</p>
+    <div class="fg">
+      <label>Code à 6 chiffres</label>
+      <input type="text" id="iCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    </div>
+    <button class="btn" id="btnVerify">VALIDER</button>
+    <div class="err" id="eCode"></div>
+    <br><button class="btn-ghost" id="btnResend">Renvoyer le code</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 3 : Formulaire -->
+<div id="sForm" style="display:none">
+  <div class="form-wrap">
+    <div class="progress-label" id="progressLabel"></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div id="formContent"></div>
+    <div class="form-nav" id="formNav"></div>
+    <div class="submit-sec" id="submitSec" style="display:none">
+      <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
+      <div class="ferr" id="ferr"></div>
+      <div class="rgpd-note">✓ Mentions RGPD acceptées en début de questionnaire.</div>
+    </div>
+  </div>
+</div>
+
+<footer>form.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
+
+<script>
+'use strict';
+
+let email0 = '', otpToken = '';
+
+const D = {
+  vendeur1: { nom: '', prenoms: '' },
+  vendeur2: { nom: '', prenoms: '' },
+  nbVendeurs: 1,
+
+  // S2 : Le bien
+  bien: {
+    adresse: '', cp: '', ville: '',
+    residencePrincipale: '', depuisQuand: '',
+    situationJour: '',
+    bail: { loyer: '', depotGarantie: '', dateConge: '' },
+    locatairePrecedent: ''
+  },
+
+  // S3 : Terrain
+  terrain: {
+    lotissement: '', asl: '', aslPresident: '',
+    coproHorizontale: '', syndicNom: '',
+    bornage: '',
+    terrainAttenant: '',
+    terrainBoise: '',
+    pollutionExploitation: '',
+    pollutionPasse: '',
+    pollutionVoisinage: '',
+    carrieres: '',
+    zoneInondable: '',
+    servitudes: '', servitudesDetail: '',
+    murSeparatif: '', murEntretien: '',
+    terrainPente: ''
+  },
+
+  // S4 : Assainissement
+  assainissement: {
+    systemeIndividuel: '', dateVidange: '',
+    toutEgout: '',
+    miseDemeureTravaux: '',
+    eauxPluvialesSeparees: '',
+    connexionReseau: '',
+    taxeRaccordement: '',
+    bonEtat: ''
+  },
+
+  // S5 : Construction et travaux
+  construction: {
+    aFaitConstruire: '',
+    moinsde10ans: '',
+    dommageOuvrage: '',
+    moinsde5ans: '',
+    taxesFiscales: '',
+    prescriptionsPC: '', prescriptionsDetail: '',
+    travauxPosterieur: '',
+    travauxPermis: '',
+    declarationCadastre: ''
+  },
+
+  // S6 : Équipements
+  equipements: {
+    cuveMazout: '',
+    gazVille: '',
+    citerne: '', citerneProprietaire: '', citerneLocataire: '', citerneCoord: '',
+    recuperationEauPluie: '',
+    reservoirEauPluie: '',
+    distributionEauPluie: '',
+    plaqueSignalisation: '',
+    carnetSanitaire: '',
+    dernierEntretienReseau: '',
+    contratAffichage: '',
+    garantiesEquipements: '',
+    installationClassee: '', exploitant: ''
+  },
+
+  // S7 : Prêts / Hypothèques
+  prets: {
+    saisieImmobiliere: '',
+    pretHypotheque: '', pretDetail: '',
+    creditRelais: ''
+  },
+
+  // S8 : Plus-values
+  plusvalue: {
+    residencePrincipale: '', depuisQuand: '',
+    remploi: '',
+    retraiteInvalide: '',
+    travauxSurelevation: '',
+    droitsMutation: '',
+    sinisstreAvant: '', sinistreDepuis: ''
+  },
+
+  // S9 : Fiscalité + motivation
+  fiscalite: {
+    tva: '', tvaDroit: '',
+    deficitFoncier: '',
+    societeCivile: '', societeCivileIR: '', societeCivileIS: '',
+    residentFiscal: ''
+  },
+  motivation: {
+    raisons: [],
+    autreRaison: '', transfertDetail: '',
+    observations: ''
+  }
+};
+
+const SECTIONS = [
+  { title: 'Identification' },
+  { title: 'Le bien vendu' },
+  { title: 'Terrain' },
+  { title: 'Assainissement' },
+  { title: 'Construction et travaux' },
+  { title: 'Équipements' },
+  { title: 'Prêts et hypothèques' },
+  { title: 'Plus-values' },
+  { title: 'Fiscalité et observations' }
+];
+
+// ── Accueil / OTP ─────────────────────────────────────────
+function checkRgpd() {
+  document.getElementById('btnAccueil').disabled =
+    !(document.getElementById('cbRgpd').checked && document.getElementById('cbLre').checked);
+}
+function validerAccueil() {
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+document.getElementById('btnSend').onclick = async () => {
+  const email = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!email || !email.includes('@')) { err.textContent = 'Adresse email invalide.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    email0 = email; otpToken = d.token || '';
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${email}.`;
+  } catch(e) { err.textContent = e.message; }
+  finally { btn.disabled = false; btn.textContent = 'ENVOYER LE CODE'; }
+};
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length !== 6) { err.textContent = 'Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  document.getElementById('btnVerify').disabled = true;
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email0, code, token: otpToken }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Code incorrect');
+    document.getElementById('sCode').style.display = 'none';
+    document.getElementById('sForm').style.display = 'block';
+    renderSection(0);
+  } catch(e) { err.textContent = e.message; }
+  finally { document.getElementById('btnVerify').disabled = false; }
+};
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+  document.getElementById('iCode').value = '';
+};
+
+// ── Navigation ────────────────────────────────────────────
+function renderSection(idx) {
+  const pct = Math.round(((idx+1)/SECTIONS.length)*100);
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = `Étape ${idx+1} sur ${SECTIONS.length} — ${SECTIONS[idx].title}`;
+  const isLast = idx === SECTIONS.length - 1;
+  document.getElementById('formContent').innerHTML = buildSection(idx);
+  bindSection(idx);
+  document.getElementById('formNav').innerHTML = `
+    ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx-1})">← Précédent</button>` : ''}
+    ${!isLast ? `<button class="btn-next" onclick="renderSection(${idx+1})">Suivant →</button>` : ''}`;
+  document.getElementById('submitSec').style.display = isLast ? 'block' : 'none';
+  window.scrollTo(0,0);
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function x(v) { return (v||'').replace(/"/g,'&quot;'); }
+function setN(obj, path, val) {
+  const p = path.split('.'); let c = obj;
+  for (let i=0;i<p.length-1;i++) c=c[p[i]];
+  c[p[p.length-1]] = val;
+}
+function tog(arr, val) { const i=arr.indexOf(val); if(i>=0) arr.splice(i,1); else arr.push(val); }
+
+function buildSection(idx) {
+  switch(idx) {
+    case 0: return buildS1();
+    case 1: return buildS2();
+    case 2: return buildS3();
+    case 3: return buildS4();
+    case 4: return buildS5();
+    case 5: return buildS6();
+    case 6: return buildS7();
+    case 7: return buildS8();
+    case 8: return buildS9();
+    default: return '';
+  }
+}
+
+// ── S1 : Identification ────────────────────────────────────
+function buildS1() {
+  const v1 = D.vendeur1, v2 = D.vendeur2;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Identification</div>
+    <div class="sec-desc">Ces informations servent à identifier le dossier. L'état civil complet est collecté par le questionnaire dédié.</div>
+    <div class="field">
+      <label>Nombre de vendeurs</label>
+      <div class="btns">
+        <button type="button" class="choice${D.nbVendeurs===1?' on':''}" data-nb="1">1 vendeur</button>
+        <button type="button" class="choice${D.nbVendeurs===2?' on':''}" data-nb="2">2 vendeurs</button>
+      </div>
+    </div>
+    <div class="epoux-grid">
+      <div class="epoux-bloc">
+        <div class="epoux-bloc-title">Vendeur 1</div>
+        <div class="field"><label>Nom <span class="req">*</span></label><input type="text" data-d="vendeur1.nom" value="${x(v1.nom)}"></div>
+        <div class="field"><label>Prénoms <span class="req">*</span></label><input type="text" data-d="vendeur1.prenoms" value="${x(v1.prenoms)}"></div>
+      </div>
+      <div class="epoux-bloc${D.nbVendeurs===2?'':' hidden'}" id="blocVendeur2">
+        <div class="epoux-bloc-title v2">Vendeur 2</div>
+        <div class="field"><label>Nom</label><input type="text" data-d="vendeur2.nom" value="${x(v2.nom)}"></div>
+        <div class="field"><label>Prénoms</label><input type="text" data-d="vendeur2.prenoms" value="${x(v2.prenoms)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S2 : Le bien ───────────────────────────────────────────
+function buildS2() {
+  const b = D.bien;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Désignation du bien</div>
+    <div class="field"><label>Adresse <span class="req">*</span></label><input type="text" data-d="bien.adresse" value="${x(b.adresse)}"></div>
+    <div class="row2">
+      <div class="field"><label>Code postal</label><input type="text" data-d="bien.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
+      <div class="field"><label>Ville</label><input type="text" data-d="bien.ville" value="${x(b.ville)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Résidence principale</div>
+    <div class="field">
+      <label>Ce bien constitue-t-il votre résidence principale ?</label>
+      <div class="btns">
+        <button type="button" class="choice${b.residencePrincipale==='oui'?' on':''}" data-b="residencePrincipale" data-v="oui">Oui</button>
+        <button type="button" class="choice${b.residencePrincipale==='non'?' on':''}" data-b="residencePrincipale" data-v="non">Non</button>
+      </div>
+      <div class="cond${b.residencePrincipale==='oui'?' show':''}" id="condDepuisQuand">
+        <div class="field" style="margin-top:10px"><label>Depuis quand ?</label><input type="text" data-d="bien.depuisQuand" value="${x(b.depuisQuand)}" placeholder="ex: janvier 2018"></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Occupation du bien</div>
+    <div class="field">
+      <label>Situation le jour de la vente</label>
+      <div class="btns">
+        <button type="button" class="choice${b.situationJour==='libre'?' on':''}" data-b="situationJour" data-v="libre">Libre de toute occupation</button>
+        <button type="button" class="choice${b.situationJour==='loue'?' on':''}" data-b="situationJour" data-v="loue">Louée</button>
+      </div>
+      <div class="cond${b.situationJour==='loue'?' show':''}" id="condLoue">
+        <div class="note">📎 <strong>Pièces à fournir :</strong> copie du bail et annexes, dernière quittance, montant du dépôt de garantie.</div>
+        <div class="row3" style="margin-top:14px">
+          <div class="field"><label>Loyer mensuel</label><input type="text" data-d="bien.bail.loyer" value="${x(b.bail.loyer)}"></div>
+          <div class="field"><label>Dépôt de garantie</label><input type="text" data-d="bien.bail.depotGarantie" value="${x(b.bail.depotGarantie)}"></div>
+          <div class="field"><label>Date du congé</label><input type="date" data-d="bien.bail.dateConge" value="${x(b.bail.dateConge)}"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>La maison a-t-elle été louée précédemment ?</label>
+      <div class="btns">
+        <button type="button" class="choice${b.locatairePrecedent==='oui'?' on':''}" data-b="locatairePrecedent" data-v="oui">Oui</button>
+        <button type="button" class="choice${b.locatairePrecedent==='non'?' on':''}" data-b="locatairePrecedent" data-v="non">Non</button>
+      </div>
+      <div class="cond${b.locatairePrecedent==='oui'?' show':''}" id="condLocPrecedent">
+        <div class="note" style="margin-top:10px">📎 Joindre copie du bail et original du congé.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S3 : Terrain ───────────────────────────────────────────
+function buildS3() {
+  const t = D.terrain;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Situation du terrain</div>
+    <div class="field">
+      <label>Dépend d'un lotissement ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.lotissement==='oui'?' on':''}" data-tr="lotissement" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.lotissement==='non'?' on':''}" data-tr="lotissement" data-v="non">Non</button>
+      </div>
+      <div class="cond${t.lotissement==='oui'?' show':''}" id="condAsl">
+        <div class="field" style="margin-top:10px">
+          <label>Association syndicale en activité ?</label>
+          <div class="btns">
+            <button type="button" class="choice${t.asl==='oui'?' on':''}" data-tr="asl" data-v="oui">Oui</button>
+            <button type="button" class="choice${t.asl==='non'?' on':''}" data-tr="asl" data-v="non">Non</button>
+          </div>
+          <div class="cond${t.asl==='oui'?' show':''}" id="condAslPresident">
+            <div class="field" style="margin-top:10px"><label>Nom et coordonnées du président</label><input type="text" data-d="terrain.aslPresident" value="${x(t.aslPresident)}"></div>
+          </div>
+        </div>
+        <div class="note">📎 Joindre règlement du lotissement, cahier des charges, statuts de l'ASL.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Dépend d'une copropriété horizontale ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.coproHorizontale==='oui'?' on':''}" data-tr="coproHorizontale" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.coproHorizontale==='non'?' on':''}" data-tr="coproHorizontale" data-v="non">Non</button>
+      </div>
+      <div class="cond${t.coproHorizontale==='oui'?' show':''}" id="condCoproH">
+        <div class="field" style="margin-top:10px"><label>Nom et adresse du syndic</label><input type="text" data-d="terrain.syndicNom" value="${x(t.syndicNom)}"></div>
+        <div class="note">Un mesurage loi Carrez est obligatoire. 📎 Joindre le règlement de copropriété.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Procès-verbal de bornage établi ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.bornage==='oui'?' on':''}" data-tr="bornage" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.bornage==='non'?' on':''}" data-tr="bornage" data-v="non">Non</button>
+      </div>
+      <div class="cond${t.bornage==='oui'?' show':''}" id="condBornage">
+        <div class="note" style="margin-top:10px">📎 Joindre le PV de bornage.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Propriétaire (ou l'avez été dans les 10 dernières années) d'un terrain attenant ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.terrainAttenant==='oui'?' on':''}" data-tr="terrainAttenant" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.terrainAttenant==='non'?' on':''}" data-tr="terrainAttenant" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Terrain référencé comme boisé ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.terrainBoise==='oui'?' on':''}" data-tr="terrainBoise" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.terrainBoise==='non'?' on':''}" data-tr="terrainBoise" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Terrain en pente ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.terrainPente==='oui'?' on':''}" data-tr="terrainPente" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.terrainPente==='non'?' on':''}" data-tr="terrainPente" data-v="non">Non</button>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Sous-sol et pollution</div>
+    <div class="field">
+      <label>Activités polluantes exploitées sur le terrain ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.pollutionExploitation==='oui'?' on':''}" data-tr="pollutionExploitation" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.pollutionExploitation==='non'?' on':''}" data-tr="pollutionExploitation" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Activités polluantes ou dépôts de déchets par le passé ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.pollutionPasse==='oui'?' on':''}" data-tr="pollutionPasse" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.pollutionPasse==='non'?' on':''}" data-tr="pollutionPasse" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Activités polluantes connues dans le voisinage ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.pollutionVoisinage==='oui'?' on':''}" data-tr="pollutionVoisinage" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.pollutionVoisinage==='non'?' on':''}" data-tr="pollutionVoisinage" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Carrières souterraines à l'aplomb du terrain ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.carrieres==='oui'?' on':''}" data-tr="carrieres" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.carrieres==='non'?' on':''}" data-tr="carrieres" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Bien situé en zone inondable ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.zoneInondable==='oui'?' on':''}" data-tr="zoneInondable" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.zoneInondable==='non'?' on':''}" data-tr="zoneInondable" data-v="non">Non</button>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Servitudes</div>
+    <div class="field">
+      <label>Servitudes particulières sur la propriété ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.servitudes==='oui'?' on':''}" data-tr="servitudes" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.servitudes==='non'?' on':''}" data-tr="servitudes" data-v="non">Non</button>
+      </div>
+      <div class="cond${t.servitudes==='oui'?' show':''}" id="condServitudes">
+        <div class="field" style="margin-top:10px"><label>Nature des servitudes</label><input type="text" data-d="terrain.servitudesDetail" value="${x(t.servitudesDetail)}" placeholder="ex: servitude de passage, tour commune…"></div>
+        <div class="note">📎 Si non mentionnées dans le titre de propriété, joindre le document établissant les modalités.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Mur séparatif ?</label>
+      <div class="btns">
+        <button type="button" class="choice${t.murSeparatif==='oui'?' on':''}" data-tr="murSeparatif" data-v="oui">Oui</button>
+        <button type="button" class="choice${t.murSeparatif==='non'?' on':''}" data-tr="murSeparatif" data-v="non">Non</button>
+      </div>
+      <div class="cond${t.murSeparatif==='oui'?' show':''}" id="condMur">
+        <div class="field" style="margin-top:10px"><label>Qui a la charge de son entretien ?</label><input type="text" data-d="terrain.murEntretien" value="${x(t.murEntretien)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S4 : Assainissement ────────────────────────────────────
+function buildS4() {
+  const a = D.assainissement;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Assainissement individuel</div>
+    <div class="field">
+      <label>Système d'assainissement individuel (fosse septique…) ?</label>
+      <div class="btns">
+        <button type="button" class="choice${a.systemeIndividuel==='oui'?' on':''}" data-a="systemeIndividuel" data-v="oui">Oui</button>
+        <button type="button" class="choice${a.systemeIndividuel==='non'?' on':''}" data-a="systemeIndividuel" data-v="non">Non</button>
+      </div>
+      <div class="cond${a.systemeIndividuel==='oui'?' show':''}" id="condIndividuel">
+        <div class="field" style="margin-top:10px"><label>Date de la dernière vidange</label><input type="text" data-d="assainissement.dateVidange" value="${x(a.dateVidange)}" placeholder="ex: mars 2023"></div>
+        <div class="note">📎 Fournir l'attestation SPANC.</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Tout-à-l'égout</div>
+    <div class="field">
+      <label>Raccordement au tout-à-l'égout ?</label>
+      <div class="btns">
+        <button type="button" class="choice${a.toutEgout==='oui'?' on':''}" data-a="toutEgout" data-v="oui">Oui</button>
+        <button type="button" class="choice${a.toutEgout==='non'?' on':''}" data-a="toutEgout" data-v="non">Non</button>
+      </div>
+      <div class="cond${a.toutEgout==='oui'?' show':''}" id="condToutEgout">
+        <div class="field" style="margin-top:14px">
+          <label>Connexion au réseau effectuée ?</label>
+          <div class="btns">
+            <button type="button" class="choice${a.connexionReseau==='oui'?' on':''}" data-a="connexionReseau" data-v="oui">Oui</button>
+            <button type="button" class="choice${a.connexionReseau==='non'?' on':''}" data-a="connexionReseau" data-v="non">Non</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Taxe de raccordement acquittée ?</label>
+          <div class="btns">
+            <button type="button" class="choice${a.taxeRaccordement==='oui'?' on':''}" data-a="taxeRaccordement" data-v="oui">Oui</button>
+            <button type="button" class="choice${a.taxeRaccordement==='non'?' on':''}" data-a="taxeRaccordement" data-v="non">Non</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Installation en bon état ?</label>
+          <div class="btns">
+            <button type="button" class="choice${a.bonEtat==='oui'?' on':''}" data-a="bonEtat" data-v="oui">Oui</button>
+            <button type="button" class="choice${a.bonEtat==='non'?' on':''}" data-a="bonEtat" data-v="non">Non</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Mise en demeure de réaliser des travaux sur l'installation ?</label>
+      <div class="btns">
+        <button type="button" class="choice${a.miseDemeureTravaux==='oui'?' on':''}" data-a="miseDemeureTravaux" data-v="oui">Oui</button>
+        <button type="button" class="choice${a.miseDemeureTravaux==='non'?' on':''}" data-a="miseDemeureTravaux" data-v="non">Non</button>
+      </div>
+      <div class="cond${a.miseDemeureTravaux==='oui'?' show':''}" id="condMiseDemeure">
+        <div class="note" style="margin-top:10px">📎 Joindre copie.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Raccordement distinct eaux pluviales / eaux usées ?</label>
+      <div class="btns">
+        <button type="button" class="choice${a.eauxPluvialesSeparees==='oui'?' on':''}" data-a="eauxPluvialesSeparees" data-v="oui">Oui</button>
+        <button type="button" class="choice${a.eauxPluvialesSeparees==='non'?' on':''}" data-a="eauxPluvialesSeparees" data-v="non">Non</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S5 : Construction et travaux ───────────────────────────
+function buildS5() {
+  const c = D.construction;
+  const travauxRealises = c.travauxPosterieur === 'oui' || c.aFaitConstruire === 'oui';
+  return `
+  <div class="sec">
+    <div class="sec-heading">Construction</div>
+    <div class="field">
+      <label>Avez-vous fait construire le bâtiment vendu ?</label>
+      <div class="btns">
+        <button type="button" class="choice${c.aFaitConstruire==='oui'?' on':''}" data-c="aFaitConstruire" data-v="oui">Oui</button>
+        <button type="button" class="choice${c.aFaitConstruire==='non'?' on':''}" data-c="aFaitConstruire" data-v="non">Non</button>
+      </div>
+      <div class="cond${c.aFaitConstruire==='oui'?' show':''}" id="condConstruire">
+        <div class="note" style="margin-top:10px">📎 Joindre copie du permis de construire, déclaration d'achèvement et certificat de conformité.</div>
+        <div class="field" style="margin-top:14px">
+          <label>Travaux achevés depuis moins de 10 ans ?</label>
+          <div class="btns">
+            <button type="button" class="choice${c.moinsde10ans==='oui'?' on':''}" data-c="moinsde10ans" data-v="oui">Oui</button>
+            <button type="button" class="choice${c.moinsde10ans==='non'?' on':''}" data-c="moinsde10ans" data-v="non">Non</button>
+          </div>
+          <div class="cond${c.moinsde10ans==='oui'?' show':''}" id="condDo">
+            <div class="field" style="margin-top:10px">
+              <label>Assurance dommage-ouvrage souscrite ?</label>
+              <div class="btns">
+                <button type="button" class="choice${c.dommageOuvrage==='oui'?' on':''}" data-c="dommageOuvrage" data-v="oui">Oui</button>
+                <button type="button" class="choice${c.dommageOuvrage==='non'?' on':''}" data-c="dommageOuvrage" data-v="non">Non</button>
+              </div>
+              <div class="cond${c.dommageOuvrage==='oui'?' show':''}" id="condDoOui">
+                <div class="note" style="margin-top:8px">📎 Joindre attestation de souscription et police intégrale.</div>
+              </div>
+              <div class="cond${c.dommageOuvrage==='non'?' show':''}" id="condDoNon">
+                <div class="note" style="margin-top:8px">📎 Joindre la liste de toutes les entreprises intervenues avec adresse et attestation d'assurance.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Travaux achevés depuis moins de 5 ans ?</label>
+          <div class="btns">
+            <button type="button" class="choice${c.moinsde5ans==='oui'?' on':''}" data-c="moinsde5ans" data-v="oui">Oui</button>
+            <button type="button" class="choice${c.moinsde5ans==='non'?' on':''}" data-c="moinsde5ans" data-v="non">Non</button>
+          </div>
+          <div class="cond${c.moinsde5ans==='oui'?' show':''}" id="condTva5">
+            <div class="note" style="margin-top:8px">Un calcul de TVA sera effectué sur le prix de vente — merci de prendre rendez-vous avec votre dossier de construction et toutes les factures.</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Taxes fiscales générées par le permis de construire acquittées ?</label>
+          <div class="btns">
+            <button type="button" class="choice${c.taxesFiscales==='oui'?' on':''}" data-c="taxesFiscales" data-v="oui">Oui</button>
+            <button type="button" class="choice${c.taxesFiscales==='non'?' on':''}" data-c="taxesFiscales" data-v="non">Non</button>
+          </div>
+          <div class="cond${c.taxesFiscales==='oui'?' show':''}" id="condTaxesPC">
+            <div class="note" style="margin-top:8px">📎 Joindre la quittance de paiement.</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Prescriptions particulières dans le permis de construire ?</label>
+          <div class="btns">
+            <button type="button" class="choice${c.prescriptionsPC==='oui'?' on':''}" data-c="prescriptionsPC" data-v="oui">Oui</button>
+            <button type="button" class="choice${c.prescriptionsPC==='non'?' on':''}" data-c="prescriptionsPC" data-v="non">Non</button>
+          </div>
+          <div class="cond${c.prescriptionsPC==='oui'?' show':''}" id="condPrescrip">
+            <div class="field" style="margin-top:10px"><label>Préciser</label><input type="text" data-d="construction.prescriptionsDetail" value="${x(c.prescriptionsDetail)}" placeholder="ex: cession d'une bande de terrain à la commune"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Travaux postérieurs à la construction</div>
+    <div class="field">
+      <label>Travaux postérieurs ayant modifié l'aspect extérieur, augmenté la surface ou changé l'affectation ?</label>
+      <div class="btns">
+        <button type="button" class="choice${c.travauxPosterieur==='oui'?' on':''}" data-c="travauxPosterieur" data-v="oui">Oui</button>
+        <button type="button" class="choice${c.travauxPosterieur==='non'?' on':''}" data-c="travauxPosterieur" data-v="non">Non</button>
+      </div>
+      <div class="cond${c.travauxPosterieur==='oui'?' show':''}" id="condTravauxPost">
+        <div class="field" style="margin-top:10px">
+          <label>Permis de construire ou déclaration de travaux effectué(e) ?</label>
+          <div class="btns">
+            <button type="button" class="choice${c.travauxPermis==='oui'?' on':''}" data-c="travauxPermis" data-v="oui">Oui</button>
+            <button type="button" class="choice${c.travauxPermis==='non'?' on':''}" data-c="travauxPermis" data-v="non">Non</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Déclaration déposée auprès du Centre des Impôts (cadastre) ?</label>
+      <div class="btns">
+        <button type="button" class="choice${c.declarationCadastre==='oui'?' on':''}" data-c="declarationCadastre" data-v="oui">Oui</button>
+        <button type="button" class="choice${c.declarationCadastre==='non'?' on':''}" data-c="declarationCadastre" data-v="non">Non</button>
+        <button type="button" class="choice${c.declarationCadastre==='na'?' on':''}" data-c="declarationCadastre" data-v="na">Sans objet</button>
+      </div>
+    </div>
+    <div class="note">📎 <strong>Diagnostics techniques :</strong> merci de transmettre le dossier complet (surface, amiante, termites, plomb, DPE, gaz, électricité…).</div>
+  </div>`;
+}
+
+// ── S6 : Équipements ───────────────────────────────────────
+function buildS6() {
+  const e = D.equipements;
+  const hasEauPluie = e.recuperationEauPluie === 'oui' || e.reservoirEauPluie === 'oui' || e.distributionEauPluie === 'oui';
+  return `
+  <div class="sec">
+    <div class="sec-heading">Chauffage</div>
+    <div class="field">
+      <label>Cuve à mazout ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.cuveMazout==='oui'?' on':''}" data-e="cuveMazout" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.cuveMazout==='non'?' on':''}" data-e="cuveMazout" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Raccordée au gaz de ville ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.gazVille==='oui'?' on':''}" data-e="gazVille" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.gazVille==='non'?' on':''}" data-e="gazVille" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Citerne à gaz ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.citerne==='oui'?' on':''}" data-e="citerne" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.citerne==='non'?' on':''}" data-e="citerne" data-v="non">Non</button>
+      </div>
+      <div class="cond${e.citerne==='oui'?' show':''}" id="condCiterne">
+        <div class="field" style="margin-top:10px">
+          <label>Statut de la citerne</label>
+          <div class="btns">
+            <button type="button" class="choice${e.citerneProprietaire==='oui'?' on':''}" data-e="citerneProprietaire" data-v="oui">Propriétaire</button>
+            <button type="button" class="choice${e.citerneLocataire==='oui'?' on':''}" data-e="citerneLocataire" data-v="oui">Locataire</button>
+          </div>
+        </div>
+        <div class="cond${e.citerneLocataire==='oui'?' show':''}" id="condCiterneCoord">
+          <div class="field"><label>Coordonnées de la société</label><input type="text" data-d="equipements.citerneCoord" value="${x(e.citerneCoord)}"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Récupération des eaux de pluie</div>
+    <div class="field">
+      <label>Équipement de récupération d'eau de pluie ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.recuperationEauPluie==='oui'?' on':''}" data-e="recuperationEauPluie" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.recuperationEauPluie==='non'?' on':''}" data-e="recuperationEauPluie" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Réservoir de stockage ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.reservoirEauPluie==='oui'?' on':''}" data-e="reservoirEauPluie" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.reservoirEauPluie==='non'?' on':''}" data-e="reservoirEauPluie" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Système de distribution ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.distributionEauPluie==='oui'?' on':''}" data-e="distributionEauPluie" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.distributionEauPluie==='non'?' on':''}" data-e="distributionEauPluie" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="cond${hasEauPluie?' show':''}" id="condEauPluieDetail">
+      <div class="field" style="margin-top:10px">
+        <label>Plaque de signalisation apposée ?</label>
+        <div class="btns">
+          <button type="button" class="choice${e.plaqueSignalisation==='oui'?' on':''}" data-e="plaqueSignalisation" data-v="oui">Oui</button>
+          <button type="button" class="choice${e.plaqueSignalisation==='non'?' on':''}" data-e="plaqueSignalisation" data-v="non">Non</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Carnet sanitaire d'entretien établi ?</label>
+        <div class="btns">
+          <button type="button" class="choice${e.carnetSanitaire==='oui'?' on':''}" data-e="carnetSanitaire" data-v="oui">Oui</button>
+          <button type="button" class="choice${e.carnetSanitaire==='non'?' on':''}" data-e="carnetSanitaire" data-v="non">Non</button>
+        </div>
+      </div>
+      <div class="field"><label>Date du dernier entretien du réseau</label><input type="text" data-d="equipements.dernierEntretienReseau" value="${x(e.dernierEntretienReseau)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Autres équipements et contrats</div>
+    <div class="field">
+      <label>Contrat d'affichage sur la maison ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.contratAffichage==='oui'?' on':''}" data-e="contratAffichage" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.contratAffichage==='non'?' on':''}" data-e="contratAffichage" data-v="non">Non</button>
+      </div>
+      <div class="cond${e.contratAffichage==='oui'?' show':''}" id="condAffichage">
+        <div class="note" style="margin-top:10px">📎 Joindre copie du contrat et de la dernière quittance de redevance.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Équipements encore sous garantie (chaudière, clim…) ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.garantiesEquipements==='oui'?' on':''}" data-e="garantiesEquipements" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.garantiesEquipements==='non'?' on':''}" data-e="garantiesEquipements" data-v="non">Non</button>
+      </div>
+      <div class="cond${e.garantiesEquipements==='oui'?' show':''}" id="condGaranties">
+        <div class="note" style="margin-top:10px">📎 Joindre copie des factures ou certificats de garantie.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Installation classée (ICPE) — déclaration ou autorisation ?</label>
+      <div class="btns">
+        <button type="button" class="choice${e.installationClassee==='oui'?' on':''}" data-e="installationClassee" data-v="oui">Oui</button>
+        <button type="button" class="choice${e.installationClassee==='non'?' on':''}" data-e="installationClassee" data-v="non">Non</button>
+      </div>
+      <div class="cond${e.installationClassee==='oui'?' show':''}" id="condICPE">
+        <div class="field" style="margin-top:10px">
+          <label>Êtes-vous l'exploitant de cette installation ?</label>
+          <div class="btns">
+            <button type="button" class="choice${e.exploitant==='oui'?' on':''}" data-e="exploitant" data-v="oui">Oui</button>
+            <button type="button" class="choice${e.exploitant==='non'?' on':''}" data-e="exploitant" data-v="non">Non</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S7 : Prêts ─────────────────────────────────────────────
+function buildS7() {
+  const p = D.prets;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Prêts et hypothèques</div>
+    <div class="field">
+      <label>Procédure de saisie immobilière en cours ?</label>
+      <div class="btns">
+        <button type="button" class="choice${p.saisieImmobiliere==='oui'?' on':''}" data-p="saisieImmobiliere" data-v="oui">Oui</button>
+        <button type="button" class="choice${p.saisieImmobiliere==='non'?' on':''}" data-p="saisieImmobiliere" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Prêt(s) avec hypothèque sur le bien à vendre ?</label>
+      <div class="btns">
+        <button type="button" class="choice${p.pretHypotheque==='oui'?' on':''}" data-p="pretHypotheque" data-v="oui">Oui</button>
+        <button type="button" class="choice${p.pretHypotheque==='non'?' on':''}" data-p="pretHypotheque" data-v="non">Non</button>
+      </div>
+      <div class="cond${p.pretHypotheque==='oui'?' show':''}" id="condPretDetail">
+        <div class="field" style="margin-top:10px"><label>Banque(s) et référence(s) du prêt</label><input type="text" data-d="prets.pretDetail" value="${x(p.pretDetail)}" placeholder="ex: BNP — prêt n° 12345"></div>
+        <div class="note">Le notaire demandera un décompte des sommes restant dues.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Crédit-relais dans l'attente de cette vente ?</label>
+      <div class="btns">
+        <button type="button" class="choice${p.creditRelais==='oui'?' on':''}" data-p="creditRelais" data-v="oui">Oui</button>
+        <button type="button" class="choice${p.creditRelais==='non'?' on':''}" data-p="creditRelais" data-v="non">Non</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S8 : Plus-values ───────────────────────────────────────
+function buildS8() {
+  const pv = D.plusvalue;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Plus-values immobilières</div>
+    <div class="sec-desc">Ces informations permettent de déterminer l'impôt éventuellement dû sur la vente.</div>
+    <div class="field">
+      <label>Le bien vendu constitue-t-il votre résidence principale ?</label>
+      <div class="btns">
+        <button type="button" class="choice${pv.residencePrincipale==='oui'?' on':''}" data-pv="residencePrincipale" data-v="oui">Oui</button>
+        <button type="button" class="choice${pv.residencePrincipale==='non'?' on':''}" data-pv="residencePrincipale" data-v="non">Non</button>
+      </div>
+      <div class="cond${pv.residencePrincipale==='oui'?' show':''}" id="condPvRp">
+        <div class="field" style="margin-top:10px"><label>Depuis quand ?</label><input type="text" data-d="plusvalue.depuisQuand" value="${x(pv.depuisQuand)}" placeholder="ex: mars 2015"></div>
+      </div>
+    </div>
+    <div class="cond${pv.residencePrincipale==='non'?' show':''}" id="condPvNonRp">
+      <div class="field">
+        <label>Vente pour remploi dans l'achat d'une résidence principale ?</label>
+        <div class="btns">
+          <button type="button" class="choice${pv.remploi==='oui'?' on':''}" data-pv="remploi" data-v="oui">Oui</button>
+          <button type="button" class="choice${pv.remploi==='non'?' on':''}" data-pv="remploi" data-v="non">Non</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Êtes-vous retraité ou invalide de condition modeste ?</label>
+        <div class="btns">
+          <button type="button" class="choice${pv.retraiteInvalide==='oui'?' on':''}" data-pv="retraiteInvalide" data-v="oui">Oui</button>
+          <button type="button" class="choice${pv.retraiteInvalide==='non'?' on':''}" data-pv="retraiteInvalide" data-v="non">Non</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Travaux de surélévation, construction ou amélioration réalisés ?</label>
+        <div class="btns">
+          <button type="button" class="choice${pv.travauxSurelevation==='oui'?' on':''}" data-pv="travauxSurelevation" data-v="oui">Oui</button>
+          <button type="button" class="choice${pv.travauxSurelevation==='non'?' on':''}" data-pv="travauxSurelevation" data-v="non">Non</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bien reçu par donation ou succession — droits de mutation payés par vous-même ?</label>
+        <div class="btns">
+          <button type="button" class="choice${pv.droitsMutation==='oui'?' on':''}" data-pv="droitsMutation" data-v="oui">Oui</button>
+          <button type="button" class="choice${pv.droitsMutation==='non'?' on':''}" data-pv="droitsMutation" data-v="non">Non</button>
+          <button type="button" class="choice${pv.droitsMutation==='na'?' on':''}" data-pv="droitsMutation" data-v="na">Sans objet</button>
+        </div>
+        <div class="note" style="margin-top:8px">📎 Si oui, joindre déclaration fiscale ou acte de donation. Dans tous les cas, joindre le compte notarial d'acquisition.</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Sinistres</div>
+    <div class="field">
+      <label>Sinistre indemnisé reconnu comme catastrophe naturelle — avant votre acquisition ?</label>
+      <div class="btns">
+        <button type="button" class="choice${pv.sinisstreAvant==='oui'?' on':''}" data-pv="sinisstreAvant" data-v="oui">Oui</button>
+        <button type="button" class="choice${pv.sinisstreAvant==='non'?' on':''}" data-pv="sinisstreAvant" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Sinistre indemnisé reconnu comme catastrophe naturelle — depuis votre acquisition ?</label>
+      <div class="btns">
+        <button type="button" class="choice${pv.sinistreDepuis==='oui'?' on':''}" data-pv="sinistreDepuis" data-v="oui">Oui</button>
+        <button type="button" class="choice${pv.sinistreDepuis==='non'?' on':''}" data-pv="sinistreDepuis" data-v="non">Non</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── S9 : Fiscalité + motivation ────────────────────────────
+function buildS9() {
+  const f = D.fiscalite;
+  const m = D.motivation;
+  const RAISONS = [
+    ['mobilite_pro','Mobilité professionnelle'],
+    ['familial','Événement familial'],
+    ['mariage_pacs_divorce','Mariage / PACS / Divorce'],
+    ['naissance_deces','Naissance / Décès'],
+    ['transfert_epargne','Transfert d\'épargne'],
+    ['autre','Autre']
+  ];
+  return `
+  <div class="sec">
+    <div class="sec-heading">TVA</div>
+    <div class="field">
+      <label>Mécanisme de récupération de TVA lors de l'achat ?</label>
+      <div class="btns">
+        <button type="button" class="choice${f.tva==='oui'?' on':''}" data-f="tva" data-v="oui">Oui</button>
+        <button type="button" class="choice${f.tva==='non'?' on':''}" data-f="tva" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Régime particulier de TVA lors de l'achat ?</label>
+      <div class="btns">
+        <button type="button" class="choice${f.tvaDroit==='oui'?' on':''}" data-f="tvaDroit" data-v="oui">Oui</button>
+        <button type="button" class="choice${f.tvaDroit==='non'?' on':''}" data-f="tvaDroit" data-v="non">Non</button>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Déficit foncier et société civile</div>
+    <div class="field">
+      <label>Déficits fonciers imputés sur le revenu global sur des exercices antérieurs ?</label>
+      <div class="btns">
+        <button type="button" class="choice${f.deficitFoncier==='oui'?' on':''}" data-f="deficitFoncier" data-v="oui">Oui</button>
+        <button type="button" class="choice${f.deficitFoncier==='non'?' on':''}" data-f="deficitFoncier" data-v="non">Non</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Bien détenu par une société civile ?</label>
+      <div class="btns">
+        <button type="button" class="choice${f.societeCivile==='oui'?' on':''}" data-f="societeCivile" data-v="oui">Oui</button>
+        <button type="button" class="choice${f.societeCivile==='non'?' on':''}" data-f="societeCivile" data-v="non">Non</button>
+      </div>
+      <div class="cond${f.societeCivile==='oui'?' show':''}" id="condSciVente">
+        <div class="row2" style="margin-top:10px">
+          <div class="field">
+            <label>Soumise à l'IR ?</label>
+            <div class="btns">
+              <button type="button" class="choice${f.societeCivileIR==='oui'?' on':''}" data-f="societeCivileIR" data-v="oui">Oui</button>
+              <button type="button" class="choice${f.societeCivileIR==='non'?' on':''}" data-f="societeCivileIR" data-v="non">Non</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Soumise à l'IS ?</label>
+            <div class="btns">
+              <button type="button" class="choice${f.societeCivileIS==='oui'?' on':''}" data-f="societeCivileIS" data-v="oui">Oui</button>
+              <button type="button" class="choice${f.societeCivileIS==='non'?' on':''}" data-f="societeCivileIS" data-v="non">Non</button>
+            </div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:10px">📎 Joindre : derniers bilans, statuts à jour, liste des associés avec domicile fiscal et % des parts.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Résidence fiscale</label>
+      <div class="btns">
+        <button type="button" class="choice${f.residentFiscal==='france'?' on':''}" data-f="residentFiscal" data-v="france">France</button>
+        <button type="button" class="choice${f.residentFiscal==='etranger'?' on':''}" data-f="residentFiscal" data-v="etranger">Étranger</button>
+      </div>
+      <div class="cond${f.residentFiscal==='etranger'?' show':''}" id="condEtranger">
+        <div class="note" style="margin-top:10px">📎 Joindre copie de votre carte de résident et de votre acte de naissance traduit en français.</div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Motivation de la cession</div>
+    <div class="checkgrid">${RAISONS.map(([k,v])=>`
+      <label class="checkitem${m.raisons.includes(k)?' on':''}">
+        <input type="checkbox" data-motif="${k}" ${m.raisons.includes(k)?'checked':''}>
+        ${v}
+      </label>`).join('')}
+    </div>
+    <div class="cond${m.raisons.includes('transfert_epargne')?' show':''}" id="condTransfert" style="margin-top:12px">
+      <div class="field"><label>Préciser le remploi</label><input type="text" data-d="motivation.transfertDetail" value="${x(m.transfertDetail)}"></div>
+    </div>
+    <div class="cond${m.raisons.includes('autre')?' show':''}" id="condAutreMotif" style="margin-top:12px">
+      <div class="field"><label>Préciser</label><input type="text" data-d="motivation.autreRaison" value="${x(m.autreRaison)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Observations</div>
+    <div class="field"><label>Particularités utiles à porter à la connaissance de l'acquéreur ou de l'étude</label>
+      <textarea data-d="motivation.observations" style="min-height:100px">${x(m.observations)}</textarea>
+    </div>
+  </div>`;
+}
+
+// ── Binding ───────────────────────────────────────────────
+function bindSection(idx) {
+  document.querySelectorAll('[data-d]').forEach(el => {
+    el.oninput = () => setN(D, el.dataset.d, el.value);
+    el.onchange = () => setN(D, el.dataset.d, el.value);
+  });
+  if (idx === 0) bindS1();
+  if (idx === 1) bindS2();
+  if (idx === 2) bindTerrain();
+  if (idx === 3) bindAssain();
+  if (idx === 4) bindConstruction();
+  if (idx === 5) bindEquipements();
+  if (idx === 6) bindPrets();
+  if (idx === 7) bindPv();
+  if (idx === 8) bindFiscalite();
+}
+
+function bindS1() {
+  document.querySelectorAll('[data-nb]').forEach(btn => {
+    btn.onclick = () => {
+      D.nbVendeurs = +btn.dataset.nb;
+      document.querySelectorAll('[data-nb]').forEach(b => b.classList.toggle('on', b===btn));
+      document.getElementById('blocVendeur2')?.classList.toggle('hidden', D.nbVendeurs !== 2);
+    };
+  });
+}
+
+function bindS2() {
+  ['residencePrincipale','situationJour','locatairePrecedent'].forEach(k => {
+    document.querySelectorAll(`[data-b="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.bien[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-b="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        if (k==='residencePrincipale') document.getElementById('condDepuisQuand')?.classList.toggle('show', D.bien[k]==='oui');
+        if (k==='situationJour') document.getElementById('condLoue')?.classList.toggle('show', D.bien[k]==='loue');
+        if (k==='locatairePrecedent') document.getElementById('condLocPrecedent')?.classList.toggle('show', D.bien[k]==='oui');
+      };
+    });
+  });
+}
+
+function bindTerrain() {
+  const KEYS = ['lotissement','asl','coproHorizontale','bornage','terrainAttenant','terrainBoise','terrainPente',
+    'pollutionExploitation','pollutionPasse','pollutionVoisinage','carrieres','zoneInondable',
+    'servitudes','murSeparatif'];
+  KEYS.forEach(k => {
+    document.querySelectorAll(`[data-tr="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.terrain[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-tr="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        const condMap = { lotissement:'condAsl', asl:'condAslPresident', coproHorizontale:'condCoproH',
+          bornage:'condBornage', servitudes:'condServitudes', murSeparatif:'condMur' };
+        if (condMap[k]) document.getElementById(condMap[k])?.classList.toggle('show', D.terrain[k]==='oui');
+      };
+    });
+  });
+}
+
+function bindAssain() {
+  ['systemeIndividuel','toutEgout','miseDemeureTravaux','eauxPluvialesSeparees','connexionReseau','taxeRaccordement','bonEtat'].forEach(k => {
+    document.querySelectorAll(`[data-a="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.assainissement[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-a="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        const condMap = { systemeIndividuel:'condIndividuel', toutEgout:'condToutEgout', miseDemeureTravaux:'condMiseDemeure' };
+        if (condMap[k]) document.getElementById(condMap[k])?.classList.toggle('show', D.assainissement[k]==='oui');
+      };
+    });
+  });
+}
+
+function bindConstruction() {
+  ['aFaitConstruire','moinsde10ans','dommageOuvrage','moinsde5ans','taxesFiscales','prescriptionsPC','travauxPosterieur','travauxPermis','declarationCadastre'].forEach(k => {
+    document.querySelectorAll(`[data-c="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.construction[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-c="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        const condMap = {
+          aFaitConstruire:'condConstruire', moinsde10ans:'condDo',
+          dommageOuvrage: null,
+          moinsde5ans:'condTva5', taxesFiscales:'condTaxesPC',
+          prescriptionsPC:'condPrescrip', travauxPosterieur:'condTravauxPost'
+        };
+        if (k==='dommageOuvrage') {
+          document.getElementById('condDoOui')?.classList.toggle('show', D.construction[k]==='oui');
+          document.getElementById('condDoNon')?.classList.toggle('show', D.construction[k]==='non');
+        } else if (condMap[k]) {
+          document.getElementById(condMap[k])?.classList.toggle('show', D.construction[k]==='oui');
+        }
+      };
+    });
+  });
+}
+
+function bindEquipements() {
+  const KEYS = ['cuveMazout','gazVille','citerne','citerneProprietaire','citerneLocataire',
+    'recuperationEauPluie','reservoirEauPluie','distributionEauPluie',
+    'plaqueSignalisation','carnetSanitaire','contratAffichage','garantiesEquipements','installationClassee','exploitant'];
+  KEYS.forEach(k => {
+    document.querySelectorAll(`[data-e="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.equipements[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-e="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        const condMap = { citerne:'condCiterne', citerneLocataire:'condCiterneCoord',
+          contratAffichage:'condAffichage', garantiesEquipements:'condGaranties', installationClassee:'condICPE' };
+        if (condMap[k]) document.getElementById(condMap[k])?.classList.toggle('show', D.equipements[k]==='oui');
+        if (['recuperationEauPluie','reservoirEauPluie','distributionEauPluie'].includes(k)) {
+          const show = D.equipements.recuperationEauPluie==='oui'||D.equipements.reservoirEauPluie==='oui'||D.equipements.distributionEauPluie==='oui';
+          document.getElementById('condEauPluieDetail')?.classList.toggle('show', show);
+        }
+      };
+    });
+  });
+}
+
+function bindPrets() {
+  ['saisieImmobiliere','pretHypotheque','creditRelais'].forEach(k => {
+    document.querySelectorAll(`[data-p="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.prets[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-p="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        if (k==='pretHypotheque') document.getElementById('condPretDetail')?.classList.toggle('show', D.prets[k]==='oui');
+      };
+    });
+  });
+}
+
+function bindPv() {
+  ['residencePrincipale','remploi','retraiteInvalide','travauxSurelevation','droitsMutation','sinisstreAvant','sinistreDepuis'].forEach(k => {
+    document.querySelectorAll(`[data-pv="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.plusvalue[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-pv="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        if (k==='residencePrincipale') {
+          document.getElementById('condPvRp')?.classList.toggle('show', D.plusvalue[k]==='oui');
+          document.getElementById('condPvNonRp')?.classList.toggle('show', D.plusvalue[k]==='non');
+        }
+      };
+    });
+  });
+}
+
+function bindFiscalite() {
+  ['tva','tvaDroit','deficitFoncier','societeCivile','societeCivileIR','societeCivileIS','residentFiscal'].forEach(k => {
+    document.querySelectorAll(`[data-f="${k}"]`).forEach(btn => {
+      btn.onclick = () => {
+        D.fiscalite[k] = btn.dataset.v;
+        document.querySelectorAll(`[data-f="${k}"]`).forEach(b=>b.classList.toggle('on',b===btn));
+        if (k==='societeCivile') document.getElementById('condSciVente')?.classList.toggle('show', D.fiscalite[k]==='oui');
+        if (k==='residentFiscal') document.getElementById('condEtranger')?.classList.toggle('show', D.fiscalite[k]==='etranger');
+      };
+    });
+  });
+  document.querySelectorAll('[data-motif]').forEach(el => {
+    el.onchange = () => {
+      tog(D.motivation.raisons, el.dataset.motif);
+      el.closest('.checkitem').classList.toggle('on', D.motivation.raisons.includes(el.dataset.motif));
+      document.getElementById('condTransfert')?.classList.toggle('show', D.motivation.raisons.includes('transfert_epargne'));
+      document.getElementById('condAutreMotif')?.classList.toggle('show', D.motivation.raisons.includes('autre'));
+    };
+  });
+}
+
+// ── Envoi ─────────────────────────────────────────────────
+function showErr(msg) {
+  const el = document.getElementById('ferr');
+  el.textContent = msg; el.style.display = 'block';
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+document.getElementById('btnSubmit').onclick = async () => {
+  document.getElementById('ferr').style.display = 'none';
+  if (!D.vendeur1.nom || !D.vendeur1.prenoms) return showErr('Nom et prénoms du Vendeur 1 obligatoires.');
+  if (!D.bien.adresse) return showErr('L\'adresse du bien est obligatoire.');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+
+  try {
+    const r = await fetch('/api/soumettre-vente-maison', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ data: D, email: email0 })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+      <div class="icon">✓</div>
+      <h2>Questionnaire envoyé</h2>
+      <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+    </div></div>`;
+  } catch(e) {
+    showErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = 'Envoyer mes réponses';
+  }
+};
+</script>
+</body>
+</html>
