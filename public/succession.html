@@ -308,12 +308,6 @@ const SECTIONS = [
   { id: 's9', title: 'Fiscalité' }
 ];
 
-// ── Paramètre etatcivil=0 ─────────────────────────────────
-const _urlParams = new URLSearchParams(window.location.search);
-const _skipEtatCivil = _urlParams.get('etatcivil') === '0';
-if (_skipEtatCivil) SECTIONS.splice(0, 1);
-window._sectionOffset = _skipEtatCivil ? 1 : 0;
-
 
 // ── Accueil ───────────────────────────────────────────────
 function checkRgpd() {
@@ -372,7 +366,8 @@ document.getElementById('btnVerify').onclick = async () => {
     document.getElementById('sCode').style.display = 'none';
     document.getElementById('sForm').style.display = 'block';
     document.getElementById('pageSub').style.display = 'none';
-    renderSection(0);
+    const _ec = new URLSearchParams(window.location.search).get('etatcivil');
+    renderSection(_ec === '0' ? 1 : 0);
   } catch(e) {
     err.textContent = e.message;
   } finally {
@@ -402,8 +397,8 @@ function renderSection(idx) {
   const submitSec = document.getElementById('submitSec');
   const isLast = idx === SECTIONS.length - 1;
 
-  content.innerHTML = buildSectionHtml(idx + (window._sectionOffset||0));
-  bindSection(idx + (window._sectionOffset||0));
+  content.innerHTML = buildSectionHtml(idx);
+  bindSection(idx);
 
   nav.innerHTML = `
     ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx - 1})">← Précédent</button>` : ''}
