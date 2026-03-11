@@ -45,6 +45,14 @@
       "destination": "/public/vente-appartement.html"
     },
     {
+      "source": "/api/soumettre-vente-maison",
+      "destination": "/api/soumettre-vente-maison"
+    },
+    {
+      "source": "/vente-maison",
+      "destination": "/public/vente-maison.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/index.html"
     }
