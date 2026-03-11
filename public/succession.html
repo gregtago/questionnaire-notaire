@@ -88,10 +88,18 @@
     .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
     .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
 
-    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm { text-align: center; padding: 40px 20px 20px; }
     .confirm .icon { font-size: 44px; margin-bottom: 14px; }
     .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
     .confirm p { color: #777; font-size: 14px; }
+    .pieces-wrap { text-align: left; margin-top: 32px; border-top: 1px solid #eee; padding-top: 24px; }
+    .pieces-wrap h3 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 16px; letter-spacing: .03em; text-transform: uppercase; }
+    .pieces-section { margin-bottom: 18px; }
+    .pieces-section .ps-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .pieces-section ul { margin: 0; padding: 0; list-style: none; }
+    .pieces-section ul li { font-size: 13px; color: #444; padding: 5px 0 5px 18px; border-bottom: 1px solid #f5f5f5; position: relative; line-height: 1.4; }
+    .pieces-section ul li::before { content: '→'; position: absolute; left: 0; color: #bbb; font-size: 11px; top: 6px; }
+    .pieces-email-note { margin-top: 20px; padding: 12px 16px; background: #f8f8f6; border-radius: 4px; font-size: 12px; color: #888; text-align: center; }
 
     footer { padding: 32px 28px 28px; border-top: 1px solid #e8e8e5; display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; }
     footer .f-left .f-name { font-size: 12px; font-weight: 500; color: #555; }
@@ -1112,6 +1120,137 @@ document.getElementById('btnSubmit').onclick = async () => {
   const ferr = document.getElementById('ferr');
   ferr.style.display = 'none';
 
+// ── Logique conditionnelle liste de pièces — Succession ──────────────────
+// Retourne un tableau de { section, pieces: [string] }
+function buildPiecesList(D) {
+  const sit = (D.situation && D.situation.etat) || '';
+  const hasBiens = D.immobilier && D.immobilier.biens && D.immobilier.biens.length > 0;
+  const hasBienLoue = hasBiens && D.immobilier.biens.some(b => b.loue === 'oui');
+  const hasComptes = D.banques && D.banques.comptes && D.banques.comptes.length > 0;
+  const hasAssuranceVie = D.banques && D.banques.assuranceVie === 'oui';
+  const hasCoffre = D.banques && D.banques.coffreFort === 'oui';
+  const hasTestament = D.dispositions && D.dispositions.testament === 'oui';
+  const hasDonationEntreEpoux = D.dispositions && D.dispositions.donationEntreEpoux === 'oui';
+  const hasDonations = D.dispositions && D.dispositions.donations && D.dispositions.donations.length > 0;
+  const hasEmprunt = D.dettes && D.dettes.emprunts === 'oui';
+  const hasObseques = D.dettes && D.dettes.factures === 'oui';
+  const hasIFI = D.fiscalite && D.fiscalite.ifi === 'oui';
+  const hasPartsSociete = D.autresActifs && D.autresActifs.partsSociete === 'oui';
+  const hasVehicules = D.autresActifs && D.autresActifs.vehicules === 'oui';
+
+  const sections = [];
+
+  // ── Toujours ────────────────────────────────────────────────────────────
+  sections.push({
+    section: 'Pour le défunt',
+    pieces: [
+      'Acte de décès',
+      'Livret de famille complet',
+      'Dernier avis d\'imposition (ou avis de non-imposition)',
+    ]
+  });
+
+  // ── Selon situation matrimoniale ────────────────────────────────────────
+  if (['M', 'P'].includes(sit)) {
+    const ps = sit === 'P'
+      ? ['Convention de PACS', 'Récépissé d\'enregistrement du PACS']
+      : ['Acte de mariage (moins de 3 mois si possible)'];
+    if (D.situation && D.situation.contratMariage === 'oui') {
+      ps.push('Contrat de mariage');
+    }
+    if (hasDonationEntreEpoux) ps.push('Donation entre époux (donation au dernier vivant)');
+    sections.push({ section: 'Situation matrimoniale', pieces: ps });
+  }
+  if (sit === 'D') {
+    sections.push({ section: 'Situation matrimoniale', pieces: ['Jugement de divorce ou attestation de divorce'] });
+  }
+  if (sit === 'V') {
+    sections.push({ section: 'Situation matrimoniale', pieces: [
+      'Acte de décès du conjoint prédécédé',
+      'Notoriété après le décès du conjoint',
+      'Attestation de propriété établie après le premier décès',
+      'Déclaration de succession du premier décès',
+    ]});
+  }
+
+  // ── Héritiers ───────────────────────────────────────────────────────────
+  sections.push({
+    section: 'Pour chaque héritier',
+    pieces: ['Copie de la pièce d\'identité en cours de validité (CNI ou passeport)']
+  });
+
+  // ── Dispositions ────────────────────────────────────────────────────────
+  if (hasTestament || hasDonations) {
+    const ps = [];
+    if (hasTestament) ps.push('Testament (si en votre possession)');
+    if (hasDonations) ps.push('Acte(s) de donation antérieure(s)');
+    sections.push({ section: 'Dispositions', pieces: ps });
+  }
+
+  // ── Comptes bancaires ───────────────────────────────────────────────────
+  if (hasComptes || hasCoffre) {
+    const ps = ['Relevé(s) de compte bancaire au jour du décès (ou estimation du solde)'];
+    if (hasCoffre) ps.push('Inventaire du contenu du coffre-fort');
+    sections.push({ section: 'Comptes bancaires', pieces: ps });
+  }
+
+  // ── Assurance-vie ───────────────────────────────────────────────────────
+  if (hasAssuranceVie) {
+    sections.push({ section: 'Assurance-vie', pieces: [
+      'Contrat(s) d\'assurance-vie (numéro de police, compagnie, bénéficiaires)',
+    ]});
+  }
+
+  // ── Biens immobiliers ───────────────────────────────────────────────────
+  if (hasBiens) {
+    const ps = [
+      'Titre de propriété pour chaque bien',
+      'Estimation de la valeur vénale (agence ou notaire)',
+      'Derniers avis de taxe foncière',
+    ];
+    if (hasIFI) ps.push('Dernière déclaration IFI');
+    if (hasBienLoue) ps.push('Bail en cours et dernière quittance de loyer');
+    sections.push({ section: 'Biens immobiliers', pieces: ps });
+  }
+
+  // ── Autres actifs ───────────────────────────────────────────────────────
+  if (hasPartsSociete) {
+    sections.push({ section: 'Parts de société', pieces: [
+      'Statuts de la société',
+      'Extrait Kbis',
+      'Estimation par un expert-comptable',
+    ]});
+  }
+  if (hasVehicules) {
+    sections.push({ section: 'Véhicules', pieces: [
+      'Carte grise de chaque véhicule',
+      'Estimation (cote Argus)',
+    ]});
+  }
+
+  // ── Dettes ──────────────────────────────────────────────────────────────
+  if (hasEmprunt) {
+    sections.push({ section: 'Prêts et emprunts', pieces: [
+      'Offre(s) de prêt',
+      'Tableau d\'amortissement (capital restant dû au jour du décès)',
+    ]});
+  }
+  if (hasObseques) {
+    sections.push({ section: 'Frais funéraires', pieces: [
+      'Facture des pompes funèbres acquittée',
+    ]});
+  }
+
+  // ── Fiscalité ───────────────────────────────────────────────────────────
+  const fiscPieces = [];
+  if (D.fiscalite && D.fiscalite.ir === 'oui') fiscPieces.push('Dernière déclaration de revenus (année du décès)');
+  if (D.fiscalite && D.fiscalite.taxesLocales === 'oui') fiscPieces.push('Derniers avis de taxe d\'habitation / taxe foncière à régulariser');
+  if (fiscPieces.length) sections.push({ section: 'Fiscalité', pieces: fiscPieces });
+
+  return sections;
+}
+
+
   if (!D.declarant.nom || !D.declarant.prenom) return showErr('Veuillez renseigner vos nom et prénom.');
   if (!D.defunt.nom) return showErr('Nom du défunt obligatoire.');
   if (!D.defunt.dateDeces) return showErr('Date du décès obligatoire.');
@@ -1125,14 +1264,27 @@ document.getElementById('btnSubmit').onclick = async () => {
     const r = await fetch('/api/soumettre-succession', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: D, email: email0, declarant: D.declarant })
+      body: JSON.stringify({ data: D, email: email0, declarant: D.declarant, pieces: buildPiecesList(D) })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    // Construire la liste de pièces
+    const piecesSections = buildPiecesList(D);
+    const piecesHtml = piecesSections.map(s => `
+      <div class="pieces-section">
+        <div class="ps-title">${s.section}</div>
+        <ul>${s.pieces.map(p => `<li>${p}</li>`).join('')}</ul>
+      </div>`).join('');
+
     document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
       <div class="icon">✓</div>
       <h2>Questionnaire envoyé</h2>
       <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+      <div class="pieces-wrap">
+        <h3>Pièces à nous faire parvenir</h3>
+        ${piecesHtml}
+        <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}</div>
+      </div>
     </div></div>`;
   } catch(e) {
     showErr(e.message);
