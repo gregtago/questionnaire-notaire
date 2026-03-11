@@ -251,7 +251,7 @@ const REG_CODE = {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
-  const { data, email } = req.body || {};
+  const { data, email, pieces } = req.body || {};
   if (!data || !data.defunt) return res.status(400).json({ error: 'Données manquantes' });
 
   const { declarant, defunt, situation, conjoint, heritiers, dispositions, banques, immobilier, autresActifs, dettes, fiscalite } = data;
@@ -431,7 +431,47 @@ module.exports = async (req, res) => {
       ...(attachment ? { attachments: [{ filename: attachment[0].name, content: Buffer.from(attachment[0].content, 'base64'), contentType: 'text/xml' }] } : {})
     });
   } catch(e) {
-    console.error('Erreur email:', e.message);
+    console.error('Erreur email étude:', e.message);
+  }
+
+  // ── Email client — liste de pièces ──────────────────────────────────────
+  if (email && pieces && pieces.length) {
+    const nomDefuntShort = [defunt.prenoms, defunt.nom].filter(Boolean).join(' ') || 'le défunt';
+    const piecesHtml = pieces.map(s => `
+      <tr><td colspan="2" style="padding:14px 0 4px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #eee;">${s.section}</td></tr>
+      ${s.pieces.map(p => `<tr><td style="padding:5px 0 5px 12px;font-size:13px;color:#444;border-bottom:1px solid #f8f8f8;">→ ${p}</td></tr>`).join('')}
+    `).join('');
+
+    const clientHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#fafafa;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:#fff;border:1px solid #eee;border-radius:6px;overflow:hidden;">
+    <div style="background:#111;padding:26px 30px;">
+      <div style="font-size:11px;letter-spacing:.05em;color:#888;margin-bottom:5px;">Grégoire TAGOT | notaire</div>
+      <div style="font-size:20px;font-weight:300;color:#fff;">Succession — pièces à fournir</div>
+      <div style="font-size:12px;color:#666;margin-top:4px;">${nomDefuntShort}</div>
+    </div>
+    <div style="padding:28px 30px;">
+      <p style="font-size:14px;color:#555;margin:0 0 20px;">Bonjour,<br><br>Suite à votre questionnaire, voici la liste des pièces à nous faire parvenir pour le dossier de succession de <strong>${nomDefuntShort}</strong>.</p>
+      <table style="width:100%;border-collapse:collapse;">${piecesHtml}</table>
+      <p style="font-size:12px;color:#999;margin-top:24px;">Vous pouvez nous les adresser par email à <a href="mailto:office@tagot.notaires.fr" style="color:#555;">office@tagot.notaires.fr</a> ou les déposer directement à l'étude.</p>
+    </div>
+    <div style="background:#f5f5f5;padding:14px 30px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <p style="margin:0;font-size:10px;color:#bbb;">Grégoire TAGOT | notaire — 2 rue Dante, 75005 Paris</p>
+      <p style="margin:0;font-size:10px;color:#bbb;">tagot.notaires.fr</p>
+    </div>
+  </div>
+</body></html>`;
+
+    try {
+      await transporter().sendMail({
+        from: FROM,
+        to: email,
+        subject: `Succession ${nomDefuntShort} — pièces à fournir`,
+        html: clientHtml,
+      });
+    } catch(e) {
+      console.error('Erreur email client:', e.message);
+    }
   }
 
   res.json({ ok: true });
