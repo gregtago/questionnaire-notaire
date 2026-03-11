@@ -36,6 +36,10 @@ app.get("/vente-appartement", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "vente-appartement.html"));
 });
 
+app.get("/vente-maison", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "vente-maison.html"));
+});
+
 // ─── Envoi du code OTP ─────────────────────────────────
 app.post("/api/otp/envoyer", async (req, res) => {
   const { email } = req.body;
