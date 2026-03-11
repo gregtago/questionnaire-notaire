@@ -207,8 +207,9 @@ const D = {
   // Section 1 : Défunt
   defunt: {
     civilite: '', nom: '', nomNaissance: '', prenoms: '',
-    dateNaissance: '', lieuNaissance: '', nationalite: '',
-    profession: '', numSecu: '', dateDeces: '', lieuDeces: '', adresse: ''
+    dateNaissance: '', lieuNaissance: '', cpNaissance: '', nationalite: '',
+    profession: '', numSecu: '', dateDeces: '', lieuDeces: '', adresse: '',
+    cp: '', ville: ''
   },
   // Section 2 : Situation familiale
   situation: {
@@ -397,6 +398,12 @@ function buildS1() {
   <div class="sec">
     <div class="sec-heading">Informations sur la personne décédée</div>
     <div class="sec-desc">Renseignez l'état civil complet du défunt.</div>
+    <div class="field">
+      <label>Civilité</label>
+      <div class="btns">
+        ${['Monsieur','Madame'].map(c=>`<button type="button" class="choice${d.civilite===c?' on':''}" data-dciv="${c}">${c}</button>`).join('')}
+      </div>
+    </div>
     <div class="row3">
       <div class="field">
         <label>Nom d'usage <span class="req">*</span></label>
@@ -419,6 +426,16 @@ function buildS1() {
       <div class="field">
         <label>Lieu de naissance</label>
         <input type="text" data-d="defunt.lieuNaissance" value="${x(d.lieuNaissance)}">
+      </div>
+      <div class="field">
+        <label>CP de naissance</label>
+        <input type="text" data-d="defunt.cpNaissance" value="${x(d.cpNaissance)}" maxlength="5" inputmode="numeric">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Profession</label>
+        <input type="text" data-d="defunt.profession" value="${x(d.profession)}">
       </div>
       <div class="field">
         <label>Nationalité</label>
@@ -898,6 +915,12 @@ function bindSection(idx) {
   // Champs data-d (champs simples dans D)
   document.querySelectorAll('[data-d]').forEach(el => {
     el.oninput = () => setNested(D, el.dataset.d, el.value);
+  });
+  document.querySelectorAll('[data-dciv]').forEach(btn => {
+    btn.onclick = () => {
+      D.defunt.civilite = btn.dataset.dciv;
+      document.querySelectorAll('[data-dciv]').forEach(b => b.classList.toggle('on', b===btn));
+    };
   });
   if (idx === 1) bindS2();
   if (idx === 3) bindHeritiers();
