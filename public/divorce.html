@@ -308,12 +308,8 @@ const SECTIONS = [
 const _urlParams = new URLSearchParams(window.location.search);
 const _skipEtatCivil = _urlParams.get('etatcivil') === '0';
 if (_skipEtatCivil) SECTIONS.splice(0, 1);
-const _sectionOffset = _skipEtatCivil ? 1 : 0;
+window._sectionOffset = _skipEtatCivil ? 1 : 0;
 
-const _buildSectionOrig = buildSection;
-function buildSection(idx) { return _buildSectionOrig(idx + _sectionOffset); }
-const _bindSectionOrig = typeof bindSection !== 'undefined' ? bindSection : null;
-if (_bindSectionOrig) { bindSection = (idx) => _bindSectionOrig(idx + _sectionOffset); }
 
 const REG_LABELS = {
   communaute_legale: 'Communauté réduite aux acquêts (régime légal)',
@@ -389,8 +385,8 @@ function renderSection(idx) {
   currentSection = idx;
   updateProgress(idx);
   const isLast = idx === SECTIONS.length - 1;
-  document.getElementById('formContent').innerHTML = buildSection(idx);
-  bindSection(idx);
+  document.getElementById('formContent').innerHTML = buildSection(idx + (window._sectionOffset||0));
+  bindSection(idx + (window._sectionOffset||0));
   const nav = document.getElementById('formNav');
   nav.innerHTML = `
     ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx-1})">← Précédent</button>` : ''}
