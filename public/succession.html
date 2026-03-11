@@ -190,7 +190,7 @@
   </div>
 </div>
 
-<footer>questionnaire.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
+<footer>form.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
 
 <script>
 'use strict';
@@ -295,6 +295,7 @@ document.getElementById('btnSend').onclick = async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Erreur');
     email0 = email;
+    otpToken = d.token || '';
     document.getElementById('sEmail').style.display = 'none';
     document.getElementById('sCode').style.display = 'block';
     document.getElementById('otpMsg').textContent = `Code envoyé à ${email}. Saisissez-le ci-dessous.`;
@@ -315,7 +316,7 @@ document.getElementById('btnVerify').onclick = async () => {
   try {
     const r = await fetch('/api/otp/verifier', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email0, code })
+      body: JSON.stringify({ email: email0, code, token: otpToken })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Code incorrect');
