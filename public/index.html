@@ -377,12 +377,12 @@ function buildPageHtml(p0, p1) {
     </div>
     <div class="row2">
       <div class="field">
-        <label>Nom d'usage <span class="req">*</span></label>
-        <input type="text" data-f="NOMU" value="${x(p.NOMU)}">
+        <label>Nom de naissance <span class="req">*</span></label>
+        <input type="text" data-f="NOM" value="${x(p.NOM)}">
       </div>
       <div class="field">
-        <label>Nom de naissance <span class="opt">(si différent)</span></label>
-        <input type="text" data-f="NOM" value="${x(p.NOM)}">
+        <label>Nom d'usage <span class="opt">(si différent)</span></label>
+        <input type="text" data-f="NOMU" value="${x(p.NOMU)}">
       </div>
     </div>
     <div class="row2">
@@ -720,7 +720,7 @@ function buildXml() {
     // LNCOMA/LPCOMA : nom/prénom du conjoint (uniquement sur fiche principale)
     let lnco = '', lpco = '', datEvt = '', lieuEvt = '';
     if (hasH) {
-      lnco = conjoint ? (conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
+      lnco = conjoint ? (conjoint.NOM||conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
       lpco = conjoint ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
       datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
       lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
@@ -777,7 +777,7 @@ ${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
 ${vr('CONJ', conjNum)}
 ${vr('ETAT', sit)}
 ${vr('CODETITRE', p.CODETITRE)}
-${vr('NOMU', p.NOMU)}
+${vr('NOMU', p.NOMU || p.NOM)}
 ${vr('PRENOMU', (p.PRENOMU||'').trim())}
 ${vr('PRENOM', prenomComplet)}
 ${vr('PROF', p.PROF)}
@@ -797,7 +797,7 @@ ${vr('CPIMP', p.CPIMP)}
 ${vr('VILLEIMP', p.VILLEIMP)}
 ${vr('CODERU', p.CODERU)}
 ${vr('LVNARU', p.LVNARU)}
-${vr('NOM', p.NOM || p.NOMU)}
+${vr('NOM', p.NOM)}
 ${vr('REGIME', showM && isMain ? (p.REGIME||'4') : '')}
 ${vr('DATCONTR', '')}
 ${vr('DATAN', '')}
@@ -878,7 +878,7 @@ document.getElementById('btnSubmit').onclick = async () => {
     const n = p._role==='conjoint' ? '2ème personne' : 'Vous';
     if (!SKIP_ETATCIVIL) {
       if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
-      if (!p.NOMU)    return showErr(`${n} : nom obligatoire.`, i);
+      if (!p.NOM)     return showErr(`${n} : nom de naissance obligatoire.`, i);
       if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
       if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
       if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
