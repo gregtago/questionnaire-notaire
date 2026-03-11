@@ -7,9 +7,13 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
-    .header { background: #111; color: #fff; padding: 28px 32px 24px; }
-    .header .cabinet { font-size: 19px; letter-spacing: .05em; color: rgba(255,255,255,.85); margin-bottom: 8px; font-weight: 500; }
-    .header h1 { font-size: 24px; font-weight: 300; }
+    .header { background: #111; color: #fff; }
+    .header .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .header .cabinet { font-size: 13px; letter-spacing: .04em; color: rgba(255,255,255,.55); font-weight: 400; }
+    .header .site-link { font-size: 11px; color: rgba(255,255,255,.35); text-decoration: none; letter-spacing: .04em; transition: color .15s; }
+    .header .site-link:hover { color: rgba(255,255,255,.7); }
+    .header .title-bar { padding: 14px 28px 18px; background: #1a1a1a; }
+    .header h1 { font-size: 22px; font-weight: 300; }
     .screen { max-width: 520px; margin: 60px auto; padding: 0 20px; }
     .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
     .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
@@ -73,7 +77,10 @@
     .confirm .icon { font-size: 44px; margin-bottom: 14px; }
     .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
     .confirm p { color: #777; font-size: 14px; }
-    footer { text-align: center; padding: 28px 20px; font-size: 11px; color: #bbb; }
+    footer { padding: 32px 28px 28px; border-top: 1px solid #e8e8e5; display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; }
+    footer .f-left .f-name { font-size: 12px; font-weight: 500; color: #555; }
+    footer .f-left .f-url { font-size: 11px; color: #bbb; margin-top: 2px; }
+    footer .f-right { text-align: right; font-size: 11px; color: #bbb; line-height: 1.8; }
     .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
     @keyframes sp { to { transform: rotate(360deg); } }
     .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; font-size: 11px; color: #666; line-height: 1.6; }
@@ -92,8 +99,11 @@
 <body>
 
 <div class="header">
-  <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
-  <h1>Vente d'une maison</h1>
+  <div class="top-bar">
+    <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
+    <a href="https://tagot.notaires.fr" target="_blank" class="site-link">tagot.notaires.fr ↗</a>
+  </div>
+  <div class="title-bar"><h1>Vente d'une maison</h1></div>
 </div>
 
 <!-- ÉCRAN 0 : RGPD -->
