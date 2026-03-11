@@ -304,6 +304,17 @@ const SECTIONS = [
   { title: 'Attribution préférentielle' }
 ];
 
+// ── Paramètre etatcivil=0 ─────────────────────────────────
+const _urlParams = new URLSearchParams(window.location.search);
+const _skipEtatCivil = _urlParams.get('etatcivil') === '0';
+if (_skipEtatCivil) SECTIONS.splice(0, 1);
+const _sectionOffset = _skipEtatCivil ? 1 : 0;
+
+const _buildSectionOrig = buildSection;
+function buildSection(idx) { return _buildSectionOrig(idx + _sectionOffset); }
+const _bindSectionOrig = typeof bindSection !== 'undefined' ? bindSection : null;
+if (_bindSectionOrig) { bindSection = (idx) => _bindSectionOrig(idx + _sectionOffset); }
+
 const REG_LABELS = {
   communaute_legale: 'Communauté réduite aux acquêts (régime légal)',
   separation: 'Séparation de biens',
@@ -356,7 +367,6 @@ document.getElementById('btnVerify').onclick = async () => {
     D.epoux1.email = email0;
     document.getElementById('sCode').style.display = 'none';
     document.getElementById('sForm').style.display = 'block';
-    document.getElementById('pageSub').style.display = 'none';
     renderSection(0);
   } catch(e) { err.textContent = e.message; }
   finally { document.getElementById('btnVerify').disabled = false; }
