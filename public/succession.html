@@ -215,13 +215,7 @@ const D = {
     etat: '', // C M P D V
     dateMariage: '', lieuMariage: '', contratMariage: '', regimeMatrimonial: '', notaireContrat: ''
   },
-  // Section 3 : Conjoint survivant
-  conjoint: {
-    afficher: false,
-    nom: '', prenoms: '', dateNaissance: '', lieuNaissance: '',
-    nationalite: '', profession: '', adresse: '', tel: '', email: ''
-  },
-  // Section 4 : Héritiers
+  // Section 3 : Héritiers (inclut conjoint survivant)
   heritiers: [],
   // Section 5 : Dispositions
   dispositions: {
@@ -258,14 +252,13 @@ const D = {
 const SECTIONS = [
   { id: 's1', title: 'Personne décédée' },
   { id: 's2', title: 'Situation familiale' },
-  { id: 's3', title: 'Conjoint survivant' },
-  { id: 's4', title: 'Héritiers' },
-  { id: 's5', title: 'Dispositions' },
-  { id: 's6', title: 'Comptes bancaires' },
-  { id: 's7', title: 'Biens immobiliers' },
-  { id: 's8', title: 'Autres actifs' },
-  { id: 's9', title: 'Dettes' },
-  { id: 's10', title: 'Fiscalité' }
+  { id: 's3', title: 'Héritiers' },
+  { id: 's4', title: 'Dispositions' },
+  { id: 's5', title: 'Comptes bancaires' },
+  { id: 's6', title: 'Biens immobiliers' },
+  { id: 's7', title: 'Autres actifs' },
+  { id: 's8', title: 'Dettes' },
+  { id: 's9', title: 'Fiscalité' }
 ];
 
 // ── Accueil ───────────────────────────────────────────────
@@ -375,14 +368,13 @@ function buildSectionHtml(idx) {
   switch(idx) {
     case 0: return buildS1();
     case 1: return buildS2();
-    case 2: return buildS3();
-    case 3: return buildS4();
-    case 4: return buildS5();
-    case 5: return buildS6();
-    case 6: return buildS7();
-    case 7: return buildS8();
-    case 8: return buildS9();
-    case 9: return buildS10();
+    case 2: return buildS4();
+    case 3: return buildS5();
+    case 4: return buildS6();
+    case 5: return buildS7();
+    case 6: return buildS8();
+    case 7: return buildS9();
+    case 8: return buildS10();
     default: return '';
   }
 }
@@ -517,62 +509,6 @@ function buildS2() {
   </div>`;
 }
 
-// Section 3 : Conjoint survivant
-function buildS3() {
-  const c = D.conjoint;
-  const show = ['M','P'].includes(D.situation.etat);
-  if (!show) {
-    return `<div class="sec"><div class="sec-heading">Conjoint survivant</div>
-      <p style="color:#aaa;font-size:13px;padding:8px 0;">Sans objet selon la situation familiale renseignée.</p></div>`;
-  }
-  return `
-  <div class="sec">
-    <div class="sec-heading">Conjoint ou partenaire survivant</div>
-    <div class="row2">
-      <div class="field">
-        <label>Nom <span class="req">*</span></label>
-        <input type="text" data-d="conjoint.nom" value="${x(c.nom)}">
-      </div>
-      <div class="field">
-        <label>Prénoms <span class="req">*</span></label>
-        <input type="text" data-d="conjoint.prenoms" value="${x(c.prenoms)}">
-      </div>
-    </div>
-    <div class="row3">
-      <div class="field">
-        <label>Date de naissance</label>
-        <input type="date" data-d="conjoint.dateNaissance" value="${x(c.dateNaissance)}">
-      </div>
-      <div class="field">
-        <label>Lieu de naissance</label>
-        <input type="text" data-d="conjoint.lieuNaissance" value="${x(c.lieuNaissance)}">
-      </div>
-      <div class="field">
-        <label>Nationalité</label>
-        <input type="text" data-d="conjoint.nationalite" value="${x(c.nationalite)}">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>Profession</label>
-        <input type="text" data-d="conjoint.profession" value="${x(c.profession)}">
-      </div>
-      <div class="field">
-        <label>Téléphone</label>
-        <input type="tel" data-d="conjoint.tel" value="${x(c.tel)}">
-      </div>
-    </div>
-    <div class="field">
-      <label>Adresse</label>
-      <input type="text" data-d="conjoint.adresse" value="${x(c.adresse)}">
-    </div>
-    <div class="field">
-      <label>Email</label>
-      <input type="email" data-d="conjoint.email" value="${x(c.email)}">
-    </div>
-  </div>`;
-}
-
 // Section 4 : Héritiers
 function buildS4() {
   if (!D.heritiers.length) D.heritiers.push(newHeritier());
@@ -588,8 +524,22 @@ function buildS4() {
 }
 
 function newHeritier() {
-  return { nom:'', prenoms:'', dateNaissance:'', lieuNaissance:'', adresse:'', tel:'', email:'', lien:'' };
+  return { nom:'', prenom:'', lien:'', email:'', tel:'' };
 }
+
+const LIENS_HERITIER = [
+  ['conjoint_survivant','Conjoint(e) survivant(e)'],
+  ['partenaire_pacs','Partenaire de PACS survivant(e)'],
+  ['enfant','Enfant'],
+  ['petit_enfant','Petit-enfant'],
+  ['pere','Père'],
+  ['mere','Mère'],
+  ['frere_soeur','Frère / Sœur'],
+  ['neveu_niece','Neveu / Nièce'],
+  ['oncle_tante','Oncle / Tante'],
+  ['cousin','Cousin(e)'],
+  ['autre','Autre lien']
+];
 
 function buildHeritierBlock(h, i) {
   return `
@@ -600,27 +550,18 @@ function buildHeritierBlock(h, i) {
     </div>
     <div class="row2">
       <div class="field"><label>Nom</label><input type="text" data-h="${i}.nom" value="${x(h.nom)}"></div>
-      <div class="field"><label>Prénoms</label><input type="text" data-h="${i}.prenoms" value="${x(h.prenoms)}"></div>
+      <div class="field"><label>Prénom</label><input type="text" data-h="${i}.prenom" value="${x(h.prenom)}"></div>
+    </div>
+    <div class="field">
+      <label>Lien avec le défunt</label>
+      <select data-h="${i}.lien">
+        <option value="">— Sélectionner —</option>
+        ${LIENS_HERITIER.map(([k,v])=>`<option value="${k}"${h.lien===k?' selected':''}>${v}</option>`).join('')}
+      </select>
     </div>
     <div class="row2">
-      <div class="field"><label>Date de naissance</label><input type="date" data-h="${i}.dateNaissance" value="${x(h.dateNaissance)}"></div>
-      <div class="field"><label>Lieu de naissance</label><input type="text" data-h="${i}.lieuNaissance" value="${x(h.lieuNaissance)}"></div>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Téléphone</label><input type="tel" data-h="${i}.tel" value="${x(h.tel)}"></div>
       <div class="field"><label>Email</label><input type="email" data-h="${i}.email" value="${x(h.email)}"></div>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Adresse</label><input type="text" data-h="${i}.adresse" value="${x(h.adresse)}"></div>
-      <div class="field">
-        <label>Lien avec le défunt</label>
-        <select data-h="${i}.lien">
-          <option value="">— Sélectionner —</option>
-          ${[['enfant','Enfant'],['conjoint','Conjoint(e)'],['parent','Parent'],['frere_soeur','Frère / Sœur'],['autre','Autre']].map(([k,v])=>
-            `<option value="${k}"${h.lien===k?' selected':''}>${v}</option>`
-          ).join('')}
-        </select>
-      </div>
+      <div class="field"><label>Téléphone</label><input type="tel" data-h="${i}.tel" value="${x(h.tel)}"></div>
     </div>
   </div>`;
 }
