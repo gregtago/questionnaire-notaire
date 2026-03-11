@@ -73,10 +73,18 @@
     .btn-submit:disabled { background: #999; cursor: not-allowed; }
     .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
     .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm { text-align: center; padding: 40px 20px 20px; }
     .confirm .icon { font-size: 44px; margin-bottom: 14px; }
     .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
     .confirm p { color: #777; font-size: 14px; }
+    .pieces-wrap { text-align: left; margin-top: 32px; border-top: 1px solid #eee; padding-top: 24px; }
+    .pieces-wrap h3 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 16px; letter-spacing: .03em; text-transform: uppercase; }
+    .pieces-section { margin-bottom: 18px; }
+    .pieces-section .ps-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .pieces-section ul { margin: 0; padding: 0; list-style: none; }
+    .pieces-section ul li { font-size: 13px; color: #444; padding: 5px 0 5px 18px; border-bottom: 1px solid #f5f5f5; position: relative; line-height: 1.4; }
+    .pieces-section ul li::before { content: "\2192"; position: absolute; left: 0; color: #bbb; font-size: 11px; top: 6px; }
+    .pieces-email-note { margin-top: 20px; padding: 12px 16px; background: #f8f8f6; border-radius: 4px; font-size: 12px; color: #888; text-align: center; }
     footer { padding: 32px 28px 28px; border-top: 1px solid #e8e8e5; display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; }
     footer .f-left .f-name { font-size: 12px; font-weight: 500; color: #555; }
     footer .f-left .f-url { font-size: 11px; color: #bbb; margin-top: 2px; }
@@ -1105,6 +1113,56 @@ function showErr(msg) {
   el.scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
+function buildPiecesList(D) {
+  const sections = [];
+  const isLoue = D.bien && D.bien.situationJour === "loue";
+  const hasPret = D.prets && D.prets.pretHypotheque === "oui";
+  const hasSci = D.fiscalite && D.fiscalite.societeCivile === "oui";
+  const hasAlarme = D.contrats && D.contrats.alarme === "oui";
+  const hasAvantFiscal = D.contrats && D.contrats.avantFiscal === "oui";
+  const isNonRP = D.plusvalue && D.plusvalue.residencePrincipale === "non";
+  const hasTva = D.fiscalite && D.fiscalite.tva === "oui";
+
+  sections.push({ section: "Documents obligatoires", pieces: [
+    "Titre de propriete",
+    "Dossier de diagnostics techniques complet (DPE, amiante, termites, plomb, gaz, electricite...)",
+    "Derniers proces-verbaux d'assemblee generale (3 derniers)",
+    "Reglement de copropriete et etat descriptif de division",
+    "Dernier appel de charges trimestriel",
+  ]});
+
+  if (isLoue) sections.push({ section: "Location", pieces: [
+    "Bail et ses annexes", "Derniere quittance de loyer", "Copie du conge donne au locataire",
+  ]});
+
+  if (hasPret) sections.push({ section: "Pret immobilier", pieces: [
+    "Offre de pret", "Tableau d'amortissement (capital restant du)",
+  ]});
+
+  if (hasSci) sections.push({ section: "Societe civile", pieces: [
+    "Statuts a jour", "Extrait Kbis", "Derniers bilans",
+  ]});
+
+  if (hasAlarme) sections.push({ section: "Alarme", pieces: [
+    "Contrat d'alarme avec coordonnees de la societe",
+  ]});
+
+  if (hasAvantFiscal) sections.push({ section: "Avantage fiscal", pieces: [
+    "Declarations d'impot concernant la periode d'engagement de location",
+  ]});
+
+  if (isNonRP) sections.push({ section: "Plus-value immobiliere", pieces: [
+    "Compte notarial d'acquisition (acte d'achat)",
+    "Factures de travaux d'amelioration (si deductibles)",
+  ]});
+
+  if (hasTva) sections.push({ section: "TVA", pieces: [
+    "Justificatifs de recuperation de TVA lors de l'acquisition",
+  ]});
+
+  return sections;
+}
+
 document.getElementById('btnSubmit').onclick = async () => {
   document.getElementById('ferr').style.display = 'none';
   if (!D.vendeur1.nom || !D.vendeur1.prenoms) return showErr('Nom et prénoms du Vendeur 1 obligatoires.');
@@ -1117,14 +1175,27 @@ document.getElementById('btnSubmit').onclick = async () => {
   try {
     const r = await fetch('/api/soumettre-vente-appartement', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ data: D, email: email0 })
+      body: JSON.stringify({ data: D, email: email0, pieces: buildPiecesList(D) })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    // Construire la liste de pièces
+    const piecesSections = buildPiecesList(D);
+    const piecesHtml = piecesSections.map(s => `
+      <div class="pieces-section">
+        <div class="ps-title">${s.section}</div>
+        <ul>${s.pieces.map(p => `<li>${p}</li>`).join("")}</ul>
+      </div>`).join("");
+
     document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
       <div class="icon">✓</div>
       <h2>Questionnaire envoyé</h2>
       <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+      <div class="pieces-wrap">
+        <h3>Pièces à nous faire parvenir</h3>
+        ${piecesHtml}
+        <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}</div>
+      </div>
     </div></div>`;
   } catch(e) {
     showErr(e.message);
