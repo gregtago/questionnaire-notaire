@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire Acquisition — Grégoire TAGOT | notaire</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
+    .header { background: #111; color: #fff; padding: 28px 32px 24px; }
+    .header .cabinet { font-size: 19px; letter-spacing: .05em; color: rgba(255,255,255,.85); margin-bottom: 8px; font-weight: 500; }
+    .header h1 { font-size: 24px; font-weight: 300; }
+    .screen { max-width: 520px; margin: 60px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p { color: #777; font-size: 14px; margin-bottom: 28px; }
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; }
+    .fg input:focus { border-color: #111; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-ghost { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .otp-input { text-align: center; font-size: 28px; letter-spacing: .3em; font-weight: 600; }
+    .form-wrap { max-width: 700px; margin: 0 auto; padding: 28px 20px 80px; }
+    .progress-bar-wrap { background: #e5e5e5; border-radius: 4px; height: 4px; margin-bottom: 28px; }
+    .progress-bar { height: 4px; background: #111; border-radius: 4px; transition: width .3s; }
+    .progress-label { font-size: 11px; color: #aaa; margin-bottom: 8px; letter-spacing: .06em; text-transform: uppercase; }
+    .sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; margin-bottom: 14px; }
+    .sec-heading { font-size: 16px; font-weight: 500; color: #111; margin-bottom: 6px; }
+    .sec-desc { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
+    .field label .req { color: #c0392b; }
+    .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; font-family: inherit; }
+    .field input:focus, .field select:focus { border-color: #111; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .choice { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; }
+    .choice.on { background: #111; color: #fff; border-color: #111; }
+    .cond { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .cond.show { display: block; }
+    .checkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 6px; }
+    .checkitem { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 13px; color: #444; background: #fff; transition: border-color .15s, background .15s; }
+    .checkitem.on { border-color: #111; background: #f5f5f5; font-weight: 500; color: #111; }
+    .checkitem input[type=checkbox] { display: none; }
+    .checkitem::before { content: '○'; font-size: 14px; color: #ccc; flex-shrink: 0; }
+    .checkitem.on::before { content: '●'; color: #111; }
+    .repeat-block { border: 1px solid #e5e5e5; border-radius: 6px; padding: 18px; margin-bottom: 10px; background: #fafafa; }
+    .repeat-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .repeat-block-num { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #888; }
+    .btn-remove { background: none; border: 1px solid #e0e0e0; color: #aaa; font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+    .btn-remove:hover { border-color: #c0392b; color: #c0392b; }
+    .btn-add { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fff; border: 1px dashed #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; color: #666; width: 100%; margin-top: 6px; }
+    .btn-add:hover { border-color: #888; color: #111; }
+    .btn-add::before { content: '+'; font-size: 18px; line-height: 1; }
+    .form-nav { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-prev { flex: 1; padding: 12px; background: #fff; color: #111; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-prev:hover { border-color: #111; }
+    .btn-next { flex: 2; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-next:hover { background: #333; }
+    .submit-sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; }
+    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-submit:hover { background: #333; }
+    .btn-submit:disabled { background: #999; cursor: not-allowed; }
+    .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
+    .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm .icon { font-size: 44px; margin-bottom: 14px; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; }
+    footer { text-align: center; padding: 28px 20px; font-size: 11px; color: #bbb; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; font-size: 11px; color: #666; line-height: 1.6; }
+    .rgpd-check.checked { border-color: #111; background: #fafafa; }
+    .rgpd-check input[type=checkbox] { display: none; }
+    .rgpd-check strong { color: #111; font-size: 11px; }
+    .rgpd-accept { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; cursor: pointer; }
+    .rgpd-accept em { font-style: normal; font-size: 11px; font-weight: 600; color: #111; }
+    .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
+    @media(max-width:600px){ .row2,.row3{ grid-template-columns:1fr; } .header{ padding:20px; } .checkgrid{ grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
+  <h1>Acquisition immobilière</h1>
+</div>
+
+<!-- ÉCRAN 0 : Accueil RGPD -->
+<div id="sAccueil" class="screen">
+  <div class="card">
+    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">Ce questionnaire nous permet de préparer votre acte d'acquisition dans les meilleures conditions. Merci de le compléter aussi précisément que possible.</p>
+    <div class="rgpd-check" id="wrapRgpd">
+      <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Protection des données personnelles</strong><br><br>
+      L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
+      <label class="rgpd-accept" for="cbRgpd">
+        <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+    <div class="rgpd-check" id="wrapLre" style="margin-top:10px">
+      <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+      Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal.
+      <label class="rgpd-accept" for="cbLre">
+        <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+    <button class="btn" id="btnAccueil" style="margin-top:20px" disabled onclick="validerAccueil()">COMMENCER</button>
+    <div class="err" id="eAccueil"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 1 : Email -->
+<div id="sEmail" class="screen" style="display:none">
+  <div class="card">
+    <h2>Vérification email</h2>
+    <p>Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.</p>
+    <div class="fg">
+      <label>Adresse email <span style="color:#c0392b">*</span></label>
+      <input type="email" id="iEmail" autocomplete="email">
+    </div>
+    <button class="btn" id="btnSend">ENVOYER LE CODE</button>
+    <div class="err" id="eEmail"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 2 : Code OTP -->
+<div id="sCode" class="screen" style="display:none">
+  <div class="card">
+    <h2>Code de vérification</h2>
+    <p id="otpMsg">Saisissez le code reçu par email.</p>
+    <div class="fg">
+      <label>Code à 6 chiffres</label>
+      <input type="text" id="iCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    </div>
+    <button class="btn" id="btnVerify">VALIDER</button>
+    <div class="err" id="eCode"></div>
+    <br><button class="btn-ghost" id="btnResend">Renvoyer le code</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 3 : Formulaire -->
+<div id="sForm" style="display:none">
+  <div class="form-wrap">
+    <div class="progress-label" id="progressLabel"></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div id="formContent"></div>
+    <div class="form-nav" id="formNav"></div>
+    <div class="submit-sec" id="submitSec" style="display:none">
+      <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
+      <div class="ferr" id="ferr"></div>
+      <div class="rgpd-note">✓ Mentions RGPD acceptées en début de questionnaire.</div>
+    </div>
+  </div>
+</div>
+
+<footer>form.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
+
+<script>
+'use strict';
+
+let email0 = '';
+let otpToken = '';
+let currentSection = 0;
+
+// ── Modèle ────────────────────────────────────────────────
+const D = {
+  // S1 : Identification
+  acquereur: { nom: '', prenoms: '' },
+  acquereur2: { nom: '', prenoms: '' }, // si couple
+
+  // S2 : Mode d'acquisition
+  mode: '', // seul | couple | indivision | sci
+  indivision: [], // [{ nom:'', quotePart:'' }]
+  sci: { nom: '', siege: '', repartition: '' },
+
+  // S3 : Désignation du bien
+  bien: {
+    adresse: '', cp: '', ville: '',
+    type: '', // appartement | maison | terrain | autre
+    typeAutre: '',
+    dependances: [], // cave, parking, garage, jardin, terrasse
+    copropriete: '',
+    lotNumero: '', tantiemes: '', syndic: ''
+  },
+
+  // S4 : Projet
+  projet: {
+    destination: '', // residence_principale | residence_secondaire | investissement_locatif
+    location: '', // meublee | nue
+    division: '',
+    travaux: '',
+    changementDestination: ''
+  },
+
+  // S5 : Financement
+  financement: {
+    prixBien: '', prixMeubles: '',
+    apportMontant: '', apportOrigine: '',
+    pretMontant: '', pretDuree: '', pretBanque: '', pretTauxMax: '',
+    conditionsSuspensives: [] // pret | vente_prealable | permis | autre
+  },
+
+  // S6 : Origine des fonds
+  fonds: {
+    origines: [], // epargne | donation | heritage | vente_bien | indemnite | autre
+    autreOrigine: '',
+    justificatifs: [] // releve | attestation_banque | attestation_donation
+  },
+
+  // S7 : Revente d'un bien
+  revente: {
+    applicable: '',
+    adresse: '', prixEstime: '', agence: '',
+    compromis: '', dateSignature: ''
+  },
+
+  // S8 : Assurance et garanties
+  garanties: {
+    assuranceEmprunteur: '',
+    typeGarantie: '' // caution | hypotheque | autre
+  },
+
+  // S9 : Fiscalité et résidence
+  fiscalite: {
+    residenceFiscale: '',
+    pays: '',
+    numeroFiscal: ''
+  },
+
+  // S10 : Coordonnées bancaires
+  banque: { banque: '', iban: '', bic: '' }
+};
+
+const SECTIONS = [
+  { title: 'Identification' },
+  { title: 'Mode d\'acquisition' },
+  { title: 'Désignation du bien' },
+  { title: 'Projet' },
+  { title: 'Financement' },
+  { title: 'Origine des fonds' },
+  { title: 'Revente d\'un bien' },
+  { title: 'Assurance et garanties' },
+  { title: 'Fiscalité et résidence' },
+  { title: 'Coordonnées bancaires' }
+];
+
+// ── Accueil / OTP ─────────────────────────────────────────
+function checkRgpd() {
+  const ok = document.getElementById('cbRgpd').checked && document.getElementById('cbLre').checked;
+  document.getElementById('btnAccueil').disabled = !ok;
+}
+function validerAccueil() {
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+
+document.getElementById('btnSend').onclick = async () => {
+  const email = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!email || !email.includes('@')) { err.textContent = 'Adresse email invalide.'; return; }
+  err.textContent = '';
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('btnSend').textContent = 'Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    email0 = email;
+    otpToken = d.token || '';
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${email}. Saisissez-le ci-dessous.`;
+  } catch(e) { err.textContent = e.message; }
+  finally { document.getElementById('btnSend').disabled = false; document.getElementById('btnSend').textContent = 'ENVOYER LE CODE'; }
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length !== 6) { err.textContent = 'Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  document.getElementById('btnVerify').disabled = true;
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email0, code, token: otpToken }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Code incorrect');
+    document.getElementById('sCode').style.display = 'none';
+    document.getElementById('sForm').style.display = 'block';
+    renderSection(0);
+  } catch(e) { err.textContent = e.message; }
+  finally { document.getElementById('btnVerify').disabled = false; }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+  document.getElementById('iCode').value = '';
+};
+
+// ── Navigation ────────────────────────────────────────────
+function renderSection(idx) {
+  currentSection = idx;
+  const pct = Math.round(((idx+1)/SECTIONS.length)*100);
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = `Étape ${idx+1} sur ${SECTIONS.length} — ${SECTIONS[idx].title}`;
+  const isLast = idx === SECTIONS.length - 1;
+  document.getElementById('formContent').innerHTML = buildSection(idx);
+  bindSection(idx);
+  document.getElementById('formNav').innerHTML = `
+    ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx-1})">← Précédent</button>` : ''}
+    ${!isLast ? `<button class="btn-next" onclick="renderSection(${idx+1})">Suivant →</button>` : ''}
+  `;
+  document.getElementById('submitSec').style.display = isLast ? 'block' : 'none';
+  window.scrollTo(0,0);
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function x(v) { return (v||'').replace(/"/g,'&quot;'); }
+function setN(obj, path, val) {
+  const p = path.split('.'); let c = obj;
+  for (let i=0;i<p.length-1;i++) c=c[p[i]];
+  c[p[p.length-1]] = val;
+}
+function tog(arr, val) {
+  const i = arr.indexOf(val);
+  if (i >= 0) arr.splice(i,1); else arr.push(val);
+}
+function buildCheckgrid(items, arr, dataAttr) {
+  return `<div class="checkgrid">${items.map(([k,v])=>`
+    <label class="checkitem${arr.includes(k)?' on':''}">
+      <input type="checkbox" data-chk="${dataAttr}" data-v="${k}" ${arr.includes(k)?'checked':''}>
+      ${v}
+    </label>`).join('')}</div>`;
+}
+
+// ── Sections ──────────────────────────────────────────────
+function buildSection(idx) {
+  switch(idx) {
+    case 0: return buildS1();
+    case 1: return buildS2();
+    case 2: return buildS3();
+    case 3: return buildS4();
+    case 4: return buildS5();
+    case 5: return buildS6();
+    case 6: return buildS7();
+    case 7: return buildS8();
+    case 8: return buildS9();
+    case 9: return buildS10();
+    default: return '';
+  }
+}
+
+// S1 : Identification
+function buildS1() {
+  const isCo = ['couple','indivision'].includes(D.mode);
+  return `
+  <div class="sec">
+    <div class="sec-heading">Identification</div>
+    <div class="sec-desc">Ces informations servent à identifier le dossier.</div>
+    <div class="row2">
+      <div class="field"><label>Nom <span class="req">*</span></label><input type="text" data-d="acquereur.nom" value="${x(D.acquereur.nom)}"></div>
+      <div class="field"><label>Prénoms <span class="req">*</span></label><input type="text" data-d="acquereur.prenoms" value="${x(D.acquereur.prenoms)}"></div>
+    </div>
+  </div>`;
+}
+
+// S2 : Mode d'acquisition
+function buildS2() {
+  const m = D.mode;
+  const showIndi = m === 'indivision';
+  const showSci = m === 'sci';
+  const showCouple = m === 'couple';
+
+  if (!D.indivision.length) D.indivision = [{ nom:'', quotePart:'' }, { nom:'', quotePart:'' }];
+
+  return `
+  <div class="sec">
+    <div class="sec-heading">Qui achète ?</div>
+    <div class="field">
+      <div class="btns">
+        ${[['seul','Seul(e)'],['couple','En couple'],['indivision','Indivision'],['sci','SCI']].map(([k,v])=>`
+          <button type="button" class="choice${m===k?' on':''}" data-mode="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="cond${showCouple?' show':''}" id="condCouple">
+      <div class="sec-heading" style="font-size:14px;margin-bottom:12px;">Co-acquéreur</div>
+      <div class="row2">
+        <div class="field"><label>Nom</label><input type="text" data-d="acquereur2.nom" value="${x(D.acquereur2.nom)}"></div>
+        <div class="field"><label>Prénoms</label><input type="text" data-d="acquereur2.prenoms" value="${x(D.acquereur2.prenoms)}"></div>
+      </div>
+    </div>
+
+    <div class="cond${showIndi?' show':''}" id="condIndivision">
+      <div class="sec-heading" style="font-size:14px;margin-bottom:12px;">Quote-parts</div>
+      <div id="indiList">${D.indivision.map((ind,i)=>buildIndiBlock(ind,i)).join('')}</div>
+      <button class="btn-add" onclick="addIndi()">Ajouter un indivisaire</button>
+    </div>
+
+    <div class="cond${showSci?' show':''}" id="condSci">
+      <div class="sec-heading" style="font-size:14px;margin-bottom:12px;">Société civile immobilière</div>
+      <div class="row2">
+        <div class="field"><label>Nom de la société</label><input type="text" data-d="sci.nom" value="${x(D.sci.nom)}"></div>
+        <div class="field"><label>Siège social</label><input type="text" data-d="sci.siege" value="${x(D.sci.siege)}"></div>
+      </div>
+      <div class="field"><label>Répartition des parts</label><input type="text" data-d="sci.repartition" value="${x(D.sci.repartition)}" placeholder="ex: 50% M. Dupont, 50% Mme Dupont"></div>
+    </div>
+  </div>`;
+}
+
+function buildIndiBlock(ind, i) {
+  return `<div class="repeat-block" id="indi_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Indivisaire ${i+1}</span>
+      ${i>1?`<button class="btn-remove" onclick="removeIndi(${i})">Supprimer</button>`:''}
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nom et prénom</label><input type="text" data-ind="${i}.nom" value="${x(ind.nom)}"></div>
+      <div class="field"><label>Quote-part (%)</label><input type="text" data-ind="${i}.quotePart" value="${x(ind.quotePart)}" inputmode="numeric" placeholder="50"></div>
+    </div>
+  </div>`;
+}
+function addIndi() { D.indivision.push({nom:'',quotePart:''}); refreshIndi(); }
+function removeIndi(i) { D.indivision.splice(i,1); refreshIndi(); }
+function refreshIndi() {
+  const el = document.getElementById('indiList');
+  if (el) { el.innerHTML = D.indivision.map((ind,i)=>buildIndiBlock(ind,i)).join(''); bindIndi(); }
+}
+
+// S3 : Désignation du bien
+function buildS3() {
+  const b = D.bien;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Identification du bien</div>
+    <div class="field"><label>Adresse <span class="req">*</span></label><input type="text" data-d="bien.adresse" value="${x(b.adresse)}"></div>
+    <div class="row2">
+      <div class="field"><label>Code postal</label><input type="text" data-d="bien.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
+      <div class="field"><label>Ville</label><input type="text" data-d="bien.ville" value="${x(b.ville)}"></div>
+    </div>
+    <div class="field">
+      <label>Type de bien</label>
+      <div class="btns">
+        ${[['appartement','Appartement'],['maison','Maison'],['terrain','Terrain'],['autre','Autre']].map(([k,v])=>`
+          <button type="button" class="choice${b.type===k?' on':''}" data-bien-type="${k}">${v}</button>`).join('')}
+      </div>
+      <div class="cond${b.type==='autre'?' show':''}" id="condTypeAutre" style="margin-top:10px">
+        <input type="text" data-d="bien.typeAutre" value="${x(b.typeAutre)}" placeholder="Préciser">
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Dépendances</div>
+    ${buildCheckgrid([
+      ['cave','Cave'],['parking','Parking'],['garage','Garage'],['jardin','Jardin'],['terrasse','Terrasse']
+    ], b.dependances, 'bien.dependances')}
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Copropriété</div>
+    <div class="field">
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+          <button type="button" class="choice${b.copropriete===k?' on':''}" data-copro="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${b.copropriete==='oui'?' show':''}" id="condCopro">
+      <div class="row3">
+        <div class="field"><label>N° de lot</label><input type="text" data-d="bien.lotNumero" value="${x(b.lotNumero)}"></div>
+        <div class="field"><label>Tantièmes</label><input type="text" data-d="bien.tantiemes" value="${x(b.tantiemes)}"></div>
+        <div class="field"><label>Syndic</label><input type="text" data-d="bien.syndic" value="${x(b.syndic)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// S4 : Projet
+function buildS4() {
+  const p = D.projet;
+  const showLocation = p.destination === 'investissement_locatif';
+  return `
+  <div class="sec">
+    <div class="sec-heading">Destination du bien</div>
+    <div class="field">
+      <div class="btns">
+        ${[['residence_principale','Résidence principale'],['residence_secondaire','Résidence secondaire'],['investissement_locatif','Investissement locatif']].map(([k,v])=>`
+          <button type="button" class="choice${p.destination===k?' on':''}" data-dest="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${showLocation?' show':''}" id="condLocation">
+      <div class="field">
+        <label>Type de location</label>
+        <div class="btns">
+          ${[['meublee','Location meublée'],['nue','Location nue']].map(([k,v])=>`
+            <button type="button" class="choice${p.location===k?' on':''}" data-loc="${k}">${v}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Travaux et projet</div>
+    <div class="field">
+      <label>Division du bien envisagée ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+          <button type="button" class="choice${p.division===k?' on':''}" data-div="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Travaux envisagés ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+          <button type="button" class="choice${p.travaux===k?' on':''}" data-trav="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="field">
+      <label>Changement de destination prévu ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+          <button type="button" class="choice${p.changementDestination===k?' on':''}" data-changdest="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// S5 : Financement
+function buildS5() {
+  const f = D.financement;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Prix d'achat</div>
+    <div class="row2">
+      <div class="field"><label>Prix du bien <span class="req">*</span></label><input type="text" data-d="financement.prixBien" value="${x(f.prixBien)}" inputmode="numeric" placeholder="ex: 350 000 €"></div>
+      <div class="field"><label>Montant des meubles <span class="opt">(si applicable)</span></label><input type="text" data-d="financement.prixMeubles" value="${x(f.prixMeubles)}" inputmode="numeric"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Apport personnel</div>
+    <div class="row2">
+      <div class="field"><label>Montant de l'apport</label><input type="text" data-d="financement.apportMontant" value="${x(f.apportMontant)}" inputmode="numeric"></div>
+      <div class="field"><label>Origine des fonds <span class="opt">(résumé)</span></label><input type="text" data-d="financement.apportOrigine" value="${x(f.apportOrigine)}" placeholder="Épargne, donation…"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Crédit immobilier</div>
+    <div class="row2">
+      <div class="field"><label>Montant du prêt</label><input type="text" data-d="financement.pretMontant" value="${x(f.pretMontant)}" inputmode="numeric"></div>
+      <div class="field"><label>Durée (années)</label><input type="text" data-d="financement.pretDuree" value="${x(f.pretDuree)}" inputmode="numeric"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Banque</label><input type="text" data-d="financement.pretBanque" value="${x(f.pretBanque)}"></div>
+      <div class="field"><label>Taux maximum souhaité</label><input type="text" data-d="financement.pretTauxMax" value="${x(f.pretTauxMax)}" placeholder="ex: 3,5 %"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Conditions suspensives</div>
+    ${buildCheckgrid([
+      ['pret','Obtention du prêt'],
+      ['vente_prealable','Vente préalable d\'un bien'],
+      ['permis','Obtention d\'un permis de construire'],
+      ['autre','Autre condition']
+    ], f.conditionsSuspensives, 'financement.conditionsSuspensives')}
+  </div>`;
+}
+
+// S6 : Origine des fonds
+function buildS6() {
+  const f = D.fonds;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Origine des fonds</div>
+    <div class="sec-desc">Ces informations sont requises dans le cadre de la lutte contre le blanchiment de capitaux (LCB-FT).</div>
+    ${buildCheckgrid([
+      ['epargne','Épargne personnelle'],
+      ['donation','Donation familiale'],
+      ['heritage','Héritage'],
+      ['vente_bien','Vente d\'un bien'],
+      ['indemnite','Indemnité'],
+      ['autre','Autre origine']
+    ], f.origines, 'fonds.origines')}
+    <div class="cond${f.origines.includes('autre')?' show':''}" id="condAutreOrigine" style="margin-top:16px">
+      <div class="field"><label>Préciser l'autre origine</label><input type="text" data-d="fonds.autreOrigine" value="${x(f.autreOrigine)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Justificatifs disponibles</div>
+    ${buildCheckgrid([
+      ['releve','Relevé bancaire'],
+      ['attestation_banque','Attestation bancaire'],
+      ['attestation_donation','Attestation de donation']
+    ], f.justificatifs, 'fonds.justificatifs')}
+  </div>`;
+}
+
+// S7 : Revente d'un bien
+function buildS7() {
+  const r = D.revente;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Revente d'un bien existant</div>
+    <div class="sec-desc">Si vous devez vendre un bien pour financer cette acquisition, ces informations permettent de prévoir une condition suspensive.</div>
+    <div class="field">
+      <label>Applicable à votre situation ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+          <button type="button" class="choice${r.applicable===k?' on':''}" data-rev="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${r.applicable==='oui'?' show':''}" id="condRevente">
+      <div class="field"><label>Adresse du bien à vendre</label><input type="text" data-d="revente.adresse" value="${x(r.adresse)}"></div>
+      <div class="row2">
+        <div class="field"><label>Prix estimé</label><input type="text" data-d="revente.prixEstime" value="${x(r.prixEstime)}" inputmode="numeric"></div>
+        <div class="field"><label>Agence immobilière</label><input type="text" data-d="revente.agence" value="${x(r.agence)}"></div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Compromis signé ?</label>
+          <div class="btns">
+            ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+              <button type="button" class="choice${r.compromis===k?' on':''}" data-compromis="${k}">${v}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field"><label>Date prévue de signature</label><input type="date" data-d="revente.dateSignature" value="${x(r.dateSignature)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// S8 : Assurance et garanties
+function buildS8() {
+  const g = D.garanties;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Assurance emprunteur</div>
+    <div class="field">
+      <label>Assurance emprunteur souscrite ou envisagée ?</label>
+      <div class="btns">
+        ${[['banque','Auprès de la banque'],['externe','Déléguée (autre assureur)'],['non','Non / À définir']].map(([k,v])=>`
+          <button type="button" class="choice${g.assuranceEmprunteur===k?' on':''}" data-assur="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Garantie du prêt</div>
+    <div class="field">
+      <label>Type de garantie choisie par la banque</label>
+      <div class="btns">
+        ${[['caution','Caution bancaire'],['hypotheque','Hypothèque'],['ppd','PPD'],['non','Non précisée']].map(([k,v])=>`
+          <button type="button" class="choice${g.typeGarantie===k?' on':''}" data-gartype="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// S9 : Fiscalité et résidence
+function buildS9() {
+  const f = D.fiscalite;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Fiscalité et résidence</div>
+    <div class="sec-desc">Ces informations sont nécessaires aux formalités fiscales et à la conformité LCB-FT.</div>
+    <div class="field">
+      <label>Résidence fiscale</label>
+      <div class="btns">
+        ${[['france','France'],['etranger','Étranger']].map(([k,v])=>`
+          <button type="button" class="choice${f.residenceFiscale===k?' on':''}" data-resfis="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${f.residenceFiscale==='etranger'?' show':''}" id="condEtranger">
+      <div class="field"><label>Pays de résidence</label><input type="text" data-d="fiscalite.pays" value="${x(f.pays)}"></div>
+    </div>
+    <div class="field"><label>Numéro fiscal (NIF) <span class="opt">(si connu)</span></label><input type="text" data-d="fiscalite.numeroFiscal" value="${x(f.numeroFiscal)}"></div>
+  </div>`;
+}
+
+// S10 : Coordonnées bancaires
+function buildS10() {
+  const b = D.banque;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Coordonnées bancaires</div>
+    <div class="sec-desc">Utilisées pour les appels de fonds et la restitution éventuelle de sommes.</div>
+    <div class="field"><label>Banque</label><input type="text" data-d="banque.banque" value="${x(b.banque)}"></div>
+    <div class="row2">
+      <div class="field"><label>IBAN</label><input type="text" data-d="banque.iban" value="${x(b.iban)}" placeholder="FR76…"></div>
+      <div class="field"><label>BIC</label><input type="text" data-d="banque.bic" value="${x(b.bic)}"></div>
+    </div>
+  </div>`;
+}
+
+// ── Binding ───────────────────────────────────────────────
+function bindSection(idx) {
+  // data-d générique
+  document.querySelectorAll('[data-d]').forEach(el => {
+    el.oninput = () => setN(D, el.dataset.d, el.value);
+    el.onchange = () => setN(D, el.dataset.d, el.value);
+  });
+  // checkboxes
+  document.querySelectorAll('[data-chk]').forEach(el => {
+    el.onchange = () => {
+      const arr = el.dataset.chk.split('.').reduce((o,k)=>o[k], D);
+      tog(arr, el.dataset.v);
+      el.closest('.checkitem').classList.toggle('on', arr.includes(el.dataset.v));
+      // révéler condAutreOrigine si besoin
+      const cond = document.getElementById('condAutreOrigine');
+      if (cond) cond.classList.toggle('show', D.fonds.origines.includes('autre'));
+    };
+  });
+  if (idx === 1) bindMode();
+  if (idx === 2) bindBien();
+  if (idx === 3) bindProjet();
+  if (idx === 6) bindRevente();
+  if (idx === 7) bindGaranties();
+  if (idx === 8) bindFiscalite();
+  if (idx === 1) bindIndi();
+}
+
+function bindMode() {
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.onclick = () => {
+      D.mode = btn.dataset.mode;
+      document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b===btn));
+      document.getElementById('condCouple').classList.toggle('show', D.mode==='couple');
+      document.getElementById('condIndivision').classList.toggle('show', D.mode==='indivision');
+      document.getElementById('condSci').classList.toggle('show', D.mode==='sci');
+    };
+  });
+  document.querySelectorAll('[data-ind]').forEach(el => {
+    el.oninput = () => { const [i,k]=el.dataset.ind.split('.'); D.indivision[+i][k]=el.value; };
+  });
+}
+function bindIndi() {
+  document.querySelectorAll('[data-ind]').forEach(el => {
+    el.oninput = () => { const [i,k]=el.dataset.ind.split('.'); D.indivision[+i][k]=el.value; };
+  });
+}
+function bindBien() {
+  document.querySelectorAll('[data-bien-type]').forEach(btn => {
+    btn.onclick = () => {
+      D.bien.type = btn.dataset.bienType;
+      document.querySelectorAll('[data-bien-type]').forEach(b=>b.classList.toggle('on',b===btn));
+      document.getElementById('condTypeAutre').classList.toggle('show', D.bien.type==='autre');
+    };
+  });
+  document.querySelectorAll('[data-copro]').forEach(btn => {
+    btn.onclick = () => {
+      D.bien.copropriete = btn.dataset.copro;
+      document.querySelectorAll('[data-copro]').forEach(b=>b.classList.toggle('on',b===btn));
+      document.getElementById('condCopro').classList.toggle('show', D.bien.copropriete==='oui');
+    };
+  });
+}
+function bindProjet() {
+  document.querySelectorAll('[data-dest]').forEach(btn => {
+    btn.onclick = () => {
+      D.projet.destination = btn.dataset.dest;
+      document.querySelectorAll('[data-dest]').forEach(b=>b.classList.toggle('on',b===btn));
+      document.getElementById('condLocation').classList.toggle('show', D.projet.destination==='investissement_locatif');
+    };
+  });
+  document.querySelectorAll('[data-loc]').forEach(btn => {
+    btn.onclick = () => { D.projet.location=btn.dataset.loc; document.querySelectorAll('[data-loc]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+  document.querySelectorAll('[data-div]').forEach(btn => {
+    btn.onclick = () => { D.projet.division=btn.dataset.div; document.querySelectorAll('[data-div]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+  document.querySelectorAll('[data-trav]').forEach(btn => {
+    btn.onclick = () => { D.projet.travaux=btn.dataset.trav; document.querySelectorAll('[data-trav]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+  document.querySelectorAll('[data-changdest]').forEach(btn => {
+    btn.onclick = () => { D.projet.changementDestination=btn.dataset.changdest; document.querySelectorAll('[data-changdest]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+}
+function bindRevente() {
+  document.querySelectorAll('[data-rev]').forEach(btn => {
+    btn.onclick = () => {
+      D.revente.applicable=btn.dataset.rev;
+      document.querySelectorAll('[data-rev]').forEach(b=>b.classList.toggle('on',b===btn));
+      document.getElementById('condRevente').classList.toggle('show', D.revente.applicable==='oui');
+    };
+  });
+  document.querySelectorAll('[data-compromis]').forEach(btn => {
+    btn.onclick = () => { D.revente.compromis=btn.dataset.compromis; document.querySelectorAll('[data-compromis]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+}
+function bindGaranties() {
+  document.querySelectorAll('[data-assur]').forEach(btn => {
+    btn.onclick = () => { D.garanties.assuranceEmprunteur=btn.dataset.assur; document.querySelectorAll('[data-assur]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+  document.querySelectorAll('[data-gartype]').forEach(btn => {
+    btn.onclick = () => { D.garanties.typeGarantie=btn.dataset.gartype; document.querySelectorAll('[data-gartype]').forEach(b=>b.classList.toggle('on',b===btn)); };
+  });
+}
+function bindFiscalite() {
+  document.querySelectorAll('[data-resfis]').forEach(btn => {
+    btn.onclick = () => {
+      D.fiscalite.residenceFiscale=btn.dataset.resfis;
+      document.querySelectorAll('[data-resfis]').forEach(b=>b.classList.toggle('on',b===btn));
+      document.getElementById('condEtranger').classList.toggle('show', D.fiscalite.residenceFiscale==='etranger');
+    };
+  });
+}
+
+// ── Envoi ─────────────────────────────────────────────────
+function showErr(msg) {
+  const el = document.getElementById('ferr');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+document.getElementById('btnSubmit').onclick = async () => {
+  document.getElementById('ferr').style.display = 'none';
+  if (!D.acquereur.nom || !D.acquereur.prenoms) return showErr('Nom et prénoms de l\'acquéreur obligatoires.');
+  if (!D.bien.adresse) return showErr('L\'adresse du bien est obligatoire.');
+  if (!D.financement.prixBien) return showErr('Le prix du bien est obligatoire.');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+
+  try {
+    const r = await fetch('/api/soumettre-acquisition', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ data: D, email: email0 })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+      <div class="icon">✓</div>
+      <h2>Questionnaire envoyé</h2>
+      <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+    </div></div>`;
+  } catch(e) {
+    showErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = 'Envoyer mes réponses';
+  }
+};
+</script>
+</body>
+</html>
