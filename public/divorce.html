@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire Divorce — Grégoire TAGOT | notaire</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
+    .header { background: #111; color: #fff; padding: 28px 32px 24px; }
+    .header .cabinet { font-size: 19px; letter-spacing: .05em; color: rgba(255,255,255,.85); margin-bottom: 8px; font-weight: 500; }
+    .header h1 { font-size: 24px; font-weight: 300; }
+    .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+    .screen { max-width: 520px; margin: 60px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p { color: #777; font-size: 14px; margin-bottom: 28px; }
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; }
+    .fg input:focus { border-color: #111; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-ghost { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .otp-input { text-align: center; font-size: 28px; letter-spacing: .3em; font-weight: 600; }
+    .form-wrap { max-width: 820px; margin: 0 auto; padding: 28px 20px 80px; }
+    .progress-bar-wrap { background: #e5e5e5; border-radius: 4px; height: 4px; margin-bottom: 28px; }
+    .progress-bar { height: 4px; background: #111; border-radius: 4px; transition: width .3s; }
+    .progress-label { font-size: 11px; color: #aaa; margin-bottom: 8px; letter-spacing: .06em; text-transform: uppercase; }
+    .sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; margin-bottom: 14px; }
+    .sec-title { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #bbb; margin-bottom: 18px; }
+    .sec-heading { font-size: 16px; font-weight: 500; color: #111; margin-bottom: 6px; }
+    .sec-desc { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .epoux-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px; }
+    .epoux-bloc { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 20px; }
+    .epoux-bloc-title { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #fff; background: #111; padding: 8px 14px; border-radius: 4px 4px 0 0; margin: -20px -20px 18px; }
+    .epoux-bloc-title.e2 { background: #2c4a6e; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
+    .field label .req { color: #c0392b; }
+    .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; font-family: inherit; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #111; }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .choice { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; }
+    .choice.on { background: #111; color: #fff; border-color: #111; }
+    .cond { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .cond.show { display: block; }
+    .hidden { display: none; }
+    .repeat-block { border: 1px solid #e5e5e5; border-radius: 6px; padding: 18px; margin-bottom: 10px; background: #fafafa; }
+    .repeat-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .repeat-block-num { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #888; }
+    .btn-remove { background: none; border: 1px solid #e0e0e0; color: #aaa; font-size: 12px; padding: 4px 10px; border-radius: 4px; cursor: pointer; }
+    .btn-remove:hover { border-color: #c0392b; color: #c0392b; }
+    .btn-add { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #fff; border: 1px dashed #ccc; border-radius: 6px; cursor: pointer; font-size: 13px; color: #666; width: 100%; margin-top: 6px; }
+    .btn-add:hover { border-color: #888; color: #111; }
+    .btn-add::before { content: '+'; font-size: 18px; line-height: 1; }
+    .form-nav { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-prev { flex: 1; padding: 12px; background: #fff; color: #111; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-prev:hover { border-color: #111; }
+    .btn-next { flex: 2; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-next:hover { background: #333; }
+    .submit-sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px; }
+    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+    .btn-submit:hover { background: #333; }
+    .btn-submit:disabled { background: #999; cursor: not-allowed; }
+    .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
+    .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm .icon { font-size: 44px; margin-bottom: 14px; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; }
+    footer { text-align: center; padding: 28px 20px; font-size: 11px; color: #bbb; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .rgpd-check { margin-top: 14px; padding: 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; font-size: 11px; color: #666; line-height: 1.6; }
+    .rgpd-check.checked { border-color: #111; background: #fafafa; }
+    .rgpd-check input[type=checkbox] { display: none; }
+    .rgpd-check strong { color: #111; font-size: 11px; }
+    .rgpd-accept { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e0e0e0; cursor: pointer; }
+    .rgpd-accept em { font-style: normal; font-size: 11px; font-weight: 600; color: #111; }
+    .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
+    @media(max-width:700px){ .epoux-grid{ grid-template-columns:1fr; } .row2,.row3{ grid-template-columns:1fr; } .header{ padding: 20px; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="cabinet">Grégoire TAGOT&nbsp; |&nbsp; notaire</div>
+  <h1 id="pageTitle">Divorce</h1>
+  <div class="subtitle" id="pageSub"></div>
+</div>
+
+<!-- ÉCRAN 0 : Accueil RGPD -->
+<div id="sAccueil" class="screen">
+  <div class="card">
+    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">Afin de préparer votre dossier de divorce dans les meilleures conditions, nous vous invitons à compléter ce questionnaire. Renseignez les informations demandées sur les époux, la situation matrimoniale et le patrimoine commun.</p>
+    <div class="rgpd-check" id="wrapRgpd">
+      <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Protection des données personnelles</strong><br><br>
+      L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes. Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'État dont sont investis les notaires, officiers publics, conformément à l'ordonnance n°45-2590 du 2 novembre 1945. Conformément au Règlement (UE) 2016/679 (RGPD) et à la loi n°78-17, vous disposez d'un droit d'accès, de rectification et d'effacement des données vous concernant, exerçables auprès de l'Office notarial.
+      <label class="rgpd-accept" for="cbRgpd">
+        <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+    <div class="rgpd-check" id="wrapLre" style="margin-top:10px">
+      <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+      <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+      Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal.
+      <label class="rgpd-accept" for="cbLre">
+        <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
+        <span class="toggle"></span>
+      </label>
+    </div>
+    <button class="btn" id="btnAccueil" style="margin-top:20px" disabled onclick="validerAccueil()">COMMENCER</button>
+    <div class="err" id="eAccueil"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 1 : Email -->
+<div id="sEmail" class="screen" style="display:none">
+  <div class="card">
+    <h2>Vérification email</h2>
+    <p>Saisissez votre adresse email. Vous recevrez un code à 6 chiffres.</p>
+    <div class="fg">
+      <label>Adresse email <span style="color:#c0392b">*</span></label>
+      <input type="email" id="iEmail" autocomplete="email">
+    </div>
+    <button class="btn" id="btnSend">ENVOYER LE CODE</button>
+    <div class="err" id="eEmail"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 2 : Code OTP -->
+<div id="sCode" class="screen" style="display:none">
+  <div class="card">
+    <h2>Code de vérification</h2>
+    <p id="otpMsg">Saisissez le code reçu par email.</p>
+    <div class="fg">
+      <label>Code à 6 chiffres</label>
+      <input type="text" id="iCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    </div>
+    <button class="btn" id="btnVerify">VALIDER</button>
+    <div class="err" id="eCode"></div>
+    <br><button class="btn-ghost" id="btnResend">Renvoyer le code</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 3 : Formulaire -->
+<div id="sForm" style="display:none">
+  <div class="form-wrap">
+    <div class="progress-label" id="progressLabel"></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div id="formContent"></div>
+    <div class="form-nav" id="formNav"></div>
+    <div class="submit-sec" id="submitSec" style="display:none">
+      <button class="btn-submit" id="btnSubmit">Envoyer mes réponses</button>
+      <div class="ferr" id="ferr"></div>
+      <div class="rgpd-note">✓ Mentions RGPD acceptées en début de questionnaire.</div>
+    </div>
+  </div>
+</div>
+
+<footer>form.tagot.notaires.fr · Grégoire TAGOT | notaire</footer>
+
+<script>
+'use strict';
+
+// ── État global ───────────────────────────────────────────
+let email0 = '';
+let otpToken = '';
+let currentSection = 0;
+
+// ── Modèle de données ─────────────────────────────────────
+function newEpoux() {
+  return {
+    civilite: '', nom: '', nomNaissance: '', prenoms: '',
+    dateNaissance: '', lieuNaissance: '', cpNaissance: '',
+    nationalite: '', profession: '',
+    adresse: '', cp: '', ville: '',
+    tel: '', email: '',
+    mesureProtection: '', centreImpots: ''
+  };
+}
+
+const D = {
+  declarant: { nom: '', prenom: '' },
+  epoux1: newEpoux(),
+  epoux2: newEpoux(),
+
+  mariage: {
+    date: '', lieu: '',
+    contrat: '', regimeMatrimonial: '', notaireContrat: '', dateContrat: '',
+    donationEntreEpoux: '', notaireDonation: '', dateDonation: ''
+  },
+
+  procedure: {
+    type: '', // consentement_mutuel | judiciaire
+    tribunal: '',
+    avocat1Nom: '', avocat1Tel: '', avocat1Email: '',
+    avocat2Nom: '', avocat2Tel: '', avocat2Email: '',
+    dateONC: '', dateJugement: '', dateEffetDissolution: ''
+  },
+
+  // Biens propres avant mariage
+  propresE1: { immobilier: [], mobilier: [], financier: [] },
+  propresE2: { immobilier: [], mobilier: [], financier: [] },
+
+  // Biens reçus pendant mariage
+  recusE1: { donations: [], successions: [] },
+  recusE2: { donations: [], successions: [] },
+
+  // Actif de communauté
+  communaute: {
+    immobilier: [], comptes: [], placements: [],
+    societes: [], vehicules: [], mobilier: []
+  },
+
+  // Passif
+  passif: {
+    prets: [], credits: [],
+    dettesFiscales: '', autresDettes: ''
+  },
+
+  // Créances entre époux
+  creances: {
+    pretCommun: '', pretCommun_detail: '',
+    financement: '', financement_detail: '',
+    recompenses: '', recompenses_detail: ''
+  },
+
+  // Attribution préférentielle
+  attribution: {
+    logement: '', logement_epoux: '',
+    entreprise: '', entreprise_epoux: '',
+    vehicule: '', vehicule_detail: ''
+  }
+};
+
+const SECTIONS = [
+  { title: 'Identité des époux' },
+  { title: 'Situation matrimoniale' },
+  { title: 'Procédure de divorce' },
+  { title: 'Biens propres avant mariage' },
+  { title: 'Biens reçus pendant le mariage' },
+  { title: 'Actif de communauté' },
+  { title: 'Passif' },
+  { title: 'Créances entre époux' },
+  { title: 'Attribution préférentielle' }
+];
+
+const REG_LABELS = {
+  communaute_legale: 'Communauté réduite aux acquêts (régime légal)',
+  separation: 'Séparation de biens',
+  communaute_universelle: 'Communauté universelle',
+  participation: 'Participation aux acquêts'
+};
+const REG_CODE = { communaute_legale:'4', separation:'33', communaute_universelle:'32', participation:'35' };
+
+// ── Accueil ───────────────────────────────────────────────
+function checkRgpd() {
+  const ok = document.getElementById('cbRgpd').checked && document.getElementById('cbLre').checked;
+  document.getElementById('btnAccueil').disabled = !ok;
+}
+function validerAccueil() {
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+
+// ── OTP ───────────────────────────────────────────────────
+document.getElementById('btnSend').onclick = async () => {
+  const email = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!email || !email.includes('@')) { err.textContent = 'Adresse email invalide.'; return; }
+  err.textContent = '';
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('btnSend').textContent = 'Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur');
+    email0 = email;
+    otpToken = d.token || '';
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${email}. Saisissez-le ci-dessous.`;
+  } catch(e) { err.textContent = e.message; }
+  finally { document.getElementById('btnSend').disabled = false; document.getElementById('btnSend').textContent = 'ENVOYER LE CODE'; }
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length !== 6) { err.textContent = 'Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  document.getElementById('btnVerify').disabled = true;
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email0, code, token: otpToken }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Code incorrect');
+    D.epoux1.email = email0;
+    document.getElementById('sCode').style.display = 'none';
+    document.getElementById('sForm').style.display = 'block';
+    document.getElementById('pageSub').style.display = 'none';
+    renderSection(0);
+  } catch(e) { err.textContent = e.message; }
+  finally { document.getElementById('btnVerify').disabled = false; }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+  document.getElementById('iCode').value = '';
+};
+
+// ── Navigation ────────────────────────────────────────────
+function updateProgress(idx) {
+  const pct = Math.round(((idx+1)/SECTIONS.length)*100);
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = `Étape ${idx+1} sur ${SECTIONS.length} — ${SECTIONS[idx].title}`;
+}
+
+function renderSection(idx) {
+  currentSection = idx;
+  updateProgress(idx);
+  const isLast = idx === SECTIONS.length - 1;
+  document.getElementById('formContent').innerHTML = buildSection(idx);
+  bindSection(idx);
+  const nav = document.getElementById('formNav');
+  nav.innerHTML = `
+    ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx-1})">← Précédent</button>` : ''}
+    ${!isLast ? `<button class="btn-next" onclick="renderSection(${idx+1})">Suivant →</button>` : ''}
+  `;
+  document.getElementById('submitSec').style.display = isLast ? 'block' : 'none';
+  window.scrollTo(0,0);
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function x(v) { return (v||'').replace(/"/g,'&quot;'); }
+function setN(obj, path, val) {
+  const p = path.split('.'); let c = obj;
+  for (let i=0;i<p.length-1;i++) c = c[p[i]];
+  c[p[p.length-1]] = val;
+}
+
+// ── Bloc identité époux (réutilisable) ────────────────────
+function blocEpoux(epoux, key, titre, colorClass) {
+  const e = epoux;
+  return `
+  <div class="epoux-bloc">
+    <div class="epoux-bloc-title ${colorClass}">${titre}</div>
+    <div class="field">
+      <label>Civilité</label>
+      <div class="btns">
+        ${['Monsieur','Madame'].map(c=>`<button type="button" class="choice${e.civilite===c?' on':''}" data-civ="${key}.civilite" data-v="${c}">${c}</button>`).join('')}
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nom d'usage <span class="req">*</span></label><input type="text" data-e="${key}.nom" value="${x(e.nom)}"></div>
+      <div class="field"><label>Nom de naissance <span class="opt">(si différent)</span></label><input type="text" data-e="${key}.nomNaissance" value="${x(e.nomNaissance)}"></div>
+    </div>
+    <div class="field"><label>Prénoms <span class="req">*</span></label><input type="text" data-e="${key}.prenoms" value="${x(e.prenoms)}"></div>
+    <div class="row3">
+      <div class="field"><label>Date de naissance</label><input type="date" data-e="${key}.dateNaissance" value="${x(e.dateNaissance)}"></div>
+      <div class="field"><label>Lieu de naissance</label><input type="text" data-e="${key}.lieuNaissance" value="${x(e.lieuNaissance)}"></div>
+      <div class="field"><label>CP de naissance</label><input type="text" data-e="${key}.cpNaissance" value="${x(e.cpNaissance)}" maxlength="5" inputmode="numeric"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Profession</label><input type="text" data-e="${key}.profession" value="${x(e.profession)}"></div>
+      <div class="field"><label>Nationalité</label><input type="text" data-e="${key}.nationalite" value="${x(e.nationalite)}"></div>
+    </div>
+    <div class="field"><label>Adresse actuelle</label><input type="text" data-e="${key}.adresse" value="${x(e.adresse)}"></div>
+    <div class="row2">
+      <div class="field"><label>Code postal</label><input type="text" data-e="${key}.cp" value="${x(e.cp)}" maxlength="5" inputmode="numeric"></div>
+      <div class="field"><label>Ville</label><input type="text" data-e="${key}.ville" value="${x(e.ville)}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Téléphone</label><input type="tel" data-e="${key}.tel" value="${x(e.tel)}"></div>
+      <div class="field"><label>Email${key==='epoux1'?' <span class="req">*</span>':''}</label><input type="email" data-e="${key}.email" value="${x(e.email)}"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Mesure de protection</label>
+        <select data-e="${key}.mesureProtection">
+          <option value="">— Aucune —</option>
+          <option value="tutelle"${e.mesureProtection==='tutelle'?' selected':''}>Tutelle</option>
+          <option value="curatelle"${e.mesureProtection==='curatelle'?' selected':''}>Curatelle</option>
+          <option value="sauvegarde"${e.mesureProtection==='sauvegarde'?' selected':''}>Sauvegarde de justice</option>
+        </select>
+      </div>
+      <div class="field"><label>Centre des impôts</label><input type="text" data-e="${key}.centreImpots" value="${x(e.centreImpots)}" placeholder="Ville ou centre"></div>
+    </div>
+  </div>`;
+}
+
+// ── Constructeurs de sections ─────────────────────────────
+function buildSection(idx) {
+  switch(idx) {
+    case 0: return buildS1();
+    case 1: return buildS2();
+    case 2: return buildS3();
+    case 3: return buildS4();
+    case 4: return buildS5();
+    case 5: return buildS6();
+    case 6: return buildS7();
+    case 7: return buildS8();
+    case 8: return buildS9();
+    default: return '';
+  }
+}
+
+// S1 : Identité des époux
+function buildS1() {
+  const dec = D.declarant;
+  return `
+  <div class="sec" style="margin-bottom:20px;border-color:#111;">
+    <div class="sec-heading">Qui remplit ce questionnaire ?</div>
+    <div class="row2">
+      <div class="field"><label>Votre nom <span class="req">*</span></label><input type="text" data-d="declarant.nom" value="${x(dec.nom)}"></div>
+      <div class="field"><label>Votre prénom <span class="req">*</span></label><input type="text" data-d="declarant.prenom" value="${x(dec.prenom)}"></div>
+    </div>
+  </div>
+  <div class="epoux-grid">
+    ${blocEpoux(D.epoux1,'epoux1','Époux 1','')}
+    ${blocEpoux(D.epoux2,'epoux2','Époux 2','e2')}
+  </div>`;
+}
+
+// S2 : Situation matrimoniale
+function buildS2() {
+  const m = D.mariage;
+  const showContrat = m.contrat === 'oui';
+  const showDonation = m.donationEntreEpoux === 'oui';
+  return `
+  <div class="sec">
+    <div class="sec-heading">Mariage</div>
+    <div class="row2">
+      <div class="field"><label>Date du mariage</label><input type="date" data-d="mariage.date" value="${x(m.date)}"></div>
+      <div class="field"><label>Lieu du mariage</label><input type="text" data-d="mariage.lieu" value="${x(m.lieu)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Contrat de mariage</div>
+    <div class="field">
+      <label>Existe-t-il un contrat de mariage ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`<button type="button" class="choice${m.contrat===k?' on':''}" data-mc="contrat" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${showContrat?' show':''}" id="condContrat">
+      <div class="row2">
+        <div class="field">
+          <label>Régime matrimonial</label>
+          <select data-d="mariage.regimeMatrimonial">
+            <option value="">— Sélectionner —</option>
+            ${Object.entries(REG_LABELS).map(([k,v])=>`<option value="${k}"${m.regimeMatrimonial===k?' selected':''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Date du contrat</label><input type="date" data-d="mariage.dateContrat" value="${x(m.dateContrat)}"></div>
+      </div>
+      <div class="field"><label>Notaire rédacteur</label><input type="text" data-d="mariage.notaireContrat" value="${x(m.notaireContrat)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Donation entre époux</div>
+    <div class="field">
+      <label>Existe-t-il une donation entre époux ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`<button type="button" class="choice${m.donationEntreEpoux===k?' on':''}" data-mc="donationEntreEpoux" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${showDonation?' show':''}" id="condDonation">
+      <div class="row2">
+        <div class="field"><label>Notaire</label><input type="text" data-d="mariage.notaireDonation" value="${x(m.notaireDonation)}"></div>
+        <div class="field"><label>Date</label><input type="date" data-d="mariage.dateDonation" value="${x(m.dateDonation)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// S3 : Procédure de divorce
+function buildS3() {
+  const p = D.procedure;
+  const isJudiciaire = p.type === 'judiciaire';
+  return `
+  <div class="sec">
+    <div class="sec-heading">Type de procédure</div>
+    <div class="field">
+      <div class="btns">
+        ${[['consentement_mutuel','Consentement mutuel'],['judiciaire','Judiciaire']].map(([k,v])=>`<button type="button" class="choice${p.type===k?' on':''}" data-proc="type" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${isJudiciaire?' show':''}" id="condJudiciaire">
+      <div class="row2">
+        <div class="field"><label>Tribunal saisi</label><input type="text" data-d="procedure.tribunal" value="${x(p.tribunal)}"></div>
+        <div class="field"><label>Date ordonnance de non-conciliation</label><input type="date" data-d="procedure.dateONC" value="${x(p.dateONC)}"></div>
+      </div>
+      <div class="field"><label>Date du jugement <span class="opt">(si déjà prononcé)</span></label><input type="date" data-d="procedure.dateJugement" value="${x(p.dateJugement)}"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Date d'effet de la dissolution</div>
+    <div class="sec-desc">Date fondamentale pour déterminer les biens à partager.</div>
+    <div class="field"><label>Date d'effet de la dissolution du régime matrimonial</label><input type="date" data-d="procedure.dateEffetDissolution" value="${x(p.dateEffetDissolution)}"></div>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Avocats</div>
+    <div class="epoux-grid">
+      <div class="epoux-bloc">
+        <div class="epoux-bloc-title">Avocat Époux 1</div>
+        <div class="field"><label>Nom</label><input type="text" data-d="procedure.avocat1Nom" value="${x(p.avocat1Nom)}"></div>
+        <div class="field"><label>Téléphone</label><input type="tel" data-d="procedure.avocat1Tel" value="${x(p.avocat1Tel)}"></div>
+        <div class="field"><label>Email</label><input type="email" data-d="procedure.avocat1Email" value="${x(p.avocat1Email)}"></div>
+      </div>
+      <div class="epoux-bloc">
+        <div class="epoux-bloc-title e2">Avocat Époux 2</div>
+        <div class="field"><label>Nom</label><input type="text" data-d="procedure.avocat2Nom" value="${x(p.avocat2Nom)}"></div>
+        <div class="field"><label>Téléphone</label><input type="tel" data-d="procedure.avocat2Tel" value="${x(p.avocat2Tel)}"></div>
+        <div class="field"><label>Email</label><input type="email" data-d="procedure.avocat2Email" value="${x(p.avocat2Email)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// S4 : Biens propres avant mariage
+function buildS4() {
+  return `
+  <div class="sec">
+    <div class="sec-heading">Biens propres avant mariage</div>
+    <div class="sec-desc">Listez les biens que chaque époux possédait avant le mariage.</div>
+  </div>
+  <div class="epoux-grid">
+    <div>${buildPropresBloc('propresE1','Époux 1','')}</div>
+    <div>${buildPropresBloc('propresE2','Époux 2','e2')}</div>
+  </div>`;
+}
+
+function buildPropresBloc(key, label, colorClass) {
+  const p = D[key];
+  if (!p.immobilier.length) p.immobilier.push(newBienPropre('immo'));
+  return `
+  <div class="epoux-bloc">
+    <div class="epoux-bloc-title ${colorClass}">${label}</div>
+    <div class="sec-title" style="margin-top:4px">Immobilier</div>
+    <div id="${key}_immo">${p.immobilier.map((b,i)=>buildBienImmoBlock(b,i,key,'immo')).join('')}</div>
+    <button class="btn-add" onclick="addPropre('${key}','immo')">Ajouter un bien immobilier</button>
+    <div class="sec-title" style="margin-top:20px">Biens mobiliers importants</div>
+    <div class="field"><label>Véhicules</label><input type="text" data-d="${key}.mobilier_vehicules" value="${x(p.mobilier_vehicules)}"></div>
+    <div class="field"><label>Objets de valeur</label><input type="text" data-d="${key}.mobilier_objets" value="${x(p.mobilier_objets)}"></div>
+    <div class="sec-title" style="margin-top:20px">Avoirs financiers</div>
+    <div class="field"><label>Comptes bancaires / épargne</label><input type="text" data-d="${key}.financier_comptes" value="${x(p.financier_comptes)}"></div>
+    <div class="field"><label>Placements</label><input type="text" data-d="${key}.financier_placements" value="${x(p.financier_placements)}"></div>
+  </div>`;
+}
+
+function newBienPropre() { return { adresse:'', nature:'', valeur:'', existeToujours:'', vendu:'', prixVente:'', remploi:'' }; }
+
+function buildBienImmoBlock(b, i, key, type) {
+  return `
+  <div class="repeat-block" id="${key}_${type}_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Bien ${i+1}</span>
+      ${i>0?`<button class="btn-remove" onclick="removePropre('${key}','${type}',${i})">Supprimer</button>`:''}
+    </div>
+    <div class="field"><label>Adresse</label><input type="text" data-bi="${key}.immo.${i}.adresse" value="${x(b.adresse)}"></div>
+    <div class="row2">
+      <div class="field"><label>Nature</label><input type="text" data-bi="${key}.immo.${i}.nature" value="${x(b.nature)}" placeholder="Maison, appartement…"></div>
+      <div class="field"><label>Valeur estimée</label><input type="text" data-bi="${key}.immo.${i}.valeur" value="${x(b.valeur)}"></div>
+    </div>
+    <div class="field">
+      <label>Situation actuelle</label>
+      <div class="btns">
+        ${[['existe','Existe toujours'],['vendu','Vendu']].map(([k,v])=>`<button type="button" class="choice${b.existeToujours===k?' on':''}" data-biv="${key}.immo.${i}.existeToujours" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${b.existeToujours==='vendu'?' show':''}" id="condvendu_${key}_${i}">
+      <div class="row2">
+        <div class="field"><label>Prix de vente</label><input type="text" data-bi="${key}.immo.${i}.prixVente" value="${x(b.prixVente)}"></div>
+        <div class="field"><label>Remploi du prix</label><input type="text" data-bi="${key}.immo.${i}.remploi" value="${x(b.remploi)}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function addPropre(key, type) {
+  D[key].immobilier.push(newBienPropre());
+  document.getElementById(`${key}_immo`).innerHTML = D[key].immobilier.map((b,i)=>buildBienImmoBlock(b,i,key,'immo')).join('');
+  bindBiImmo();
+}
+function removePropre(key, type, i) {
+  D[key].immobilier.splice(i,1);
+  document.getElementById(`${key}_immo`).innerHTML = D[key].immobilier.map((b,i)=>buildBienImmoBlock(b,i,key,'immo')).join('');
+  bindBiImmo();
+}
+
+// S5 : Biens reçus pendant mariage
+function buildS5() {
+  return `
+  <div class="sec">
+    <div class="sec-heading">Biens reçus pendant le mariage</div>
+    <div class="sec-desc">Donations et successions reçues par chaque époux — ces biens restent propres.</div>
+  </div>
+  <div class="epoux-grid">
+    <div>${buildRecusBloc('recusE1','Époux 1','')}</div>
+    <div>${buildRecusBloc('recusE2','Époux 2','e2')}</div>
+  </div>`;
+}
+
+function buildRecusBloc(key, label, colorClass) {
+  const r = D[key];
+  return `
+  <div class="epoux-bloc">
+    <div class="epoux-bloc-title ${colorClass}">${label}</div>
+    <div class="sec-title" style="margin-top:4px">Donations reçues</div>
+    <div id="${key}_dons">${r.donations.map((d,i)=>buildRecuBlock(d,i,key,'dons','Donation')).join('')}</div>
+    <button class="btn-add" onclick="addRecu('${key}','dons')">Ajouter une donation</button>
+    <div class="sec-title" style="margin-top:20px">Successions reçues</div>
+    <div id="${key}_succ">${r.successions.map((s,i)=>buildRecuBlock(s,i,key,'succ','Succession')).join('')}</div>
+    <button class="btn-add" onclick="addRecu('${key}','succ')">Ajouter une succession</button>
+  </div>`;
+}
+
+function newRecu() { return { qui:'', nature:'', valeur:'', notaire:'', date:'', existeToujours:'', vendu:'', destination:'' }; }
+
+function buildRecuBlock(item, i, key, type, label) {
+  return `
+  <div class="repeat-block" id="${key}_${type}_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">${label} ${i+1}</span>
+      <button class="btn-remove" onclick="removeRecu('${key}','${type}',${i})">Supprimer</button>
+    </div>
+    <div class="row2">
+      <div class="field"><label>${type==='dons'?'Donateur':'Défunt'}</label><input type="text" data-rc="${key}.${type}.${i}.qui" value="${x(item.qui)}"></div>
+      <div class="field"><label>Nature du bien</label><input type="text" data-rc="${key}.${type}.${i}.nature" value="${x(item.nature)}"></div>
+    </div>
+    <div class="row3">
+      <div class="field"><label>Valeur</label><input type="text" data-rc="${key}.${type}.${i}.valeur" value="${x(item.valeur)}"></div>
+      <div class="field"><label>Notaire</label><input type="text" data-rc="${key}.${type}.${i}.notaire" value="${x(item.notaire)}"></div>
+      <div class="field"><label>Date</label><input type="date" data-rc="${key}.${type}.${i}.date" value="${x(item.date)}"></div>
+    </div>
+    <div class="field">
+      <label>Situation actuelle</label>
+      <div class="btns">
+        ${[['existe','Existe toujours'],['vendu','Vendu / Réalisé']].map(([k,v])=>`<button type="button" class="choice${item.existeToujours===k?' on':''}" data-rcv="${key}.${type}.${i}" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+    <div class="cond${item.existeToujours==='vendu'?' show':''}" id="condrcvendu_${key}_${type}_${i}">
+      <div class="field"><label>Destination du prix</label><input type="text" data-rc="${key}.${type}.${i}.destination" value="${x(item.destination)}"></div>
+    </div>
+  </div>`;
+}
+
+function addRecu(key, type) {
+  const arr = type === 'dons' ? D[key].donations : D[key].successions;
+  arr.push(newRecu());
+  document.getElementById(`${key}_${type}`).innerHTML = arr.map((r,i)=>buildRecuBlock(r,i,key,type,type==='dons'?'Donation':'Succession')).join('');
+  bindRecus();
+}
+function removeRecu(key, type, i) {
+  const arr = type === 'dons' ? D[key].donations : D[key].successions;
+  arr.splice(i,1);
+  document.getElementById(`${key}_${type}`).innerHTML = arr.map((r,i)=>buildRecuBlock(r,i,key,type,type==='dons'?'Donation':'Succession')).join('');
+  bindRecus();
+}
+
+// S6 : Actif de communauté
+function buildS6() {
+  const c = D.communaute;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Biens immobiliers communs</div>
+    <div id="comm_immo">${c.immobilier.map((b,i)=>buildCommImmoBlock(b,i)).join('')}</div>
+    <button class="btn-add" onclick="addCommImmo()">Ajouter un bien immobilier</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Comptes bancaires communs</div>
+    <div id="comm_comptes">${c.comptes.map((b,i)=>buildCommCompteBlock(b,i)).join('')}</div>
+    <button class="btn-add" onclick="addCommCompte()">Ajouter un compte</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Placements</div>
+    <div id="comm_placements">${c.placements.map((p,i)=>buildCommPlacementBlock(p,i)).join('')}</div>
+    <button class="btn-add" onclick="addCommPlacement()">Ajouter un placement</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Sociétés et activités professionnelles</div>
+    <div id="comm_societes">${c.societes.map((s,i)=>buildCommSocieteBlock(s,i)).join('')}</div>
+    <button class="btn-add" onclick="addCommSociete()">Ajouter une société</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Véhicules</div>
+    <div id="comm_vehicules">${c.vehicules.map((v,i)=>buildCommVehiculeBlock(v,i)).join('')}</div>
+    <button class="btn-add" onclick="addCommVehicule()">Ajouter un véhicule</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Mobilier</div>
+    <div class="row3">
+      <div class="field"><label>Mobilier courant <span class="opt">(valeur)</span></label><input type="text" data-d="communaute.mobilier_courant" value="${x(c.mobilier_courant)}"></div>
+      <div class="field"><label>Objets d'art / antiquités</label><input type="text" data-d="communaute.mobilier_art" value="${x(c.mobilier_art)}"></div>
+      <div class="field"><label>Autres objets de valeur</label><input type="text" data-d="communaute.mobilier_autres" value="${x(c.mobilier_autres)}"></div>
+    </div>
+  </div>`;
+}
+
+function newCommImmo() { return { adresse:'', nature:'', dateAcquisition:'', notaire:'', valeur:'' }; }
+function newCommCompte() { return { banque:'', numero:'', titulaire:'', solde:'' }; }
+function newCommPlacement() { return { type:'', etablissement:'', valeur:'' }; }
+function newCommSociete() { return { nom:'', parts:'', valeur:'' }; }
+function newCommVehicule() { return { marque:'', modele:'', valeur:'' }; }
+
+function buildCommImmoBlock(b,i) {
+  return `<div class="repeat-block" id="ci_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Bien ${i+1}</span>${i>0?`<button class="btn-remove" onclick="removeComm('immobilier',${i})">Supprimer</button>`:''}</div>
+    <div class="field"><label>Adresse</label><input type="text" data-ci="immobilier.${i}.adresse" value="${x(b.adresse)}"></div>
+    <div class="row2"><div class="field"><label>Nature</label><input type="text" data-ci="immobilier.${i}.nature" value="${x(b.nature)}"></div>
+    <div class="field"><label>Date d'acquisition</label><input type="date" data-ci="immobilier.${i}.dateAcquisition" value="${x(b.dateAcquisition)}"></div></div>
+    <div class="row2"><div class="field"><label>Notaire</label><input type="text" data-ci="immobilier.${i}.notaire" value="${x(b.notaire)}"></div>
+    <div class="field"><label>Valeur estimée</label><input type="text" data-ci="immobilier.${i}.valeur" value="${x(b.valeur)}"></div></div>
+  </div>`;
+}
+function buildCommCompteBlock(b,i) {
+  return `<div class="repeat-block" id="cc_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Compte ${i+1}</span>${i>0?`<button class="btn-remove" onclick="removeComm('comptes',${i})">Supprimer</button>`:''}</div>
+    <div class="row2"><div class="field"><label>Banque</label><input type="text" data-ci="comptes.${i}.banque" value="${x(b.banque)}"></div>
+    <div class="field"><label>N° de compte</label><input type="text" data-ci="comptes.${i}.numero" value="${x(b.numero)}"></div></div>
+    <div class="row2"><div class="field"><label>Titulaire(s)</label><input type="text" data-ci="comptes.${i}.titulaire" value="${x(b.titulaire)}"></div>
+    <div class="field"><label>Solde estimé</label><input type="text" data-ci="comptes.${i}.solde" value="${x(b.solde)}"></div></div>
+  </div>`;
+}
+function buildCommPlacementBlock(p,i) {
+  return `<div class="repeat-block" id="cp_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Placement ${i+1}</span><button class="btn-remove" onclick="removeComm('placements',${i})">Supprimer</button></div>
+    <div class="row3">
+      <div class="field"><label>Type</label>
+        <select data-ci="placements.${i}.type">
+          <option value="">— Type —</option>
+          ${[['assurance_vie','Assurance-vie'],['pea','PEA'],['compte_titres','Compte-titres'],['livret','Livret'],['autre','Autre']].map(([k,v])=>`<option value="${k}"${p.type===k?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Établissement</label><input type="text" data-ci="placements.${i}.etablissement" value="${x(p.etablissement)}"></div>
+      <div class="field"><label>Valeur estimée</label><input type="text" data-ci="placements.${i}.valeur" value="${x(p.valeur)}"></div>
+    </div>
+  </div>`;
+}
+function buildCommSocieteBlock(s,i) {
+  return `<div class="repeat-block" id="cs_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Société ${i+1}</span><button class="btn-remove" onclick="removeComm('societes',${i})">Supprimer</button></div>
+    <div class="row3">
+      <div class="field"><label>Dénomination</label><input type="text" data-ci="societes.${i}.nom" value="${x(s.nom)}"></div>
+      <div class="field"><label>Nombre de parts / %</label><input type="text" data-ci="societes.${i}.parts" value="${x(s.parts)}"></div>
+      <div class="field"><label>Valeur estimée</label><input type="text" data-ci="societes.${i}.valeur" value="${x(s.valeur)}"></div>
+    </div>
+  </div>`;
+}
+function buildCommVehiculeBlock(v,i) {
+  return `<div class="repeat-block" id="cv_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Véhicule ${i+1}</span><button class="btn-remove" onclick="removeComm('vehicules',${i})">Supprimer</button></div>
+    <div class="row3">
+      <div class="field"><label>Marque</label><input type="text" data-ci="vehicules.${i}.marque" value="${x(v.marque)}"></div>
+      <div class="field"><label>Modèle</label><input type="text" data-ci="vehicules.${i}.modele" value="${x(v.modele)}"></div>
+      <div class="field"><label>Valeur estimée</label><input type="text" data-ci="vehicules.${i}.valeur" value="${x(v.valeur)}"></div>
+    </div>
+  </div>`;
+}
+
+function addCommImmo()      { D.communaute.immobilier.push(newCommImmo()); refreshComm(); }
+function addCommCompte()    { D.communaute.comptes.push(newCommCompte()); refreshComm(); }
+function addCommPlacement() { D.communaute.placements.push(newCommPlacement()); refreshComm(); }
+function addCommSociete()   { D.communaute.societes.push(newCommSociete()); refreshComm(); }
+function addCommVehicule()  { D.communaute.vehicules.push(newCommVehicule()); refreshComm(); }
+function removeComm(type, i) { D.communaute[type].splice(i,1); refreshComm(); }
+function refreshComm() {
+  const c = D.communaute;
+  const el = id => document.getElementById(id);
+  if (el('comm_immo'))       el('comm_immo').innerHTML       = c.immobilier.map((b,i)=>buildCommImmoBlock(b,i)).join('');
+  if (el('comm_comptes'))    el('comm_comptes').innerHTML    = c.comptes.map((b,i)=>buildCommCompteBlock(b,i)).join('');
+  if (el('comm_placements')) el('comm_placements').innerHTML = c.placements.map((p,i)=>buildCommPlacementBlock(p,i)).join('');
+  if (el('comm_societes'))   el('comm_societes').innerHTML   = c.societes.map((s,i)=>buildCommSocieteBlock(s,i)).join('');
+  if (el('comm_vehicules'))  el('comm_vehicules').innerHTML  = c.vehicules.map((v,i)=>buildCommVehiculeBlock(v,i)).join('');
+  bindCommInputs();
+}
+
+// S7 : Passif
+function buildS7() {
+  const p = D.passif;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Prêts immobiliers</div>
+    <div id="prets">${p.prets.map((pr,i)=>buildPretBlock(pr,i)).join('')}</div>
+    <button class="btn-add" onclick="addPret()">Ajouter un prêt</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Crédits à la consommation</div>
+    <div id="credits">${p.credits.map((cr,i)=>buildCreditBlock(cr,i)).join('')}</div>
+    <button class="btn-add" onclick="addCredit()">Ajouter un crédit</button>
+  </div>
+  <div class="sec">
+    <div class="sec-heading">Dettes fiscales et autres</div>
+    <div class="field"><label>Impôt sur le revenu / Taxe foncière</label><input type="text" data-d="passif.dettesFiscales" value="${x(p.dettesFiscales)}" placeholder="Nature et montant estimé"></div>
+    <div class="field"><label>Autres dettes <span class="opt">(familiales, professionnelles…)</span></label><input type="text" data-d="passif.autresDettes" value="${x(p.autresDettes)}"></div>
+  </div>`;
+}
+
+function newPret() { return { banque:'', numero:'', montantInitial:'', capitalRestant:'', quiPaie:'' }; }
+function newCredit() { return { objet:'', banque:'', capitalRestant:'' }; }
+
+function buildPretBlock(pr,i) {
+  return `<div class="repeat-block" id="pret_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Prêt ${i+1}</span>${i>0?`<button class="btn-remove" onclick="removePret(${i})">Supprimer</button>`:''}</div>
+    <div class="row2"><div class="field"><label>Banque</label><input type="text" data-pr="${i}.banque" value="${x(pr.banque)}"></div>
+    <div class="field"><label>N° prêt</label><input type="text" data-pr="${i}.numero" value="${x(pr.numero)}"></div></div>
+    <div class="row3"><div class="field"><label>Montant initial</label><input type="text" data-pr="${i}.montantInitial" value="${x(pr.montantInitial)}"></div>
+    <div class="field"><label>Capital restant dû</label><input type="text" data-pr="${i}.capitalRestant" value="${x(pr.capitalRestant)}"></div>
+    <div class="field"><label>Qui rembourse ?</label>
+      <select data-pr="${i}.quiPaie">
+        <option value="">—</option>
+        <option value="epoux1"${pr.quiPaie==='epoux1'?' selected':''}>Époux 1</option>
+        <option value="epoux2"${pr.quiPaie==='epoux2'?' selected':''}>Époux 2</option>
+        <option value="commun"${pr.quiPaie==='commun'?' selected':''}>Commun</option>
+      </select>
+    </div></div>
+  </div>`;
+}
+function buildCreditBlock(cr,i) {
+  return `<div class="repeat-block" id="credit_${i}">
+    <div class="repeat-block-header"><span class="repeat-block-num">Crédit ${i+1}</span><button class="btn-remove" onclick="removeCredit(${i})">Supprimer</button></div>
+    <div class="row3"><div class="field"><label>Objet</label><input type="text" data-cr="${i}.objet" value="${x(cr.objet)}"></div>
+    <div class="field"><label>Banque</label><input type="text" data-cr="${i}.banque" value="${x(cr.banque)}"></div>
+    <div class="field"><label>Capital restant dû</label><input type="text" data-cr="${i}.capitalRestant" value="${x(cr.capitalRestant)}"></div></div>
+  </div>`;
+}
+
+function addPret()      { D.passif.prets.push(newPret()); refreshPassif(); }
+function removePret(i)  { D.passif.prets.splice(i,1); refreshPassif(); }
+function addCredit()    { D.passif.credits.push(newCredit()); refreshPassif(); }
+function removeCredit(i){ D.passif.credits.splice(i,1); refreshPassif(); }
+function refreshPassif() {
+  const el = id => document.getElementById(id);
+  if (el('prets'))   el('prets').innerHTML   = D.passif.prets.map((p,i)=>buildPretBlock(p,i)).join('');
+  if (el('credits')) el('credits').innerHTML = D.passif.credits.map((c,i)=>buildCreditBlock(c,i)).join('');
+  bindPassifInputs();
+}
+
+// S8 : Créances entre époux
+function buildS8() {
+  const c = D.creances;
+  const items = [
+    ['pretCommun','Un époux a-t-il payé seul un prêt commun ?'],
+    ['financement','Un époux a-t-il financé un bien propre de l\'autre ?'],
+    ['recompenses','Existe-t-il des récompenses à calculer ?']
+  ];
+  return `
+  <div class="sec">
+    <div class="sec-heading">Créances entre époux</div>
+    <div class="sec-desc">Ces éléments permettent de calculer les récompenses et créances à régulariser lors de la liquidation.</div>
+    ${items.map(([key,label])=>`
+    <div class="field">
+      <label>${label}</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>`<button type="button" class="choice${c[key]===k?' on':''}" data-cr2="${key}" data-v="${k}">${v}</button>`).join('')}
+      </div>
+      <div class="cond${c[key]==='oui'?' show':''}" id="condcr_${key}">
+        <input type="text" data-d="creances.${key}_detail" value="${x(c[key+'_detail'])}" placeholder="Précisions">
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// S9 : Attribution préférentielle
+function buildS9() {
+  const a = D.attribution;
+  return `
+  <div class="sec">
+    <div class="sec-heading">Attribution préférentielle</div>
+    <div class="sec-desc">Souhaitez-vous conserver certains biens en priorité lors du partage ?</div>
+    ${[
+      ['logement','Logement familial'],
+      ['entreprise','Entreprise / fonds de commerce'],
+      ['vehicule','Véhicule']
+    ].map(([key,label])=>`
+    <div class="field">
+      <label>${label}</label>
+      <div class="btns" style="margin-bottom:8px">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`<button type="button" class="choice${a[key]===k?' on':''}" data-attr="${key}" data-v="${k}">${v}</button>`).join('')}
+      </div>
+      <div class="cond${a[key]==='oui'?' show':''}" id="condattr_${key}">
+        <div class="row2">
+          <div class="field"><label>Par quel époux ?</label>
+            <select data-d="attribution.${key}_epoux">
+              <option value="">—</option>
+              <option value="epoux1"${a[key+'_epoux']==='epoux1'?' selected':''}>Époux 1</option>
+              <option value="epoux2"${a[key+'_epoux']==='epoux2'?' selected':''}>Époux 2</option>
+            </select>
+          </div>
+          ${key==='vehicule'?`<div class="field"><label>Précision</label><input type="text" data-d="attribution.vehicule_detail" value="${x(a.vehicule_detail)}"></div>`:''}
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ── Binding ───────────────────────────────────────────────
+function bindSection(idx) {
+  // Champs génériques data-d
+  document.querySelectorAll('[data-d]').forEach(el => {
+    el.oninput = () => setN(D, el.dataset.d, el.value);
+    el.onchange = () => setN(D, el.dataset.d, el.value);
+  });
+  if (idx === 0) bindEpoux();
+  if (idx === 1) bindMariage();
+  if (idx === 2) bindProcedure();
+  if (idx === 3) { bindBiImmo(); }
+  if (idx === 4) bindRecus();
+  if (idx === 5) bindCommInputs();
+  if (idx === 6) bindPassifInputs();
+  if (idx === 7) bindCreances();
+  if (idx === 8) bindAttribution();
+}
+
+function bindEpoux() {
+  document.querySelectorAll('[data-civ]').forEach(btn => {
+    btn.onclick = () => {
+      setN(D, btn.dataset.civ, btn.dataset.v);
+      const key = btn.dataset.civ.split('.')[0];
+      document.querySelectorAll(`[data-civ^="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+    };
+  });
+  document.querySelectorAll('[data-e]').forEach(el => {
+    el.oninput = () => setN(D, el.dataset.e, el.value);
+    el.onchange = () => setN(D, el.dataset.e, el.value);
+  });
+}
+
+function bindMariage() {
+  document.querySelectorAll('[data-mc]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.mc;
+      setN(D.mariage, key, btn.dataset.v);
+      document.querySelectorAll(`[data-mc="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      if (key === 'contrat') document.getElementById('condContrat').classList.toggle('show', btn.dataset.v==='oui');
+      if (key === 'donationEntreEpoux') document.getElementById('condDonation').classList.toggle('show', btn.dataset.v==='oui');
+    };
+  });
+}
+
+function bindProcedure() {
+  document.querySelectorAll('[data-proc]').forEach(btn => {
+    btn.onclick = () => {
+      D.procedure.type = btn.dataset.v;
+      document.querySelectorAll('[data-proc]').forEach(b => b.classList.toggle('on', b===btn));
+      document.getElementById('condJudiciaire').classList.toggle('show', btn.dataset.v==='judiciaire');
+    };
+  });
+}
+
+function bindBiImmo() {
+  document.querySelectorAll('[data-bi]').forEach(el => {
+    el.oninput = () => {
+      const parts = el.dataset.bi.split('.');
+      // key.immo.idx.field
+      D[parts[0]].immobilier[+parts[2]][parts[3]] = el.value;
+    };
+    el.onchange = () => {
+      const parts = el.dataset.bi.split('.');
+      D[parts[0]].immobilier[+parts[2]][parts[3]] = el.value;
+    };
+  });
+  document.querySelectorAll('[data-biv]').forEach(btn => {
+    btn.onclick = () => {
+      const parts = btn.dataset.biv.split('.');
+      const obj = D[parts[0]].immobilier[+parts[2]];
+      obj.existeToujours = btn.dataset.v;
+      document.querySelectorAll(`[data-biv="${btn.dataset.biv}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      const condId = `condvendu_${parts[0]}_${parts[2]}`;
+      const condEl = document.getElementById(condId);
+      if (condEl) condEl.classList.toggle('show', btn.dataset.v==='vendu');
+    };
+  });
+}
+
+function bindRecus() {
+  document.querySelectorAll('[data-rc]').forEach(el => {
+    el.oninput = () => {
+      const parts = el.dataset.rc.split('.');
+      const arr = parts[1]==='dons' ? D[parts[0]].donations : D[parts[0]].successions;
+      arr[+parts[2]][parts[3]] = el.value;
+    };
+    el.onchange = () => {
+      const parts = el.dataset.rc.split('.');
+      const arr = parts[1]==='dons' ? D[parts[0]].donations : D[parts[0]].successions;
+      arr[+parts[2]][parts[3]] = el.value;
+    };
+  });
+  document.querySelectorAll('[data-rcv]').forEach(btn => {
+    btn.onclick = () => {
+      const parts = btn.dataset.rcv.split('.');
+      const arr = parts[1]==='dons' ? D[parts[0]].donations : D[parts[0]].successions;
+      arr[+parts[2]].existeToujours = btn.dataset.v;
+      document.querySelectorAll(`[data-rcv="${btn.dataset.rcv}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      const condEl = document.getElementById(`condrcvendu_${parts[0]}_${parts[1]}_${parts[2]}`);
+      if (condEl) condEl.classList.toggle('show', btn.dataset.v==='vendu');
+    };
+  });
+}
+
+function bindCommInputs() {
+  document.querySelectorAll('[data-ci]').forEach(el => {
+    el.oninput = () => {
+      const parts = el.dataset.ci.split('.');
+      D.communaute[parts[0]][+parts[1]][parts[2]] = el.value;
+    };
+    el.onchange = () => {
+      const parts = el.dataset.ci.split('.');
+      D.communaute[parts[0]][+parts[1]][parts[2]] = el.value;
+    };
+  });
+}
+
+function bindPassifInputs() {
+  document.querySelectorAll('[data-pr]').forEach(el => {
+    el.oninput = () => { const [i,k] = el.dataset.pr.split('.'); D.passif.prets[+i][k] = el.value; };
+    el.onchange = () => { const [i,k] = el.dataset.pr.split('.'); D.passif.prets[+i][k] = el.value; };
+  });
+  document.querySelectorAll('[data-cr]').forEach(el => {
+    el.oninput = () => { const [i,k] = el.dataset.cr.split('.'); D.passif.credits[+i][k] = el.value; };
+    el.onchange = () => { const [i,k] = el.dataset.cr.split('.'); D.passif.credits[+i][k] = el.value; };
+  });
+}
+
+function bindCreances() {
+  document.querySelectorAll('[data-cr2]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.cr2;
+      D.creances[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-cr2="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      const condEl = document.getElementById(`condcr_${key}`);
+      if (condEl) condEl.classList.toggle('show', btn.dataset.v==='oui');
+    };
+  });
+}
+
+function bindAttribution() {
+  document.querySelectorAll('[data-attr]').forEach(btn => {
+    btn.onclick = () => {
+      const key = btn.dataset.attr;
+      D.attribution[key] = btn.dataset.v;
+      document.querySelectorAll(`[data-attr="${key}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      const condEl = document.getElementById(`condattr_${key}`);
+      if (condEl) condEl.classList.toggle('show', btn.dataset.v==='oui');
+    };
+  });
+}
+
+// ── Envoi ─────────────────────────────────────────────────
+function showErr(msg) {
+  const el = document.getElementById('ferr');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+document.getElementById('btnSubmit').onclick = async () => {
+  document.getElementById('ferr').style.display = 'none';
+  if (!D.declarant.nom || !D.declarant.prenom) return showErr('Veuillez renseigner vos nom et prénom.');
+  if (!D.epoux1.nom || !D.epoux1.prenoms) return showErr('Nom et prénoms de l\'Époux 1 obligatoires.');
+  if (!D.epoux2.nom || !D.epoux2.prenoms) return showErr('Nom et prénoms de l\'Époux 2 obligatoires.');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+
+  try {
+    const r = await fetch('/api/soumettre-divorce', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ data: D, email: email0 })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+      <div class="icon">✓</div>
+      <h2>Questionnaire envoyé</h2>
+      <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+    </div></div>`;
+  } catch(e) {
+    showErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = 'Envoyer mes réponses';
+  }
+};
+</script>
+</body>
+</html>
