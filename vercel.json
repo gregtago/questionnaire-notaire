@@ -37,6 +37,14 @@
       "destination": "/public/acquisition.html"
     },
     {
+      "source": "/api/soumettre-vente-appartement",
+      "destination": "/api/soumettre-vente-appartement"
+    },
+    {
+      "source": "/vente-appartement",
+      "destination": "/public/vente-appartement.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/index.html"
     }
