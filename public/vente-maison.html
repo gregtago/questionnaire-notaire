@@ -333,6 +333,17 @@ const SECTIONS = [
   { title: 'Fiscalité et observations' }
 ];
 
+// ── Paramètre etatcivil=0 ─────────────────────────────────
+const _urlParams = new URLSearchParams(window.location.search);
+const _skipEtatCivil = _urlParams.get('etatcivil') === '0';
+if (_skipEtatCivil) SECTIONS.splice(0, 1);
+const _sectionOffset = _skipEtatCivil ? 1 : 0;
+
+const _buildSectionOrig = buildSection;
+function buildSection(idx) { return _buildSectionOrig(idx + _sectionOffset); }
+const _bindSectionOrig = typeof bindSection !== 'undefined' ? bindSection : null;
+if (_bindSectionOrig) { bindSection = (idx) => _bindSectionOrig(idx + _sectionOffset); }
+
 // ── Accueil / OTP ─────────────────────────────────────────
 function checkRgpd() {
   document.getElementById('btnAccueil').disabled =
