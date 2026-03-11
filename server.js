@@ -20,6 +20,10 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+app.get("/succession", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "succession.html"));
+});
+
 // ─── Envoi du code OTP ─────────────────────────────────
 app.post("/api/otp/envoyer", async (req, res) => {
   const { email } = req.body;
