@@ -41,6 +41,207 @@ const TYPE_CPT = { courant:'Compte courant', livret:'Livret', pea:'PEA', titre:'
 const TYPE_BIEN = { maison:'Maison', appartement:'Appartement', terrain:'Terrain', commerce:'Local commercial', autre:'Autre' };
 const TYPE_DON = { manuel:'Don manuel', partage:'Donation-partage', immobilier:'Donation immobilière', assurance_vie:'Assurance-vie', autre:'Autre' };
 
+
+// ── Génération XML iNot pour le défunt ────────────────
+function buildXmlDefunt(defunt, situation) {
+  function esc(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function v(key, val, nameOverride) {
+    const nm = nameOverride || key;
+    return `    <Var key="${key}" name="${nm}"><Value>${esc(String(val||''))}</Value></Var>`;
+  }
+  function toInotDate(d) {
+    if (!d) return '';
+    // format YYYY-MM-DD (input type=date)
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return m[1]+m[2]+m[3];
+    return '';
+  }
+  function deptFromCp(cp) {
+    if (!cp) return '';
+    const depts = {
+      '01':'Ain','02':'Aisne','03':'Allier','04':'Alpes-de-Haute-Provence','05':'Hautes-Alpes',
+      '06':'Alpes-Maritimes','07':'Ardèche','08':'Ardennes','09':'Ariège','10':'Aube',
+      '11':'Aude','12':'Aveyron','13':'Bouches-du-Rhône','14':'Calvados','15':'Cantal',
+      '16':'Charente','17':'Charente-Maritime','18':'Cher','19':'Corrèze','20':'Corse',
+      '21':"Côte-d'Or",'22':"Côtes-d'Armor",'23':'Creuse','24':'Dordogne','25':'Doubs',
+      '26':'Drôme','27':'Eure','28':'Eure-et-Loir','29':'Finistère','30':'Gard',
+      '31':'Haute-Garonne','32':'Gers','33':'Gironde','34':'Hérault','35':'Ille-et-Vilaine',
+      '36':'Indre','37':'Indre-et-Loire','38':'Isère','39':'Jura','40':'Landes',
+      '41':'Loir-et-Cher','42':'Loire','43':'Haute-Loire','44':'Loire-Atlantique','45':'Loiret',
+      '46':'Lot','47':'Lot-et-Garonne','48':'Lozère','49':'Maine-et-Loire','50':'Manche',
+      '51':'Marne','52':'Haute-Marne','53':'Mayenne','54':'Meurthe-et-Moselle','55':'Meuse',
+      '56':'Morbihan','57':'Moselle','58':'Nièvre','59':'Nord','60':'Oise',
+      '61':'Orne','62':'Pas-de-Calais','63':'Puy-de-Dôme','64':'Pyrénées-Atlantiques','65':'Hautes-Pyrénées',
+      '66':'Pyrénées-Orientales','67':'Bas-Rhin','68':'Haut-Rhin','69':'Rhône','70':'Haute-Saône',
+      '71':'Saône-et-Loire','72':'Sarthe','73':'Savoie','74':'Haute-Savoie','75':'Paris',
+      '76':'Seine-Maritime','77':'Seine-et-Marne','78':'Yvelines','79':'Deux-Sèvres','80':'Somme',
+      '81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse','85':'Vendée',
+      '86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne','90':'Territoire de Belfort',
+      '91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne',"95":"Val-d'Oise"
+    };
+    return depts[cp.substring(0,2)] || '';
+  }
+
+  const civ = defunt.civilite || '';
+  const titre = civ === 'Monsieur' ? 'Monsieur' : 'Madame';
+  const codeTitre = civ === 'Monsieur' ? 'M.' : 'MME';
+  const accord = civ === 'Monsieur' ? 'M' : 'F';
+
+  const nom = (defunt.nom || '').toUpperCase();
+  const nomNaissance = (defunt.nomNaissance || defunt.nom || '').toUpperCase();
+  const prenoms = defunt.prenoms || '';
+  const prenomUsuel = prenoms.split(/\s+/)[0] || '';
+
+  const adresse = defunt.adresse || '';
+  const cp = defunt.cp || '';
+  const ville = (defunt.ville || '').toUpperCase();
+  const deptDo = deptFromCp(cp);
+
+  const datNa = toInotDate(defunt.dateNaissance);
+  const lieuNa = (defunt.lieuNaissance || '').toUpperCase();
+  const cpNa = defunt.cpNaissance || '';
+  const deptNa = deptFromCp(cpNa);
+
+  const datMor = toInotDate(defunt.dateDeces);
+  const lieuMor = defunt.lieuDeces || '';
+  const deptMor = lieuMor ? '' : ''; // on n'a pas le CP du lieu de décès
+
+  // Situation familiale du défunt
+  const sit = situation.etat || 'C';
+  const hasHistory = ['M','D','V','I','P','S'].includes(sit);
+
+  let datMa = '';
+  let cpayMa = '';
+  let historiqueXml = '    <HistoriqueMarital />';
+
+  if (['M','I','S'].includes(sit)) {
+    datMa = toInotDate(situation.dateMariage);
+    cpayMa = situation.lieuMariage ? 'FR' : '';
+    historiqueXml = `    <HistoriqueMarital><Evenement>
+      ${v('COTYMA','M')}
+      ${v('DAMAMA', datMa)}
+      ${v('LVT1MA', situation.lieuMariage || '')}
+      ${v('LNCOMA','')}
+      ${v('LPCOMA','')}
+      ${v('COCRMA','')}
+    </Evenement></HistoriqueMarital>`;
+  } else if (sit === 'D') {
+    historiqueXml = `    <HistoriqueMarital><Evenement>
+      ${v('COTYMA','D')}
+      ${v('DAMAMA','')}
+      ${v('LVT1MA','')}
+      ${v('LNCOMA','')}
+      ${v('LPCOMA','')}
+      ${v('COCRMA','')}
+    </Evenement></HistoriqueMarital>`;
+  } else if (sit === 'V') {
+    historiqueXml = `    <HistoriqueMarital><Evenement>
+      ${v('COTYMA','V')}
+      ${v('DAMAMA','')}
+      ${v('LVT1MA','')}
+      ${v('LNCOMA','')}
+      ${v('LPCOMA','')}
+      ${v('COCRMA','')}
+    </Evenement></HistoriqueMarital>`;
+  } else if (sit === 'P') {
+    datMa = toInotDate(situation.dateMariage);
+    historiqueXml = `    <HistoriqueMarital><Evenement>
+      ${v('COTYMA','P')}
+      ${v('DAMAMA', datMa)}
+      ${v('LVT1MA', situation.lieuMariage || '')}
+      ${v('LNCOMA','')}
+      ${v('LPCOMA','')}
+      ${v('COCRMA','')}
+    </Evenement></HistoriqueMarital>`;
+  }
+
+  const regime = ['M','I','S','D'].includes(sit) ? (REG_CODE[situation.regimeMatrimonial] || '4') : '';
+
+  const xml = `<?xml version="1.0" encoding="utf-8"?>
+<iNova><iNot><Customer><Folder>
+  <Person info="">
+${v('NUMERO','10000001')}
+${v('TYPE','PP')}
+${v('ADR1', adresse)}
+${v('ADR2','')}
+${v('ADR3', cp)}
+${v('ADR4', ville)}
+${v('RCS','')}
+${v('VILRCS','')}
+${v('CPRCS','')}
+${v('CPAYRCS','')}
+${v('NUMMB','')}
+${v('IDENMB','')}
+${v('ACCORD', accord)}
+${v('ADR1MB','')}
+${v('ADR2MB','')}
+${v('CPMB','')}
+${v('VILLEMB','')}
+${v('PRESENCE','')}
+${v('INTCONJ','')}
+${v('PRECONJ','')}
+${v('JODATE','')}
+${v('CPVILMA','')}
+${v('NOTMA','')}
+${v('HISTORIQUE', hasHistory ? 'O' : 'N')}
+${v('INTCONJPURIEL','')}
+${v('CODCRU','')}
+${v('LVDCRU','')}
+${v('CPSTAT','')}
+${v('PREFDAT','')}
+${v('DEPTDO', deptDo)}
+${v('CPAYDO','FRANCE')}
+${v('CONJ','')}
+${v('ETAT', sit)}
+${v('CODETITRE', codeTitre, 'CIVILITY')}
+${v('NOMU', nom)}
+${v('PRENOMU', prenomUsuel)}
+${v('PRENOM', prenoms)}
+${v('PROF', defunt.profession || '')}
+${v('DATNA', datNa)}
+${v('DEPTNA', deptNa)}
+${v('CPAYNA','FRANCE')}
+${v('DEPMOR', deptMor)}
+${v('NATION', defunt.nationalite || '')}
+${v('INCAPABLE','')}
+${v('TITRE', titre)}
+${v('DATMOR', datMor)}
+${v('DATMA', datMa)}
+${v('CPAYMA', cpayMa)}
+${v('ADR1IMP', adresse)}
+${v('ADR2IMP','')}
+${v('CPIMP', cp)}
+${v('VILLEIMP', ville)}
+${v('CODERU', cpNa)}
+${v('LVNARU', lieuNa)}
+${v('NOM', nomNaissance)}
+${v('REGIME', regime)}
+${v('DATCONTR','')}
+${v('DATAN','')}
+${v('DATDECL','')}
+${v('DATHOM','')}
+${v('TGIME','')}
+${v('REGPRE','')}
+${v('LIEME','')}
+${v('NOTME','')}
+${v('NOPME','')}
+${historiqueXml}
+  </Person>
+</Folder></Customer></iNot></iNova>`;
+
+  return xml;
+}
+
+// Correspondance régime matrimonial
+const REG_CODE = {
+  communaute_legale: '4',
+  separation: '33',
+  communaute_universelle: '32',
+  participation: '35'
+};
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
   const { data, email } = req.body || {};
@@ -201,12 +402,26 @@ module.exports = async (req, res) => {
   </div>
 </body></html>`;
 
+  // Génération XML iNot pour le défunt
+  let attachment = undefined;
+  try {
+    const xml = buildXmlDefunt(defunt, situation);
+    const slug = (defunt.nom || 'defunt').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+    const filename = `import_inot_${slug}.XML`;
+    attachment = [{ name: filename, content: Buffer.from(xml).toString('base64') }];
+  } catch(e) {
+    console.error('Erreur XML:', e.message);
+  }
+
   try {
     await brevo().transactionalEmails.sendTransacEmail({
       sender: SENDER,
       to: [{ email: NOTAIRE }],
       subject: `Questionnaire Succession — ${nomDefunt}`,
-      htmlContent
+      htmlContent,
+      ...(attachment ? { attachment } : {})
     });
   } catch(e) {
     console.error('Erreur email:', e.message);
