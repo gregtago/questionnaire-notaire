@@ -73,10 +73,18 @@
     .btn-submit:disabled { background: #999; cursor: not-allowed; }
     .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
     .rgpd-note { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm { text-align: center; padding: 40px 20px 20px; }
     .confirm .icon { font-size: 44px; margin-bottom: 14px; }
     .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
     .confirm p { color: #777; font-size: 14px; }
+    .pieces-wrap { text-align: left; margin-top: 32px; border-top: 1px solid #eee; padding-top: 24px; }
+    .pieces-wrap h3 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 16px; letter-spacing: .03em; text-transform: uppercase; }
+    .pieces-section { margin-bottom: 18px; }
+    .pieces-section .ps-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .pieces-section ul { margin: 0; padding: 0; list-style: none; }
+    .pieces-section ul li { font-size: 13px; color: #444; padding: 5px 0 5px 18px; border-bottom: 1px solid #f5f5f5; position: relative; line-height: 1.4; }
+    .pieces-section ul li::before { content: "\2192"; position: absolute; left: 0; color: #bbb; font-size: 11px; top: 6px; }
+    .pieces-email-note { margin-top: 20px; padding: 12px 16px; background: #f8f8f6; border-radius: 4px; font-size: 12px; color: #888; text-align: center; }
     footer { padding: 32px 28px 28px; border-top: 1px solid #e8e8e5; display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; }
     footer .f-left .f-name { font-size: 12px; font-weight: 500; color: #555; }
     footer .f-left .f-url { font-size: 11px; color: #bbb; margin-top: 2px; }
@@ -1295,6 +1303,68 @@ function showErr(msg) {
   el.scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
+function buildPiecesList(D) {
+  const sections = [];
+  const isLoue = D.bien && D.bien.situationJour === "loue";
+  const hasPret = D.prets && D.prets.pretHypotheque === "oui";
+  const hasBornage = D.terrain && D.terrain.bornage === "oui";
+  const hasAsl = D.terrain && D.terrain.asl === "oui";
+  const hasServitudes = D.terrain && D.terrain.servitudes === "oui";
+  const hasCoproH = D.terrain && D.terrain.coproHorizontale === "oui";
+  const hasFosse = D.assainissement && D.assainissement.systemeIndividuel === "oui";
+  const aFaitConstruire = D.construction && D.construction.aFaitConstruire === "oui";
+  const hasTravauxPost = D.construction && D.construction.travauxPosterieur === "oui";
+  const hasCuveMazout = D.equipements && D.equipements.cuveMazout === "oui";
+  const hasCiterne = D.equipements && D.equipements.citerne === "oui";
+  const hasSci = D.fiscalite && D.fiscalite.societeCivile === "oui";
+  const isNonRP = D.plusvalue && D.plusvalue.residencePrincipale === "non";
+
+  sections.push({ section: "Documents obligatoires", pieces: [
+    "Titre de propriete",
+    "Dossier de diagnostics techniques complet (DPE, amiante, termites, plomb, gaz, electricite, assainissement...)",
+  ]});
+
+  const terrainPieces = [];
+  if (hasBornage) terrainPieces.push("Proces-verbal de bornage");
+  if (hasServitudes) terrainPieces.push("Documents etablissant les servitudes");
+  if (hasAsl) terrainPieces.push("Reglement du lotissement, cahier des charges, statuts ASL, derniers appels de charges");
+  if (hasCoproH) terrainPieces.push("Reglement de copropriete, derniers PV AG, dernier appel de charges");
+  if (terrainPieces.length) sections.push({ section: "Terrain", pieces: terrainPieces });
+
+  if (hasFosse) sections.push({ section: "Assainissement", pieces: [
+    "Attestation SPANC (controle de la fosse septique)",
+  ]});
+
+  if (aFaitConstruire) {
+    const ps = ["Permis de construire", "Declaration d'achevement et certificat de conformite (DAACT)"];
+    if (D.construction.moinsde10ans === "oui") ps.push("Attestation d'assurance dommage-ouvrage (ou liste des entreprises intervenantes)");
+    sections.push({ section: "Construction", pieces: ps });
+  }
+  if (hasTravauxPost) sections.push({ section: "Travaux", pieces: [
+    "Permis de construire ou declaration de travaux et declaration d'achevement",
+  ]});
+
+  const equip = [];
+  if (hasCuveMazout) equip.push("Derniere facture de remplissage de la cuve a mazout");
+  if (hasCiterne) equip.push("Contrat de location/entretien de la citerne a gaz");
+  if (equip.length) sections.push({ section: "Equipements", pieces: equip });
+
+  if (hasPret) sections.push({ section: "Pret immobilier", pieces: [
+    "Offre de pret", "Tableau d'amortissement (capital restant du)",
+  ]});
+
+  if (hasSci) sections.push({ section: "Societe civile", pieces: [
+    "Statuts a jour", "Extrait Kbis", "Derniers bilans",
+  ]});
+
+  if (isNonRP) sections.push({ section: "Plus-value immobiliere", pieces: [
+    "Compte notarial d'acquisition (acte d'achat)",
+    "Factures de travaux d'amelioration (si deductibles)",
+  ]});
+
+  return sections;
+}
+
 document.getElementById('btnSubmit').onclick = async () => {
   document.getElementById('ferr').style.display = 'none';
   if (!D.vendeur1.nom || !D.vendeur1.prenoms) return showErr('Nom et prénoms du Vendeur 1 obligatoires.');
@@ -1307,14 +1377,27 @@ document.getElementById('btnSubmit').onclick = async () => {
   try {
     const r = await fetch('/api/soumettre-vente-maison', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ data: D, email: email0 })
+      body: JSON.stringify({ data: D, email: email0, pieces: buildPiecesList(D) })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Erreur serveur');
+    // Construire la liste de pièces
+    const piecesSections = buildPiecesList(D);
+    const piecesHtml = piecesSections.map(s => `
+      <div class="pieces-section">
+        <div class="ps-title">${s.section}</div>
+        <ul>${s.pieces.map(p => `<li>${p}</li>`).join("")}</ul>
+      </div>`).join("");
+
     document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
       <div class="icon">✓</div>
       <h2>Questionnaire envoyé</h2>
       <p>Vos réponses ont bien été transmises à l'étude. Nous vous contacterons prochainement.</p>
+      <div class="pieces-wrap">
+        <h3>Pièces à nous faire parvenir</h3>
+        ${piecesHtml}
+        <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}</div>
+      </div>
     </div></div>`;
   } catch(e) {
     showErr(e.message);
