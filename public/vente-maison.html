@@ -333,12 +333,6 @@ const SECTIONS = [
   { title: 'Fiscalité et observations' }
 ];
 
-// ── Paramètre etatcivil=0 ─────────────────────────────────
-const _urlParams = new URLSearchParams(window.location.search);
-const _skipEtatCivil = _urlParams.get('etatcivil') === '0';
-if (_skipEtatCivil) SECTIONS.splice(0, 1);
-window._sectionOffset = _skipEtatCivil ? 1 : 0;
-
 
 // ── Accueil / OTP ─────────────────────────────────────────
 function checkRgpd() {
@@ -379,7 +373,8 @@ document.getElementById('btnVerify').onclick = async () => {
     if (!r.ok) throw new Error(d.error || 'Code incorrect');
     document.getElementById('sCode').style.display = 'none';
     document.getElementById('sForm').style.display = 'block';
-    renderSection(0);
+    const _ec = new URLSearchParams(window.location.search).get('etatcivil');
+    renderSection(_ec === '0' ? 1 : 0);
   } catch(e) { err.textContent = e.message; }
   finally { document.getElementById('btnVerify').disabled = false; }
 };
@@ -395,8 +390,8 @@ function renderSection(idx) {
   document.getElementById('progressBar').style.width = pct+'%';
   document.getElementById('progressLabel').textContent = `Étape ${idx+1} sur ${SECTIONS.length} — ${SECTIONS[idx].title}`;
   const isLast = idx === SECTIONS.length - 1;
-  document.getElementById('formContent').innerHTML = buildSection(idx + (window._sectionOffset||0));
-  bindSection(idx + (window._sectionOffset||0));
+  document.getElementById('formContent').innerHTML = buildSection(idx);
+  bindSection(idx);
   document.getElementById('formNav').innerHTML = `
     ${idx > 0 ? `<button class="btn-prev" onclick="renderSection(${idx-1})">← Précédent</button>` : ''}
     ${!isLast ? `<button class="btn-next" onclick="renderSection(${idx+1})">Suivant →</button>` : ''}`;
