@@ -46,11 +46,18 @@ module.exports = async (req, res) => {
   const { data, email } = req.body || {};
   if (!data || !data.defunt) return res.status(400).json({ error: 'Données manquantes' });
 
-  const { defunt, situation, conjoint, heritiers, dispositions, banques, immobilier, autresActifs, dettes, fiscalite } = data;
+  const { declarant, defunt, situation, conjoint, heritiers, dispositions, banques, immobilier, autresActifs, dettes, fiscalite } = data;
   const today = new Date().toLocaleDateString('fr-FR');
   const nomDefunt = [defunt.prenoms, defunt.nom].filter(Boolean).join(' ') || 'Défunt';
 
   let body = '';
+
+  // ── Déclarant ───────────────────────────────────────────
+  if (declarant && (declarant.nom || declarant.prenom)) {
+    body += sec('Questionnaire rempli par');
+    body += row('Nom / Prénom', [declarant.nom, declarant.prenom].filter(Boolean).join(' '));
+    body += row('Email', email || '');
+  }
 
   // ── Section 1 : Défunt ──────────────────────────────────
   body += sec('Personne décédée');
@@ -91,16 +98,15 @@ module.exports = async (req, res) => {
 
   // ── Section 4 : Héritiers ──────────────────────────────
   if (heritiers && heritiers.length) {
-    body += sec(`Héritiers (${heritiers.length})`);
-    heritiers.forEach((h, i) => {
-      if (!h.nom && !h.prenoms) return;
-      body += `<tr><td colspan="2" style="padding:10px 0 4px;font-size:12px;font-weight:600;color:#555;">${i+1}. ${[h.prenoms, h.nom].filter(Boolean).join(' ')}</td></tr>`;
-      body += row('Lien', LIEN_LABELS[h.lien] || h.lien);
-      body += row('Naissance', [fmtDate(h.dateNaissance), h.lieuNaissance].filter(Boolean).join(' — '));
-      body += row('Adresse', h.adresse);
-      body += row('Téléphone', h.tel);
-      body += row('Email', h.email);
-    });
+    const heritiersFiltres = heritiers.filter(h => h.nom || h.prenom);
+    if (heritiersFiltres.length) {
+      body += sec(`Héritiers (${heritiersFiltres.length})`);
+      heritiersFiltres.forEach((h, i) => {
+        const lienLabel = LIEN_LABELS[h.lien] || h.lien || '';
+        const nomComplet = [h.prenom, h.nom].filter(Boolean).join(' ');
+        body += row(`${i+1}. ${nomComplet}`, lienLabel);
+      });
+    }
   }
 
   // ── Section 5 : Dispositions ───────────────────────────
@@ -190,7 +196,7 @@ module.exports = async (req, res) => {
       <table style="width:100%;border-collapse:collapse;">${body}</table>
     </div>
     <div style="background:#f5f5f5;padding:14px 30px;border-top:1px solid #eee;">
-      <p style="margin:0;font-size:10px;color:#bbb;">Questionnaire complété par : ${email || ''}</p>
+      <p style="margin:0;font-size:10px;color:#bbb;">Questionnaire Succession — form.tagot.notaires.fr</p>
     </div>
   </div>
 </body></html>`;
