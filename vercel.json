@@ -1,12 +1,44 @@
 {
   "rewrites": [
-    { "source": "/api/otp/envoyer", "destination": "/api/otp/envoyer" },
-    { "source": "/api/otp/verifier", "destination": "/api/otp/verifier" },
-    { "source": "/api/soumettre", "destination": "/api/soumettre" },
-    { "source": "/api/soumettre-succession", "destination": "/api/soumettre-succession" },
-    { "source": "/api/soumettre-divorce", "destination": "/api/soumettre-divorce" },
-    { "source": "/succession", "destination": "/public/succession.html" },
-    { "source": "/divorce", "destination": "/public/divorce.html" },
-    { "source": "/(.*)", "destination": "/public/index.html" }
+    {
+      "source": "/api/otp/envoyer",
+      "destination": "/api/otp/envoyer"
+    },
+    {
+      "source": "/api/otp/verifier",
+      "destination": "/api/otp/verifier"
+    },
+    {
+      "source": "/api/soumettre",
+      "destination": "/api/soumettre"
+    },
+    {
+      "source": "/api/soumettre-succession",
+      "destination": "/api/soumettre-succession"
+    },
+    {
+      "source": "/api/soumettre-divorce",
+      "destination": "/api/soumettre-divorce"
+    },
+    {
+      "source": "/succession",
+      "destination": "/public/succession.html"
+    },
+    {
+      "source": "/divorce",
+      "destination": "/public/divorce.html"
+    },
+    {
+      "source": "/api/soumettre-acquisition",
+      "destination": "/api/soumettre-acquisition"
+    },
+    {
+      "source": "/acquisition",
+      "destination": "/public/acquisition.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/index.html"
+    }
   ]
 }
