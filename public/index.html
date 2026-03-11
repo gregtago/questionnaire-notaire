@@ -67,10 +67,18 @@
     .btn-submit:disabled { background: #999; cursor: not-allowed; }
     .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
     .rgpd { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-    .confirm { text-align: center; padding: 60px 20px; }
+    .confirm { text-align: center; padding: 40px 20px 20px; }
     .confirm .icon { font-size: 44px; margin-bottom: 14px; }
     .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
     .confirm p { color: #777; font-size: 14px; }
+    .pieces-wrap { text-align: left; margin-top: 32px; border-top: 1px solid #eee; padding-top: 24px; }
+    .pieces-wrap h3 { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 16px; letter-spacing: .03em; text-transform: uppercase; }
+    .pieces-section { margin-bottom: 18px; }
+    .pieces-section .ps-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .pieces-section ul { margin: 0; padding: 0; list-style: none; }
+    .pieces-section ul li { font-size: 13px; color: #444; padding: 5px 0 5px 18px; border-bottom: 1px solid #f5f5f5; position: relative; line-height: 1.4; }
+    .pieces-section ul li::before { content: "\2192"; position: absolute; left: 0; color: #bbb; font-size: 11px; top: 6px; }
+    .pieces-email-note { margin-top: 20px; padding: 12px 16px; background: #f8f8f6; border-radius: 4px; font-size: 12px; color: #888; text-align: center; }
     footer { padding: 32px 28px 28px; border-top: 1px solid #e8e8e5; display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; }
     footer .f-left .f-name { font-size: 12px; font-weight: 500; color: #555; }
     footer .f-left .f-url { font-size: 11px; color: #bbb; margin-top: 2px; }
@@ -894,6 +902,15 @@ document.getElementById('btnVerify').onclick = async () => {
 };
 
 // ── Soumission ────────────────────────────────────────────
+function buildPiecesList(persons) {
+  const sections = [];
+  sections.push({ section: "Pour chaque personne", pieces: [
+    "Copie de la piece d'identite en cours de validite (CNI ou passeport)",
+    "Justificatif de domicile recent",
+  ]});
+  return sections;
+}
+
 document.getElementById('btnSubmit').onclick = async () => {
   const ferr = document.getElementById('ferr');
   ferr.style.display = 'none';
@@ -925,13 +942,26 @@ document.getElementById('btnSubmit').onclick = async () => {
     const r = await fetch('/api/soumettre', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil' })
+      body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', pieces: buildPiecesList(persons) })
     });
     if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
+    // Construire la liste de pièces
+    const piecesSections = buildPiecesList(persons);
+    const piecesHtml = piecesSections.map(s => `
+      <div class="pieces-section">
+        <div class="ps-title">${s.section}</div>
+        <ul>${s.pieces.map(p => `<li>${p}</li>`).join("")}</ul>
+      </div>`).join("");
+
     document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
       <div class="icon">✓</div>
       <h2>Merci, votre questionnaire a bien été transmis.</h2>
-      <p>Votre notaire a reçu vos informations et reviendra vers vous prochainement.<br>Vous pouvez fermer cette page.</p>
+      <p>Votre notaire a reçu vos informations et reviendra vers vous prochainement.</p>
+      <div class="pieces-wrap">
+        <h3>Pièces à nous faire parvenir</h3>
+        ${piecesHtml}
+        <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}</div>
+      </div>
     </div></div>`;
   } catch(e) {
     ferr.textContent = e.message;
