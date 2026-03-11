@@ -52,8 +52,19 @@ module.exports = async (req, res) => {
   const { data, email } = req.body || {};
   if (!data) return res.status(400).json({ error: 'Données manquantes' });
 
-  const { acquereur, acquereur2, mode, indivision, sci, bien, projet,
-          financement, fonds, revente, garanties, fiscalite, banque } = data;
+  const acquereur  = data.acquereur1 || data.acquereur || {};
+  const acquereur2 = data.acquereur2 || {};
+  const mode       = data.modeAcquisition || data.mode || '';
+  const indivision = data.indivision || [];
+  const sci        = data.sci || {};
+  const bien       = data.bien || {};
+  const projet     = data.projet || {};
+  const financement = data.financement || {};
+  const fonds      = { origines: data.originesFonds || [], justificatifs: data.justificatifsFonds || [] };
+  const revente    = data.reventeDetails || data.revente || {};
+  const garanties  = data.assurances || data.garanties || {};
+  const fiscalite  = data.fiscalite || {};
+  const banque     = data.coordonneesBancaires || data.banque || {};
 
   const nomAcq = [acquereur.prenoms, acquereur.nom].filter(Boolean).join(' ');
   const adresseBien = [bien.adresse, bien.cp, bien.ville].filter(Boolean).join(', ');
