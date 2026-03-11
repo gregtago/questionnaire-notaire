@@ -247,7 +247,7 @@ const D = {
 };
 
 const SECTIONS = [
-  { title: 'Identité des époux' },
+  { title: 'Identification des époux' },
   { title: 'Situation matrimoniale' },
   { title: 'Procédure de divorce' },
   { title: 'Biens propres avant mariage' },
@@ -418,20 +418,24 @@ function buildSection(idx) {
   }
 }
 
-// S1 : Identité des époux
+// S1 : Identification des époux (noms uniquement)
 function buildS1() {
-  const dec = D.declarant;
   return `
-  <div class="sec" style="margin-bottom:20px;border-color:#111;">
-    <div class="sec-heading">Qui remplit ce questionnaire ?</div>
-    <div class="row2">
-      <div class="field"><label>Votre nom <span class="req">*</span></label><input type="text" data-d="declarant.nom" value="${x(dec.nom)}"></div>
-      <div class="field"><label>Votre prénom <span class="req">*</span></label><input type="text" data-d="declarant.prenom" value="${x(dec.prenom)}"></div>
+  <div class="sec">
+    <div class="sec-heading">Identification des époux</div>
+    <div class="sec-desc">Ces informations servent uniquement à identifier le dossier.</div>
+    <div class="epoux-grid">
+      <div class="epoux-bloc">
+        <div class="epoux-bloc-title">Époux 1</div>
+        <div class="field"><label>Nom <span class="req">*</span></label><input type="text" data-e="epoux1.nom" value="${x(D.epoux1.nom)}"></div>
+        <div class="field"><label>Prénoms <span class="req">*</span></label><input type="text" data-e="epoux1.prenoms" value="${x(D.epoux1.prenoms)}"></div>
+      </div>
+      <div class="epoux-bloc">
+        <div class="epoux-bloc-title e2">Époux 2</div>
+        <div class="field"><label>Nom <span class="req">*</span></label><input type="text" data-e="epoux2.nom" value="${x(D.epoux2.nom)}"></div>
+        <div class="field"><label>Prénoms <span class="req">*</span></label><input type="text" data-e="epoux2.prenoms" value="${x(D.epoux2.prenoms)}"></div>
+      </div>
     </div>
-  </div>
-  <div class="epoux-grid">
-    ${blocEpoux(D.epoux1,'epoux1','Époux 1','')}
-    ${blocEpoux(D.epoux2,'epoux2','Époux 2','e2')}
   </div>`;
 }
 
