@@ -202,6 +202,8 @@ let currentSection = 0;
 
 // Données du formulaire
 const D = {
+  // Déclarant
+  declarant: { nom: '', prenom: '' },
   // Section 1 : Défunt
   defunt: {
     civilite: '', nom: '', nomNaissance: '', prenoms: '',
@@ -389,7 +391,16 @@ function x(v) { return (v || '').replace(/"/g, '&quot;'); }
 // Section 1 : Personne décédée
 function buildS1() {
   const d = D.defunt;
+  const dec = D.declarant;
   return `
+  <div class="sec" style="margin-bottom:20px;border-color:#111;">
+    <div class="sec-heading">Vos coordonnées</div>
+    <div class="sec-desc">Qui remplit ce questionnaire ?</div>
+    <div class="row2">
+      <div class="field"><label>Votre nom <span class="req">*</span></label><input type="text" data-d="declarant.nom" value="${x(dec.nom)}"></div>
+      <div class="field"><label>Votre prénom <span class="req">*</span></label><input type="text" data-d="declarant.prenom" value="${x(dec.prenom)}"></div>
+    </div>
+  </div>
   <div class="sec">
     <div class="sec-heading">Informations sur la personne décédée</div>
     <div class="sec-desc">Renseignez l'état civil complet du défunt.</div>
@@ -1098,6 +1109,7 @@ document.getElementById('btnSubmit').onclick = async () => {
   const ferr = document.getElementById('ferr');
   ferr.style.display = 'none';
 
+  if (!D.declarant.nom || !D.declarant.prenom) return showErr('Veuillez renseigner vos nom et prénom.');
   if (!D.defunt.nom) return showErr('Nom du défunt obligatoire.');
   if (!D.defunt.dateDeces) return showErr('Date du décès obligatoire.');
   if (!D.defunt.lieuDeces) return showErr('Lieu du décès obligatoire.');
@@ -1110,7 +1122,7 @@ document.getElementById('btnSubmit').onclick = async () => {
     const r = await fetch('/api/soumettre-succession', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: D, email: email0 })
+      body: JSON.stringify({ data: D, email: email0, declarant: D.declarant })
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Erreur serveur');
