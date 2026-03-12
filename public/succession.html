@@ -1903,6 +1903,8 @@ document.getElementById('btnSubmit').onclick = async () => {
       if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
       // Passer au formulaire dossier
       _phase = 'dossier';
+      btn.disabled = false;
+      btn.textContent = 'Envoyer mes réponses';
       document.getElementById('pageSub').textContent = 'Questionnaire';
       document.getElementById('progressLabel').textContent = '';
       document.getElementById('progressBar').style.width = '0%';
