@@ -111,7 +111,7 @@
     .btn:disabled { background: #ccc; cursor: not-allowed; }
   
     /* ── Slides d'accueil ── */
-    .screen-wide { max-width: 700px; }
+    .screen-wide { max-width: 960px; }
     .card-slides { padding: 36px 40px; min-height: calc(100vh - 200px); display: flex; flex-direction: column; }
     .slide { flex: 1; display: flex; flex-direction: column; }
     .slide-dots { display: flex; gap: 8px; margin-bottom: 28px; }
@@ -152,7 +152,8 @@
 
     <!-- ── Slide 1 : Accueil + choix dossier ── -->
     <div class="slide" id="slide1">
-      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">Ce questionnaire nous permet de recueillir les informations nécessaires à la rédaction de votre acte. Sélectionnez ci-dessous la nature de votre dossier et complétez les informations qui vous seront demandées. Une liste des pièces justificatives à nous transmettre vous sera remise à l'issue du questionnaire.</p>
+      <h2 style="font-size:22px;font-weight:300;margin-bottom:18px;">Questionnaire</h2>
+    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">Ce questionnaire nous permet de recueillir les informations nécessaires à la rédaction de votre acte. Sélectionnez ci-dessous la nature de votre dossier et complétez les informations qui vous seront demandées. Une liste des pièces justificatives à nous transmettre vous sera remise à l'issue du questionnaire.</p>
       <p style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#999;margin-bottom:14px;font-weight:600;">Nature de votre dossier</p>
       <div class="dossier-grid" id="dossierGrid">
         <button class="dossier-btn" data-type="achat" onclick="selectDossier(this)">
