@@ -1753,9 +1753,6 @@ function makeToggle(attr, obj, key, condMap) {
   });
 }
 
-function bindAll(attr, obj, keys, condMap) {
-  keys.forEach(k => makeToggle(attr, obj, k, condMap ? (condMap[k] || null) : null));
-}
 
 function bindS1() {
   document.querySelectorAll('[data-nb]').forEach(btn => {
