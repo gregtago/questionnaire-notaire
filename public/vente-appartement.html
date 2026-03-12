@@ -1011,59 +1011,12 @@ function showEtatCivil() {
   document.getElementById('progressBar').style.width = '50%';
   document.getElementById('submitSec').style.display = 'block';
   document.getElementById('btnSubmit').textContent = 'Continuer →';
+  _phase = 'etatcivil';
   renderForms();
 }
 
 
-document.getElementById('btnSubmit').onclick = async () => {
-  const ferr = document.getElementById('ferr');
-  ferr.style.display = 'none';
-
-  if (!SKIP_ETATCIVIL) {
-    // Validation état civil
-    for (let i=0; i<persons.length; i++) {
-      const p = persons[i];
-      const n = p._role==='conjoint' ? '2ème personne' : 'Vous';
-      if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
-      if (!p.NOM)     return showErr(`${n} : nom de naissance obligatoire.`, i);
-      if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
-      if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
-      if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
-      if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
-      if (p._role !== 'conjoint') {
-        if (!p.ADR1 || !p.ADR4) return showErr(`Adresse incomplète.`, i);
-        if (!p.TEL) return showErr(`Téléphone obligatoire.`, i);
-        if (i===0 && !p.EMAIL) return showErr(`Email obligatoire.`, i);
-      }
-    }
-    const btn = document.getElementById('btnSubmit');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
-    try {
-      const xml = buildXml();
-      const r = await fetch('/api/soumettre', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', pieces: buildPiecesListEC(persons) })
-      });
-      if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
-      // Lancer le formulaire dossier
-      document.getElementById('sForm').innerHTML = '<div class="form-wrap"></div>';
-      document.getElementById('pageSub').textContent = 'Questionnaire';
-      renderSection(0);
-      window.scrollTo(0,0);
-    } catch(e) {
-      ferr.textContent = e.message;
-      ferr.style.display = 'block';
-      document.getElementById('btnSubmit').disabled = false;
-      document.getElementById('btnSubmit').textContent = 'Continuer →';
-    }
-  } else {
-    // Déjà client : aller directement au formulaire dossier
-    renderSection(0);
-    window.scrollTo(0,0);
-  }
-};
+;
 
 
 // ── Formulaire dossier ────────────────────────────────────
@@ -2006,8 +1959,56 @@ function buildPiecesList(D) {
   return sections;
 }
 
+let _phase = 'dossier'; // 'etatcivil' | 'dossier'
+
 document.getElementById('btnSubmit').onclick = async () => {
-  document.getElementById('ferr').style.display = 'none';
+  if (_phase === 'etatcivil') {
+    // ── Phase état civil ──
+    const ferr = document.getElementById('ferr');
+    ferr.style.display = 'none';
+    for (let i=0; i<persons.length; i++) {
+      const p = persons[i];
+      const n = p._role==='conjoint' ? '2ème personne' : 'Vous';
+      if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
+      if (!p.NOM)     return showErr(`${n} : nom de naissance obligatoire.`, i);
+      if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
+      if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
+      if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
+      if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+      if (p._role !== 'conjoint') {
+        if (!p.ADR1 || !p.ADR4) return showErr('Adresse incomplète.', i);
+        if (!p.TEL) return showErr('Téléphone obligatoire.', i);
+        if (i===0 && !p.EMAIL) return showErr('Email obligatoire.', i);
+      }
+    }
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+    try {
+      const xml = buildXml();
+      const resp = await fetch('/api/soumettre', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', pieces: buildPiecesListEC(persons) })
+      });
+      if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
+      // Passer au formulaire dossier
+      _phase = 'dossier';
+      document.getElementById('pageSub').textContent = 'Questionnaire';
+      document.getElementById('progressLabel').textContent = '';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('formContent').innerHTML = '';
+      document.getElementById('formNav').innerHTML = '';
+      document.getElementById('submitSec').style.display = 'none';
+      document.getElementById('btnSubmit').textContent = 'Envoyer mes réponses';
+      renderSection(0);
+      window.scrollTo(0,0);
+    } catch(e) {
+      ferr.textContent = e.message; ferr.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Continuer →';
+    }
+  } else {
+    // ── Phase dossier ──
+    document.getElementById('ferr').style.display = 'none';
   if (!D.vendeur1.nom || !D.vendeur1.prenoms) return showErr('Nom et prénoms du Vendeur 1 obligatoires.');
   if (!D.bien.adresse) return showErr('L\'adresse du bien est obligatoire.');
 
@@ -2045,7 +2046,8 @@ document.getElementById('btnSubmit').onclick = async () => {
     btn.disabled = false;
     btn.innerHTML = 'Envoyer mes réponses';
   }
-};
+  }
+};;
 
 </script>
 </body>
