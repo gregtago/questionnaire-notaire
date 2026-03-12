@@ -991,6 +991,7 @@ function buildPiecesListEC(persons) {
 function showEtatCivil() {
   document.getElementById('pageSub').textContent = 'État civil';
   document.getElementById('sAccueil').style.display = 'none';
+  if (email0) persons[0].EMAIL = email0;
   const sForm = document.getElementById('sForm');
   sForm.style.display = 'block';
   // Remplacer le contenu par les conteneurs état civil
