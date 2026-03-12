@@ -1021,20 +1021,16 @@ function buildPiecesListEC(persons) {
 // Appelé après validation OTP
 function showEtatCivil() {
   document.getElementById('pageSub').textContent = 'État civil';
-  // Afficher sForm et y injecter les conteneurs attendus par renderForms
   const sForm = document.getElementById('sForm');
   sForm.style.display = 'block';
-  sForm.innerHTML = `<div class="form-wrap">
-    <div id="tabs"></div>
-    <div id="forms"></div>
-    <div class="submit-sec" id="submitSec" style="display:block">
-      <button class="btn-submit" id="btnSubmit">Continuer →</button>
-      <div class="ferr" id="ferr" style="display:none"></div>
-    </div>
-  </div>`;
+  // Remplacer le contenu par les conteneurs état civil
+  document.getElementById('formContent').innerHTML = '<div id="tabs"></div><div id="forms"></div>';
+  document.getElementById('formNav').innerHTML = '';
+  document.getElementById('progressLabel').textContent = 'État civil';
+  document.getElementById('progressBar').style.width = '50%';
+  document.getElementById('submitSec').style.display = 'block';
+  document.getElementById('btnSubmit').textContent = 'Continuer →';
   renderForms();
-  // Re-binder btnSubmit (innerHTML l'a recréé)
-  bindBtnSubmit();
 }
 
 
