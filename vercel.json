@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/etat-civil",
+      "destination": "/etat-civil.html"
+    },
+    {
       "source": "/api/otp/envoyer",
       "destination": "/api/otp/envoyer"
     },
@@ -113,4 +117,4 @@
       ]
     }
   ]
-} 
+}
