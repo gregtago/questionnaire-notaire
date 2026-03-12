@@ -313,13 +313,15 @@ const URL_ETATCIVIL  = _urlParams.get('etatcivil');       // '0' = masqué
 const SKIP_ETATCIVIL = URL_ETATCIVIL === '0';
 
 // --- Écran accueil ---
-let typeDossier = '';
+let typeDossier = URL_DOSSIER || '';
+const MODE_ETATCIVIL = (URL_DOSSIER === 'etatcivil');
 const DOSSIER_LABELS = {
   'achat': 'Achat immobilier',
   'vente-maison': 'Vente — Maison',
   'vente-appartement': 'Vente — Appartement',
   'divorce': 'Divorce',
-  'succession': 'Succession'
+  'succession': 'Succession',
+  'etatcivil': 'État civil'
 };
 
 function selectDossier(btn) {
@@ -1047,6 +1049,20 @@ function showErr(msg, idx) {
   ferr.textContent = msg;
   ferr.style.display = 'block';
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Mode état civil seul (?dossier=etatcivil)
+if (MODE_ETATCIVIL) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.getElementById('dossierGrid');
+    if (grid) {
+      const labelNature = grid.previousElementSibling;
+      if (labelNature) labelNature.style.display = 'none';
+      grid.style.display = 'none';
+    }
+    const b1 = document.getElementById('btnSlide1');
+    if (b1) b1.disabled = false;
+  });
 }
 </script>
 </body>
