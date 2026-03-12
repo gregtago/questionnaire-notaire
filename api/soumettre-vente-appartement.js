@@ -194,8 +194,9 @@ module.exports = async (req, res) => {
 </body></html>`;
     try {
       await transporter().sendMail({ from: FROM, to: email, subject: `Vente appartement — pièces à fournir`, html: clientHtml });
-    } catch(e) { console.error('Email client pieces:', e.message); }
-  }
+      } catch(e) { console.error('Email client pieces:', e.message); }
+    }
+
     return res.status(200).json({ ok: true });
   } catch(e) {
     console.error('Erreur email:', e.message);
