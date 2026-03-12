@@ -57,6 +57,10 @@
       "destination": "/public/vente-maison.html"
     },
     {
+      "source": "/etatcivil",
+      "destination": "/public/etatcivil.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/public/index.html"
     }
