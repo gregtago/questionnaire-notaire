@@ -442,7 +442,15 @@ document.getElementById('btnVerify').onclick = async () => {
       document.getElementById('sForm').style.display='block';
       renderSection(0);
     } else {
-      showEtatCivil();
+      try {
+        showEtatCivil();
+      } catch(ecErr) {
+        // Afficher l'erreur directement sur la page pour diagnostic
+        document.body.insertAdjacentHTML('beforeend',
+          '<div style="position:fixed;top:0;left:0;right:0;background:red;color:#fff;padding:16px;z-index:9999;font-family:monospace;font-size:12px">'
+          + 'ERREUR showEtatCivil: ' + ecErr.message + '<br>' + (ecErr.stack||'').substring(0,400)
+          + '</div>');
+      }
     }
   } catch(e) { err.textContent=e.message; }
   finally { btn.disabled=false; btn.textContent='VALIDER'; }
@@ -976,7 +984,15 @@ document.getElementById('btnVerify').onclick = async () => {
       document.getElementById('sForm').style.display='block';
       renderSection(0);
     } else {
-      showEtatCivil();
+      try {
+        showEtatCivil();
+      } catch(ecErr) {
+        // Afficher l'erreur directement sur la page pour diagnostic
+        document.body.insertAdjacentHTML('beforeend',
+          '<div style="position:fixed;top:0;left:0;right:0;background:red;color:#fff;padding:16px;z-index:9999;font-family:monospace;font-size:12px">'
+          + 'ERREUR showEtatCivil: ' + ecErr.message + '<br>' + (ecErr.stack||'').substring(0,400)
+          + '</div>');
+      }
     }
   } catch(e) { err.textContent=e.message; }
   finally { btn.disabled=false; btn.textContent='VALIDER'; }
