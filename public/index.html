@@ -118,6 +118,14 @@
     .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: background .2s; }
     .dot-active { background: #111; }
     .rgpd-box { font-size: 12px; color: #555; line-height: 1.75; background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 20px; flex: 1; overflow-y: auto; }
+    .rgpd-accept-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #111; color: #fff; border-radius: 4px; padding: 16px 20px; margin-top: 16px; cursor: pointer; user-select: none; }
+    .rgpd-accept-bar em { font-style: normal; font-size: 13px; letter-spacing: .01em; line-height: 1.4; flex: 1; }
+    .rgpd-accept-bar .toggle { position: relative; width: 40px; height: 22px; background: #444; border-radius: 11px; flex-shrink: 0; transition: background .2s; }
+    .rgpd-accept-bar .toggle::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition: transform .2s; }
+    .rgpd-accept-bar input:checked ~ .toggle,
+    .rgpd-check.checked .rgpd-accept-bar .toggle { background: #fff; }
+    .rgpd-check.checked .rgpd-accept-bar { background: #1a1a1a; }
+    .rgpd-check.checked .rgpd-accept-bar .toggle::after { transform: translateX(18px); background: #111; }
     .btn-ghost-outline { width: auto; padding: 12px 20px; background: #fff; color: #111; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; letter-spacing: .05em; cursor: pointer; white-space: nowrap; }
     .btn-ghost-outline:hover { background: #f5f5f5; }
 
@@ -203,9 +211,9 @@
         <br><br>
         Si les personnes estiment, après avoir contacté l'Office notarial, que leurs droits ne sont pas respectés, elles peuvent introduire une réclamation auprès d'une autorité européenne de contrôle, la Commission Nationale de l'Informatique et des Libertés pour la France.
       </div>
-      <div class="rgpd-check" id="wrapRgpd" style="margin-top:16px">
-        <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-        <label class="rgpd-accept" for="cbRgpd">
+      <div class="rgpd-check" id="wrapRgpd">
+        <input type="checkbox" id="cbRgpd" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+        <label class="rgpd-accept-bar" for="cbRgpd">
           <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
           <span class="toggle"></span>
         </label>
@@ -223,9 +231,9 @@
         <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
         Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.
       </div>
-      <div class="rgpd-check" id="wrapLre" style="margin-top:16px">
-        <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-        <label class="rgpd-accept" for="cbLre">
+      <div class="rgpd-check" id="wrapLre">
+        <input type="checkbox" id="cbLre" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+        <label class="rgpd-accept-bar" for="cbLre">
           <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
           <span class="toggle"></span>
         </label>
