@@ -102,6 +102,29 @@
     .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
     .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
     @media(max-width:640px){ .epoux-grid,.row2,.row3{ grid-template-columns:1fr; } .header{ padding:20px; } }
+  
+    /* ── Slides d'accueil ── */
+    .screen-wide { max-width: 960px !important; }
+    .card-slides { padding: 28px 32px; min-height: calc(100vh - 140px); display: flex; flex-direction: column; }
+    .slide { flex: 1; display: flex; flex-direction: column; }
+    .slide-dots { display: flex; gap: 8px; margin-bottom: 16px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; transition: background .2s; }
+    .dot-active { background: #111; }
+    .rgpd-box { font-size: 12px; color: #555; line-height: 1.75; background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 20px; flex: 1; overflow-y: auto; }
+    .rgpd-accept-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #111; color: #fff; border-radius: 4px; padding: 16px 20px; margin-top: 16px; cursor: pointer; user-select: none; }
+    .rgpd-accept-bar em { font-style: normal; font-size: 13px; letter-spacing: .01em; line-height: 1.4; flex: 1; }
+    .rgpd-accept-bar .toggle { position: relative; width: 40px; height: 22px; background: #444; border-radius: 11px; flex-shrink: 0; transition: background .2s; }
+    .rgpd-accept-bar .toggle::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition: transform .2s; }
+    .rgpd-check.checked .rgpd-accept-bar .toggle { background: #fff; }
+    .rgpd-check.checked .rgpd-accept-bar .toggle::after { transform: translateX(18px); background: #111; }
+    .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .client-btn { background: #fff; border: 2px solid #e0e0e0; border-radius: 6px; padding: 28px 20px; cursor: pointer; text-align: left; transition: border-color .15s, background .15s; }
+    .client-btn:hover { border-color: #999; }
+    .client-btn.selected { border-color: #111; background: #111; }
+    .client-btn.selected .client-label { color: #fff; }
+    .client-label { font-size: 15px; font-weight: 400; color: #1a1a1a; display: block; line-height: 1.4; }
+    .btn-ghost-outline { width: auto; padding: 12px 20px; background: #fff; color: #111; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; letter-spacing: .05em; cursor: pointer; white-space: nowrap; }
+    .btn-ghost-outline:hover { background: #f5f5f5; }
   </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -118,56 +141,103 @@
 </div>
 
 <!-- ÉCRAN 0 : RGPD -->
-<div id="sAccueil" class="screen">
-  <div class="card">
-    <h2 style="font-size:20px;font-weight:400;margin-bottom:16px;color:#1a1a1a;">Préparation de la vente de votre appartement</h2>
-    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Afin de préparer la vente de votre appartement dans les meilleures conditions, nous vous invitons à compléter ce questionnaire sécurisé.</p>
-    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Les informations recueillies permettront à l'étude d'identifier les caractéristiques du bien et les éléments nécessaires à la préparation des actes.</p>
-    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Le questionnaire peut être complété en quelques minutes depuis votre téléphone, votre tablette ou votre ordinateur.</p>
-    <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">À l'issue du formulaire, nous vous indiquerons les documents utiles à la constitution de votre dossier.</p>
-    <div class="rgpd-check" id="wrapRgpd">
-      <input type="checkbox" id="cbRgpd" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-      <strong>Protection des données personnelles</strong><br><br>
-      L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes.
-      <br><br>
-      Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'Etat dont sont investis les notaires, officiers publics, conformément à l'ordonnance n° 45-2590 du 2 novembre 1945.
-      <br><br>
-      Ces données seront susceptibles d'être transférées aux destinataires suivants :
-      <ul style="margin:8px 0 8px 16px;padding:0;list-style:disc;">
-        <li>les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux de la profession notariale (Fichier Central Des Dernières Volontés, Minutier Central Électronique des Notaires, registre du PACS, etc.),</li>
-        <li>les offices notariaux participant ou concourant à l'acte,</li>
-        <li>les établissements financiers concernés,</li>
-        <li>les organismes de conseils spécialisés pour la gestion des activités notariales,</li>
-        <li>le Conseil supérieur du notariat ou son délégataire, pour la production des statistiques permettant l'évaluation des biens immobiliers, en application du décret n° 2013-803 du 3 septembre 2013,</li>
-        <li>les organismes publics ou privés pour des opérations de vérification dans le cadre de la recherche de personnalités politiquement exposées ou ayant fait l'objet de gel des avoirs ou sanctions, de la lutte contre le blanchiment des capitaux et le financement du terrorisme. Ces vérifications font l'objet d'un transfert de données dans un pays situé hors de l'Union Européenne et encadré par la signature de clauses contractuelles types de la Commission européenne, visant à assurer un niveau de protection des données substantiellement équivalent à celui garanti dans l'Union Européenne.</li>
-      </ul>
-      La communication de ces données à ces destinataires peut être indispensable pour l'accomplissement des activités notariales.
-      <br><br>
-      Les documents permettant d'établir, d'enregistrer et de publier les actes sont conservés 30 ans à compter de la réalisation de l'ensemble des formalités. L'acte authentique et ses annexes sont conservés 75 ans et 100 ans lorsque l'acte porte sur des personnes mineures ou majeures protégées. Les vérifications liées aux personnalités politiquement exposées, au blanchiment des capitaux et au financement du terrorisme sont conservées 5 ans après la fin de la relation d'affaires.
-      <br><br>
-      Conformément à la réglementation en vigueur relative à la protection des données personnelles, les personnes peuvent demander l'accès aux données les concernant. Le cas échéant, elles peuvent demander la rectification ou l'effacement de celles-ci, obtenir la limitation du traitement de ces données ou s'y opposer pour des raisons tenant à leur situation particulière. Elles peuvent également définir des directives relatives à la conservation, à l'effacement et à la communication de leurs données personnelles après leur décès.
-      <br>
-      L'Office notarial a désigné un Délégué à la protection des données que les personnes peuvent contacter à l'adresse suivante : <a href="mailto:office@tagot.notaires.fr" style="color:inherit;">office@tagot.notaires.fr</a>.
-      <br><br>
-      Si les personnes estiment, après avoir contacté l'Office notarial, que leurs droits ne sont pas respectés, elles peuvent introduire une réclamation auprès d'une autorité européenne de contrôle, la Commission Nationale de l'Informatique et des Libertés pour la France.
-      <label class="rgpd-accept" for="cbRgpd">
-        <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
-        <span class="toggle"></span>
-      </label>
+<div id="sAccueil" class="screen screen-wide">
+  <div class="card card-slides">
+    <div class="slide-dots" id="slideDots">
+      <span class="dot dot-active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
     </div>
-    <div class="rgpd-check" id="wrapLre" style="margin-top:10px">
-      <input type="checkbox" id="cbLre" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-      <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
-      Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal.
-      <label class="rgpd-accept" for="cbLre">
-        <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
-        <span class="toggle"></span>
-      </label>
+
+    <!-- Slide 1 : Déjà client ? -->
+    <div class="slide" id="slide1">
+      <h2 style="font-size:20px;font-weight:400;margin-bottom:12px;color:#1a1a1a;">Bienvenue</h2>
+      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:28px;">Avant de commencer, une question rapide.</p>
+      <div class="client-grid">
+        <button class="client-btn" id="btnDejaClient" onclick="selectClient(true)">
+          <span class="client-label">Je suis déjà client de l'étude</span>
+        </button>
+        <button class="client-btn" id="btnNouveauClient" onclick="selectClient(false)">
+          <span class="client-label">Je suis nouveau client</span>
+        </button>
+      </div>
+      <p style="font-size:11px;color:#aaa;line-height:1.6;margin-top:20px;margin-bottom:28px;">Si vous êtes déjà client, vos informations personnelles sont déjà enregistrées — vous n'aurez pas à les ressaisir.</p>
+      <button class="btn" id="btnSlide1" disabled onclick="goSlide(2)">SUIVANT →</button>
     </div>
-    <button class="btn" id="btnAccueil" style="margin-top:20px" disabled onclick="validerAccueil()">COMMENCER</button>
-    <div class="err" id="eAccueil"></div>
+
+    <!-- Slide 2 : Intro dossier -->
+    <div class="slide" id="slide2" style="display:none">
+      <h2 style="font-size:20px;font-weight:400;margin-bottom:16px;color:#1a1a1a;">Préparation de la vente de votre appartement</h2>
+      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Afin de préparer la vente de votre appartement dans les meilleures conditions, nous vous invitons à compléter ce questionnaire sécurisé.</p>
+      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Les informations recueillies permettront à l'étude d'identifier les caractéristiques du bien et les éléments nécessaires à la préparation des actes.</p>
+      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Le questionnaire peut être complété en quelques minutes depuis votre téléphone, votre tablette ou votre ordinateur.</p>
+      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">À l'issue du formulaire, nous vous indiquerons les documents utiles à la constitution de votre dossier.</p>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost-outline" onclick="goSlide(1)">← Retour</button>
+        <button class="btn" onclick="goSlide(3)">SUIVANT →</button>
+      </div>
+    </div>
+
+    <!-- Slide 3 : RGPD -->
+    <div class="slide" id="slide3" style="display:none">
+      <div class="rgpd-box">
+        <strong>Protection des données personnelles</strong><br><br>
+        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes.
+        <br><br>
+        Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'Etat dont sont investis les notaires, officiers publics, conformément à l'ordonnance n° 45-2590 du 2 novembre 1945.
+        <br><br>
+        Ces données seront susceptibles d'être transférées aux destinataires suivants :
+        <ul style="margin:8px 0 8px 16px;padding:0;list-style:disc;">
+          <li>les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux de la profession notariale (Fichier Central Des Dernières Volontés, Minutier Central Électronique des Notaires, registre du PACS, etc.),</li>
+          <li>les offices notariaux participant ou concourant à l'acte,</li>
+          <li>les établissements financiers concernés,</li>
+          <li>les organismes de conseils spécialisés pour la gestion des activités notariales,</li>
+          <li>le Conseil supérieur du notariat ou son délégataire, pour la production des statistiques permettant l'évaluation des biens immobiliers, en application du décret n° 2013-803 du 3 septembre 2013,</li>
+          <li>les organismes publics ou privés pour des opérations de vérification dans le cadre de la lutte contre le blanchiment des capitaux et le financement du terrorisme.</li>
+        </ul>
+        Les documents permettant d'établir les actes sont conservés 30 ans, l'acte authentique 75 ans (100 ans pour les mineurs).<br><br>
+        Conformément à la réglementation, les personnes peuvent demander l'accès, la rectification ou l'effacement de leurs données.<br>
+        Délégué à la protection des données : <a href="mailto:office@tagot.notaires.fr" style="color:inherit;">office@tagot.notaires.fr</a>.<br><br>
+        Réclamation possible auprès de la CNIL.
+      </div>
+      <div class="rgpd-check" id="wrapRgpd">
+        <input type="checkbox" id="cbRgpd" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+        <label class="rgpd-accept-bar" for="cbRgpd">
+          <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-ghost-outline" onclick="goSlide(2)">← Retour</button>
+        <button class="btn" id="btnSlide3" disabled onclick="goSlide(4)">SUIVANT →</button>
+      </div>
+    </div>
+
+    <!-- Slide 4 : LRE -->
+    <div class="slide" id="slide4" style="display:none">
+      <div class="rgpd-box">
+        <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
+        Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.
+      </div>
+      <div class="rgpd-check" id="wrapLre">
+        <input type="checkbox" id="cbLre" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
+        <label class="rgpd-accept-bar" for="cbLre">
+          <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
+          <span class="toggle"></span>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-ghost-outline" onclick="goSlide(3)">← Retour</button>
+        <button class="btn" id="btnAccueil" disabled onclick="validerAccueil()">COMMENCER</button>
+      </div>
+      <div class="err" id="eAccueil"></div>
+    </div>
+
   </div>
 </div>
+
+
 
 <!-- ÉCRAN 1 : Email -->
 <div id="sEmail" class="screen" style="display:none">
@@ -323,11 +393,36 @@ const SECTIONS = [
 
 
 // ── Accueil / OTP ─────────────────────────────────────────
-function checkRgpd() {
-  document.getElementById('btnAccueil').disabled =
-    !(document.getElementById('cbRgpd').checked && document.getElementById('cbLre').checked);
+function goSlide(n) {
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('slide'+i);
+    if (el) el.style.display = (i===n) ? 'flex' : 'none';
+  });
+  document.querySelectorAll('.dot').forEach((d,i) => {
+    d.classList.toggle('dot-active', i < n);
+  });
 }
+
+function selectClient(dejaClient) {
+  document.querySelectorAll('.client-btn').forEach(b => b.classList.remove('selected'));
+  const btn = dejaClient ? document.getElementById('btnDejaClient') : document.getElementById('btnNouveauClient');
+  if (btn) btn.classList.add('selected');
+  window._skipEtatcivil = dejaClient;
+  const b1 = document.getElementById('btnSlide1');
+  if (b1) b1.disabled = false;
+}
+
+function checkRgpd() {
+  const rgpd = document.getElementById('cbRgpd') ? document.getElementById('cbRgpd').checked : false;
+  const lre  = document.getElementById('cbLre')  ? document.getElementById('cbLre').checked  : false;
+  const b3 = document.getElementById('btnSlide3');
+  const bA = document.getElementById('btnAccueil');
+  if (b3) b3.disabled = !rgpd;
+  if (bA) bA.disabled = !(rgpd && lre);
+}
+let SKIP_ETATCIVIL = false;
 function validerAccueil() {
+  SKIP_ETATCIVIL = window._skipEtatcivil || false;
   document.getElementById('sAccueil').style.display = 'none';
   document.getElementById('sEmail').style.display = 'block';
 }
