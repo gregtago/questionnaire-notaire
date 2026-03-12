@@ -172,6 +172,7 @@ module.exports = async (req, res) => {
 </body></html>`;
 
   try {
+    // Email étude
     await transporter().sendMail({
       from: FROM,
       to: NOTAIRE,
@@ -180,8 +181,8 @@ module.exports = async (req, res) => {
       html: htmlContent
     });
 
-  // ── Email client — liste de pièces ──────────────────────────────────
-  if (email && pieces && pieces.length) {
+    // ── Email client — liste de pièces ──────────────────────────────────
+    if (email && pieces && pieces.length) {
     const nomDossier = data && data.acquereur ? [data.acquereur.prenoms, data.acquereur.nom].filter(Boolean).join(" ") || "Acquisition" : "Acquisition";
     const piecesHtml = pieces.map(s => `
       <tr><td colspan="2" style="padding:14px 0 4px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #eee;">${s.section}</td></tr>
@@ -207,8 +208,9 @@ module.exports = async (req, res) => {
 </body></html>`;
     try {
       await transporter().sendMail({ from: FROM, to: email, subject: `Acquisition — pièces à fournir`, html: clientHtml });
-    } catch(e) { console.error('Email client pieces:', e.message); }
-  }
+      } catch(e) { console.error('Email client pieces:', e.message); }
+    }
+
     return res.status(200).json({ ok: true });
   } catch(e) {
     console.error('Erreur email:', e.message);
