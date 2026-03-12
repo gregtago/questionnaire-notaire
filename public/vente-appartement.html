@@ -1962,6 +1962,7 @@ function buildPiecesList(D) {
   return sections;
 }
 
+let currentSection = 0;
 let _phase = 'dossier'; // 'etatcivil' | 'dossier'
 
 document.getElementById('btnSubmit').onclick = async () => {
