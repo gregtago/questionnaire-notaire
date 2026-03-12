@@ -116,5 +116,11 @@
         }
       ]
     }
+  ],
+  "routes": [
+    {
+      "src": "/etatcivil",
+      "dest": "/etatcivil.html"
+    }
   ]
 }
