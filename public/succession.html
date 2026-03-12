@@ -1907,6 +1907,7 @@ function showErr(msg) {
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+let currentSection = 0;
 let _phase = 'dossier'; // 'etatcivil' | 'dossier'
 
 document.getElementById('btnSubmit').onclick = async () => {
