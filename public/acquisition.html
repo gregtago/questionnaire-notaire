@@ -1702,6 +1702,15 @@ document.getElementById('btnSubmit').onclick = async () => {
       if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
       // Passer au formulaire dossier
       _phase = 'dossier';
+      // Pré-remplir D depuis persons[0] (état civil déjà saisi)
+      if (persons[0]) {
+        D.acquereur.nom = persons[0].NOM || '';
+        D.acquereur.prenoms = persons[0].PRENOMU || '';
+        if (persons[1]) {
+          D.acquereur2.nom = persons[1].NOM || '';
+          D.acquereur2.prenoms = persons[1].PRENOMU || '';
+        }
+      }
       document.getElementById('pageSub').textContent = 'Questionnaire';
       document.getElementById('progressLabel').textContent = '';
       document.getElementById('progressBar').style.width = '0%';
