@@ -144,7 +144,17 @@
     .client-label { font-size: 15px; font-weight: 400; color: #1a1a1a; display: block; line-height: 1.4; }
     .btn-ghost-outline { width: auto; padding: 12px 20px; background: #fff; color: #111; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; letter-spacing: .05em; cursor: pointer; white-space: nowrap; }
     .btn-ghost-outline:hover { background: #f5f5f5; }
-  </style>
+  
+    .client-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+    .client-btn { background: #fff; border: 2px solid #e0e0e0; border-radius: 6px; padding: 24px 20px; cursor: pointer; text-align: left; transition: border-color .15s, background .15s; }
+    .client-btn:hover { border-color: #999; }
+    .client-btn.selected { border-color: #111; background: #111; }
+    .client-btn.selected .client-label, .client-btn.selected .client-sub { color: #fff; }
+    .client-btn.selected .client-icon { color: #fff; border-color: rgba(255,255,255,.4); }
+    .client-icon { width: 32px; height: 32px; border: 2px solid #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-bottom: 12px; color: #bbb; }
+    .client-label { font-size: 15px; font-weight: 500; color: #111; margin-bottom: 6px; }
+    .client-sub { font-size: 12px; color: #888; line-height: 1.5; }
+    </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -157,11 +167,11 @@
     <a href="https://tagot.notaires.fr" target="_blank" class="site-link">tagot.notaires.fr ↗</a>
   </div>
   <div class="title-bar">
-  <h1 id="pageTitle">Succession</h1>
+    <h1 id="pageTitle">Succession</h1>
+    <div class="subtitle" id="pageSub"></div>
   </div>
 </div>
 
-<!-- ÉCRAN 0 : Accueil RGPD -->
 <div id="sAccueil" class="screen screen-wide">
   <div class="card card-slides">
     <div class="slide-dots" id="slideDots">
@@ -170,57 +180,40 @@
       <span class="dot"></span>
       <span class="dot"></span>
     </div>
-
-    <!-- Slide 1 : Déjà client ? -->
     <div class="slide" id="slide1">
-      <h2 style="font-size:20px;font-weight:400;margin-bottom:12px;color:#1a1a1a;">Bienvenue</h2>
-      <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:28px;">Avant de commencer, une question rapide.</p>
-      <div class="client-grid">
-        <button class="client-btn" id="btnDejaClient" onclick="selectClient(true)">
-          <span class="client-label">Je suis déjà client de l'étude</span>
-        </button>
-        <button class="client-btn" id="btnNouveauClient" onclick="selectClient(false)">
-          <span class="client-label">Je suis nouveau client</span>
-        </button>
-      </div>
-      <p style="font-size:11px;color:#aaa;line-height:1.6;margin-top:20px;margin-bottom:28px;">Si vous êtes déjà client, vos informations personnelles sont déjà enregistrées — vous n'aurez pas à les ressaisir.</p>
-      <button class="btn" id="btnSlide1" disabled onclick="goSlide(2)">SUIVANT →</button>
-    </div>
-
-    <!-- Slide 2 : Intro dossier -->
-    <div class="slide" id="slide2" style="display:none">
       <h2 style="font-size:20px;font-weight:400;margin-bottom:16px;color:#1a1a1a;">Préparation du règlement de la succession</h2>
       <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Afin de préparer le règlement de la succession dans les meilleures conditions, nous vous invitons à compléter ce questionnaire sécurisé.</p>
       <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Les informations recueillies permettront à l'étude de disposer des éléments nécessaires à l'identification des héritiers et à l'analyse de la situation patrimoniale.</p>
       <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:10px;">Le questionnaire peut être complété en quelques minutes depuis votre téléphone, votre tablette ou votre ordinateur.</p>
       <p style="font-size:13px;color:#555;line-height:1.8;margin-bottom:24px;">À l'issue du formulaire, nous vous indiquerons les documents utiles à la constitution du dossier.</p>
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-ghost-outline" onclick="goSlide(1)">← Retour</button>
-        <button class="btn" onclick="goSlide(3)">SUIVANT →</button>
+      <button class="btn" id="btnSlide1" onclick="goSlide(2)">SUIVANT &#8594;</button>
+    </div>
+    <div class="slide" id="slide2" style="display:none">
+      <h2 style="font-size:18px;font-weight:400;margin-bottom:20px;">Êtes-vous déjà client de l'étude ?</h2>
+      <div class="client-grid">
+        <button class="client-btn" id="btnDejaClient" onclick="selectClient(true)">
+          <div class="client-icon">&#10003;</div>
+          <div class="client-label">Je suis déjà client</div>
+          <div class="client-sub">Vos informations personnelles sont déjà enregistrées.</div>
+        </button>
+        <button class="client-btn" id="btnNouveauClient" onclick="selectClient(false)">
+          <div class="client-icon">+</div>
+          <div class="client-label">Je suis nouveau client</div>
+          <div class="client-sub">Nous allons recueillir vos informations personnelles.</div>
+        </button>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button class="btn btn-ghost-outline" onclick="goSlide(1)">&#8592; Retour</button>
+        <button class="btn" id="btnSlide2" disabled onclick="goSlide(3)">SUIVANT &#8594;</button>
       </div>
     </div>
-
-    <!-- Slide 3 : RGPD -->
     <div class="slide" id="slide3" style="display:none">
       <div class="rgpd-box">
         <strong>Protection des données personnelles</strong><br><br>
-        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes.
-        <br><br>
-        Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'Etat dont sont investis les notaires, officiers publics, conformément à l'ordonnance n° 45-2590 du 2 novembre 1945.
-        <br><br>
-        Ces données seront susceptibles d'être transférées aux destinataires suivants :
-        <ul style="margin:8px 0 8px 16px;padding:0;list-style:disc;">
-          <li>les administrations ou partenaires légalement habilités tels que la Direction Générale des Finances Publiques, ou, le cas échéant, le livre foncier, les instances notariales, les organismes du notariat, les fichiers centraux de la profession notariale (Fichier Central Des Dernières Volontés, Minutier Central Électronique des Notaires, registre du PACS, etc.),</li>
-          <li>les offices notariaux participant ou concourant à l'acte,</li>
-          <li>les établissements financiers concernés,</li>
-          <li>les organismes de conseils spécialisés pour la gestion des activités notariales,</li>
-          <li>le Conseil supérieur du notariat ou son délégataire, pour la production des statistiques permettant l'évaluation des biens immobiliers, en application du décret n° 2013-803 du 3 septembre 2013,</li>
-          <li>les organismes publics ou privés pour des opérations de vérification dans le cadre de la lutte contre le blanchiment des capitaux et le financement du terrorisme.</li>
-        </ul>
-        Les documents permettant d'établir les actes sont conservés 30 ans, l'acte authentique 75 ans (100 ans pour les mineurs).<br><br>
-        Conformément à la réglementation, les personnes peuvent demander l'accès, la rectification ou l'effacement de leurs données.<br>
-        Délégué à la protection des données : <a href="mailto:office@tagot.notaires.fr" style="color:inherit;">office@tagot.notaires.fr</a>.<br><br>
-        Réclamation possible auprès de la CNIL.
+        L'Office notarial traite des données personnelles concernant les personnes mentionnées aux présentes, pour l'accomplissement des activités notariales, notamment de formalités d'actes.<br><br>
+        Ce traitement est fondé sur le respect d'une obligation légale et l'exécution d'une mission relevant de l'exercice de l'autorité publique déléguée par l'Etat, conformément à l'ordonnance n° 45-2590 du 2 novembre 1945.<br><br>
+        Vos données peuvent être transmises à des administrations partenaires, instances notariales, établissements financiers, et organismes de vérification dans le cadre de la lutte contre le blanchiment.<br><br>
+        Les actes authentiques sont conservés 75 ans. Délégué protection des données : <a href="mailto:office@tagot.notaires.fr" style="color:inherit;">office@tagot.notaires.fr</a>. Réclamation : CNIL.
       </div>
       <div class="rgpd-check" id="wrapRgpd">
         <input type="checkbox" id="cbRgpd" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
@@ -229,17 +222,15 @@
           <span class="toggle"></span>
         </label>
       </div>
-      <div style="display:flex;gap:10px;margin-top:20px">
-        <button class="btn btn-ghost-outline" onclick="goSlide(2)">← Retour</button>
-        <button class="btn" id="btnSlide3" disabled onclick="goSlide(4)">SUIVANT →</button>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-ghost-outline" onclick="goSlide(2)">&#8592; Retour</button>
+        <button class="btn" id="btnSlide3" disabled onclick="goSlide(4)">SUIVANT &#8594;</button>
       </div>
     </div>
-
-    <!-- Slide 4 : LRE -->
     <div class="slide" id="slide4" style="display:none">
       <div class="rgpd-box">
         <strong>Consentement à la lettre recommandée électronique (LRE)</strong><br><br>
-        Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir, à l'adresse email que je vais renseigner, des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, notamment pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.
+        Conformément à l'article L.100 du Code des postes et des communications électroniques et au Règlement eIDAS, je consens à recevoir à l'adresse email que je vais renseigner des lettres recommandées électroniques ayant la même valeur juridique qu'un recommandé postal, pour la transmission de documents notariaux, convocations et notifications dans le cadre de mon dossier.
       </div>
       <div class="rgpd-check" id="wrapLre">
         <input type="checkbox" id="cbLre" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
@@ -248,19 +239,16 @@
           <span class="toggle"></span>
         </label>
       </div>
-      <div style="display:flex;gap:10px;margin-top:20px">
-        <button class="btn btn-ghost-outline" onclick="goSlide(3)">← Retour</button>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-ghost-outline" onclick="goSlide(3)">&#8592; Retour</button>
         <button class="btn" id="btnAccueil" disabled onclick="validerAccueil()">COMMENCER</button>
       </div>
       <div class="err" id="eAccueil"></div>
     </div>
-
   </div>
 </div>
 
-
-
-<!-- ÉCRAN 1 : Email -->
+<!-- ÉCRAN : Email OTP -->
 <div id="sEmail" class="screen" style="display:none">
   <div class="card">
     <h2>Vérification email</h2>
@@ -290,6 +278,8 @@
 </div>
 
 <!-- ÉCRAN 3 : Formulaire -->
+
+<!-- ÉCRAN : Formulaire -->
 <div id="sForm" style="display:none">
   <div class="form-wrap">
     <div class="progress-label" id="progressLabel"></div>
@@ -314,11 +304,780 @@
 
 <script>
 'use strict';
+let dejaClient = false;
+let SKIP_ETATCIVIL = false;
 
-// ── État global ───────────────────────────────────────────
+function goSlide(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('slide'+i);
+    if (el) el.style.display = (i===n) ? 'flex' : 'none';
+  }
+  document.querySelectorAll('.dot').forEach((d,i) => {
+    d.classList.toggle('dot-active', i < n);
+  });
+}
+
+function selectClient(isDejaClient) {
+  dejaClient = isDejaClient;
+  SKIP_ETATCIVIL = isDejaClient;
+  document.querySelectorAll('.client-btn').forEach(b => b.classList.remove('selected'));
+  const btn = isDejaClient
+    ? document.getElementById('btnDejaClient')
+    : document.getElementById('btnNouveauClient');
+  if (btn) btn.classList.add('selected');
+  const b2 = document.getElementById('btnSlide2');
+  if (b2) b2.disabled = false;
+}
+
+function checkRgpd() {
+  const rgpd = document.getElementById('cbRgpd') ? document.getElementById('cbRgpd').checked : false;
+  const lre  = document.getElementById('cbLre')  ? document.getElementById('cbLre').checked  : false;
+  const b3 = document.getElementById('btnSlide3');
+  const bA = document.getElementById('btnAccueil');
+  if (b3) b3.disabled = !rgpd;
+  if (bA) bA.disabled = !(rgpd && lre);
+}
+
+function validerAccueil() {
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+
+
+// ── État civil ─────────────────────────────────────────────
 let email0 = '';
 let otpToken = '';
-let currentSection = 0;
+let persons = [newPerson('personne')];
+let hasConj = false;
+let activeIdx = 0;
+
+function newPerson(role) {
+  return {
+    _role: role,       // 'personne' | 'conjoint'
+    TITRE: '', CODETITRE: '', ACCORD: '',
+    NOMU: '',          // nom d'usage
+    NOM: '',           // nom de naissance (si différent)
+    PRENOMU: '',       // prénom usuel
+    AUTPREN: '',       // autres prénoms (2e, 3e…)
+    PRENOM: '',        // tous prénoms = PRENOMU + AUTPREN (calculé)
+    DATNA: '',         // AAAA-MM-JJ (input date)
+    LVNARU: '',        // lieu naissance
+    CODERU: '',        // CP naissance
+    DEPTNA: '',
+    CPAYNA: 'FRANCE',
+    PROF: '',
+    NATION: 'Française',
+    ADR1: '', ADR2: '',
+    ADR3: '',          // CP domicile
+    ADR4: '',          // ville domicile
+    DEPTDO: '',
+    CPAYDO: 'FRANCE',  // pays domicile
+    TEL: '', EMAIL: '',
+    ADR1IMP: '', CPIMP: '', VILLEIMP: '', // centre des impôts
+    // Situation (personne principale seulement)
+    ETAT: 'C',
+    HISTORIQUE: 'N',
+    REGIME: '4',
+    DATMA: '',         // date mariage/PACS
+    CPVILMA: '',       // lieu mariage/PACS
+    LNCOMA: '',        // nom conjoint/ex/défunt
+    LPCOMA: '',        // prénoms conjoint/ex/défunt
+    DATDIV: '',
+    TRIBUNAL: '',
+  };
+}
+
+// ── Helpers ───────────────────────────────────────────────
+const DEPTS = {'01':'Ain','02':'Aisne','03':'Allier','04':'Alpes-de-Haute-Provence','05':'Hautes-Alpes','06':'Alpes-Maritimes','07':'Ardèche','08':'Ardennes','09':'Ariège','10':'Aube','11':'Aude','12':'Aveyron','13':'Bouches-du-Rhône','14':'Calvados','15':'Cantal','16':'Charente','17':'Charente-Maritime','18':'Cher','19':'Corrèze','20':'Corse','21':'Côte-d\'Or','22':'Côtes-d\'Armor','23':'Creuse','24':'Dordogne','25':'Doubs','26':'Drôme','27':'Eure','28':'Eure-et-Loir','29':'Finistère','30':'Gard','31':'Haute-Garonne','32':'Gers','33':'Gironde','34':'Hérault','35':'Ille-et-Vilaine','36':'Indre','37':'Indre-et-Loire','38':'Isère','39':'Jura','40':'Landes','41':'Loir-et-Cher','42':'Loire','43':'Haute-Loire','44':'Loire-Atlantique','45':'Loiret','46':'Lot','47':'Lot-et-Garonne','48':'Lozère','49':'Maine-et-Loire','50':'Manche','51':'Marne','52':'Haute-Marne','53':'Mayenne','54':'Meurthe-et-Moselle','55':'Meuse','56':'Morbihan','57':'Moselle','58':'Nièvre','59':'Nord','60':'Oise','61':'Orne','62':'Pas-de-Calais','63':'Puy-de-Dôme','64':'Pyrénées-Atlantiques','65':'Hautes-Pyrénées','66':'Pyrénées-Orientales','67':'Bas-Rhin','68':'Haut-Rhin','69':'Rhône','70':'Haute-Saône','71':'Saône-et-Loire','72':'Sarthe','73':'Savoie','74':'Haute-Savoie','75':'Paris','76':'Seine-Maritime','77':'Seine-et-Marne','78':'Yvelines','79':'Deux-Sèvres','80':'Somme','81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse','85':'Vendée','86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne','90':'Territoire de Belfort','91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne','95':'Val-d\'Oise','971':'Guadeloupe','972':'Martinique','973':'Guyane','974':'La Réunion','976':'Mayotte'};
+
+function dept(cp) {
+  if (!cp) return '';
+  const k3 = cp.substring(0,3);
+  const k2 = cp.substring(0,2);
+  return DEPTS[k3] || DEPTS[k2] || '';
+}
+
+function toInotDate(d) {
+  if (!d) return '';
+  const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? m[1]+m[2]+m[3] : '';
+}
+
+function x(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const SITS = { C:'Célibataire', M:'Marié(e)', D:'Divorcé(e)', V:'Veuf / Veuve', I:'En instance de divorce', P:'Pacsé(e)', S:'Séparé(e) de corps', K:'En concubinage' };
+
+// ── Rendu ─────────────────────────────────────────────────
+
+// ── OTP ──────────────────────────────────────────────────
+document.getElementById('btnSend').onclick = async () => {
+  const em = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!em.includes('@')) { err.textContent = 'Adresse invalide.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:em}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Erreur');
+    email0 = em;
+    persons[0].EMAIL = em;
+    otpToken = d.token || '';
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${em}. Vérifiez vos spams si besoin.`;
+    document.getElementById('iCode').focus();
+  } catch(e) { err.textContent = e.message; }
+  finally { btn.disabled=false; btn.textContent='ENVOYER LE CODE'; }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display='none';
+  document.getElementById('sEmail').style.display='block';
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length!==6) { err.textContent='Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnVerify');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Vérification…';
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code, token:otpToken}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Code incorrect');
+    document.getElementById('sCode').style.display='none';
+    document.getElementById('sForm').style.display='block';
+    document.getElementById('pageSub').style.display='none';
+    renderAll();
+  } catch(e) { err.textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='VALIDER'; }
+};
+
+// ── Formulaire état civil ─────────────────────────────────
+function renderAll() {
+  renderForms();
+}
+
+function renderTabs() {} // plus d'onglets
+
+function renderForms() {
+  const p0 = persons[0];
+  const p1 = hasConj ? persons.find(p => p._role === 'conjoint') : null;
+  document.getElementById('tabs').innerHTML = '';
+  document.getElementById('forms').innerHTML = buildPageHtml(p0, p1);
+  bindAll();
+}
+
+// ── Page unique ───────────────────────────────────────────
+// Situations qui déclenchent l'affichage d'une 2ème personne
+const SHOW_P2 = ['M','P','K']; // Marié, Pacsé, Concubin
+
+function buildPageHtml(p0, p1) {
+  const sit = p0.ETAT || 'C';
+  const showM = ['M','I','S'].includes(sit);
+  const showD = ['D','I'].includes(sit);
+  const showV = sit === 'V';
+  const showP = sit === 'P';
+  const showP2 = SHOW_P2.includes(sit);
+  const isFR = !p0.CPAYDO || p0.CPAYDO.toUpperCase() === 'FRANCE';
+  const conjIdx = p1 ? persons.indexOf(p1) : -1;
+
+  // Bloc identité complet (identité + contact)
+  const blocIdentite = (p, i) => `
+  <div class="sec" data-idx="${i}">
+    <div class="field">
+      <label>Civilité <span class="req">*</span></label>
+      <div class="btns">
+        ${['Monsieur','Madame','Mademoiselle'].map(c=>`<button type="button" class="choice${p.TITRE===c?' on':''}" data-f="TITRE" data-v="${c}">${c}</button>`).join('')}
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Nom de naissance <span class="req">*</span></label>
+        <input type="text" data-f="NOM" value="${x(p.NOM)}">
+      </div>
+      <div class="field">
+        <label>Nom d'usage <span class="opt">(si différent)</span></label>
+        <input type="text" data-f="NOMU" value="${x(p.NOMU)}">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Prénom usuel <span class="req">*</span></label>
+        <input type="text" data-f="PRENOMU" value="${x(p.PRENOMU)}">
+      </div>
+      <div class="field">
+        <label>Autres prénoms <span class="opt">(2e, 3e…)</span></label>
+        <input type="text" data-f="AUTPREN" value="${x(p.AUTPREN)}">
+      </div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Date de naissance <span class="req">*</span></label>
+        <input type="date" data-f="DATNA" value="${x(p.DATNA)}">
+      </div>
+      <div class="field">
+        <label>Lieu de naissance <span class="req">*</span></label>
+        <input type="text" data-f="LVNARU" value="${x(p.LVNARU)}">
+      </div>
+      <div class="field">
+        <label>Code postal de naissance <span class="req">*</span></label>
+        <input type="text" data-f="CODERU" value="${x(p.CODERU)}" maxlength="5" inputmode="numeric">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Profession</label>
+        <input type="text" data-f="PROF" value="${x(p.PROF)}">
+      </div>
+      <div class="field">
+        <label>Nationalité</label>
+        <input type="text" data-f="NATION" value="${x(p.NATION)}">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Téléphone <span class="req">*</span></label>
+        <input type="tel" data-f="TEL" value="${x(p.TEL)}" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label>Email${i===0?' <span class="req">*</span>':''}</label>
+        <input type="email" data-f="EMAIL" value="${x(p.EMAIL)}"${i===0&&email0?' class="ro" readonly':''} autocomplete="email">
+      </div>
+    </div>
+  </div>`;
+
+  // Label de la 2ème personne selon situation
+  const labelP2 = sit==='M' ? 'Conjoint(e)' : sit==='P' ? 'Partenaire de PACS' : 'Concubin(e)';
+
+  return `
+  <!-- PERSONNE PRINCIPALE -->
+  ${!SKIP_ETATCIVIL ? `
+  <div class="person-block">
+    <div class="person-header">
+      <div class="person-header-title">Votre état civil</div>
+    </div>
+    ${blocIdentite(p0, 0)}
+  </div>` : ''}
+
+  <!-- SITUATION MATRIMONIALE -->
+  <div class="sec" data-idx="0">
+    <div class="sec-title">Situation matrimoniale</div>
+    <div class="field">
+      <label>Situation <span class="req">*</span></label>
+      <div class="btns">
+        ${Object.entries(SITS).map(([k,v])=>`<button type="button" class="choice${sit===k?' on':''}" data-f="ETAT" data-v="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
+
+    <!-- Marié / En instance / Séparé -->
+    <div class="cond${showM?' show':''}">
+      <div class="sec-title">Détails du mariage</div>
+      <div class="row2">
+        <div class="field">
+          <label>Date du mariage</label>
+          <input type="date" data-f="DATMA" value="${x(p0.DATMA)}">
+        </div>
+        <div class="field">
+          <label>Lieu (CP + commune)</label>
+          <input type="text" data-f="CPVILMA" value="${x(p0.CPVILMA)}">
+        </div>
+      </div>
+      ${!showP2 ? `<div class="row2">
+        <div class="field">
+          <label>Nom du conjoint</label>
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
+        </div>
+        <div class="field">
+          <label>Prénoms du conjoint</label>
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
+        </div>
+      </div>` : ''}
+      <div class="field">
+        <label>Régime matrimonial</label>
+        <select data-f="REGIME">
+          <option value="4"${p0.REGIME==='4'?' selected':''}>Sans contrat — communauté légale (après 01/02/1966)</option>
+          <option value="33"${p0.REGIME==='33'?' selected':''}>Séparation de biens</option>
+          <option value="32"${p0.REGIME==='32'?' selected':''}>Communauté universelle</option>
+          <option value="30"${p0.REGIME==='30'?' selected':''}>Communauté réduite aux acquêts (contrat)</option>
+          <option value="35"${p0.REGIME==='35'?' selected':''}>Participation aux acquêts</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Divorcé / En instance -->
+    <div class="cond${showD?' show':''}">
+      <div class="sec-title">Détails du divorce</div>
+      <div class="row2">
+        <div class="field">
+          <label>Date du divorce</label>
+          <input type="date" data-f="DATDIV" value="${x(p0.DATDIV)}">
+        </div>
+        <div class="field">
+          <label>Tribunal</label>
+          <input type="text" data-f="TRIBUNAL" value="${x(p0.TRIBUNAL)}">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Nom de l'ex-conjoint</label>
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
+        </div>
+        <div class="field">
+          <label>Prénoms de l'ex-conjoint</label>
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Veuf / Veuve -->
+    <div class="cond${showV?' show':''}">
+      <div class="sec-title">Conjoint décédé</div>
+      <div class="row2">
+        <div class="field">
+          <label>Nom</label>
+          <input type="text" data-f="LNCOMA" value="${x(p0.LNCOMA)}">
+        </div>
+        <div class="field">
+          <label>Prénoms</label>
+          <input type="text" data-f="LPCOMA" value="${x(p0.LPCOMA)}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Pacsé -->
+    <div class="cond${showP?' show':''}">
+      <div class="sec-title">Détails du PACS</div>
+      <div class="row2">
+        <div class="field">
+          <label>Date du PACS</label>
+          <input type="date" data-f="DATMA" value="${x(p0.DATMA)}">
+        </div>
+        <div class="field">
+          <label>Lieu (CP + commune)</label>
+          <input type="text" data-f="CPVILMA" value="${x(p0.CPVILMA)}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2ÈME PERSONNE — apparaît si M / P / concubin -->
+  ${showP2 && p1 ? `
+  <div class="person-block conjoint-block">
+    <div class="person-header">
+      <div class="person-header-title">${labelP2}</div>
+    </div>
+    ${blocIdentite(p1, conjIdx)}
+  </div>
+  ` : ''}
+
+  <!-- ADRESSE COMMUNE -->
+  <div class="sec" data-idx="0">
+    <div class="sec-title">Adresse domicile${showP2 && p1 ? ' — commune aux deux' : ''}</div>
+    <div class="field">
+      <label>Adresse (numéro et voie) <span class="req">*</span></label>
+      <input type="text" data-f="ADR1" value="${x(p0.ADR1)}" autocomplete="street-address">
+    </div>
+    <div class="field">
+      <label>Complément d'adresse</label>
+      <input type="text" data-f="ADR2" value="${x(p0.ADR2)}">
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Code postal${isFR?' <span class="req">*</span>':''}</label>
+        <input type="text" data-f="ADR3" value="${x(p0.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville <span class="req">*</span></label>
+        <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
+      </div>
+      <div class="field">
+        <label>Pays</label>
+        <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTRE DES IMPÔTS -->
+  <div class="sec" data-idx="0">
+    <div class="sec-title">Adresse du centre des impôts dont vous dépendez</div>
+    <div class="field">
+      <label>Adresse</label>
+      <input type="text" data-f="ADR1IMP" value="${x(p0.ADR1IMP)}">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Code postal</label>
+        <input type="text" data-f="CPIMP" value="${x(p0.CPIMP)}" maxlength="5" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville</label>
+        <input type="text" data-f="VILLEIMP" value="${x(p0.VILLEIMP)}">
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Binding ───────────────────────────────────────────────
+function bindAll() {
+  document.querySelectorAll('[data-f]').forEach(el => {
+    if (el.tagName === 'BUTTON') return;
+    const sec = el.closest('[data-idx]');
+    if (!sec) return;
+    const i = +sec.dataset.idx;
+    const update = () => {
+      const f = el.dataset.f;
+      let v = el.value;
+      if (['NOMU','NOM','LVNARU','ADR4'].includes(f)) { v = v.toUpperCase(); el.value = v; }
+      if (['PRENOMU','AUTPREN'].includes(f)) {
+        // Majuscule après début, espace, tiret, apostrophe — et après tout caractère non-lettre
+        v = v.replace(/./gu, (c, idx, str) => {
+          if (idx === 0) return c.toUpperCase();
+          const prev = str[idx - 1];
+          const isSep = /[\s\-']/u.test(prev);
+          return isSep ? c.toUpperCase() : c.toLowerCase();
+        });
+        el.value = v;
+      }
+      persons[i][f] = v;
+      // Calculs dérivés
+      if (f === 'ADR3') persons[i].DEPTDO = dept(v);
+      if (f === 'CODERU') persons[i].DEPTNA = dept(v);
+      if (f === 'PRENOMU' || f === 'AUTPREN') {
+        const pu = persons[i].PRENOMU || '';
+        const au = persons[i].AUTPREN || '';
+        persons[i].PRENOM = (pu + (au ? ' ' + au : '')).trim();
+      }
+      // Synchroniser l'adresse vers le conjoint
+      if (i === 0 && ['ADR1','ADR2','ADR3','ADR4','CPAYDO','DEPTDO'].includes(f) && hasConj) {
+        const conj = persons.find(p => p._role === 'conjoint');
+        if (conj) conj[f] = v;
+      }
+    };
+    el.addEventListener('input', update);
+    el.addEventListener('change', update);
+  });
+
+  document.querySelectorAll('button.choice').forEach(btn => {
+    const sec = btn.closest('[data-idx]');
+    if (!sec) return;
+    const i = +sec.dataset.idx;
+    btn.onclick = () => {
+      const f = btn.dataset.f;
+      const v = btn.dataset.v;
+      persons[i][f] = v;
+      if (f === 'TITRE') {
+        persons[i].CODETITRE = v==='Monsieur'?'M.':v==='Madame'?'MME':'MELLE';
+        persons[i].ACCORD = v==='Monsieur'?'M':'F';
+      }
+      if (f === 'ETAT') {
+        // HistoriqueMarital = uniquement pour remariage (D/V/I/S = union passée à rappeler)
+        persons[i].HISTORIQUE = ['D','V','I','S'].includes(v) ? 'O' : 'N';
+        // Créer ou supprimer la 2ème personne selon la situation
+        const needsP2 = SHOW_P2.includes(v);
+        if (needsP2 && !hasConj) {
+          hasConj = true;
+          const p0 = persons[0];
+          const c = newPerson('conjoint');
+          c.ADR1 = p0.ADR1; c.ADR2 = p0.ADR2; c.ADR3 = p0.ADR3; c.ADR4 = p0.ADR4;
+          c.DEPTDO = p0.DEPTDO; c.CPAYDO = p0.CPAYDO;
+          persons.push(c);
+        } else if (!needsP2 && hasConj) {
+          hasConj = false;
+          persons = persons.filter(p => p._role !== 'conjoint');
+        }
+      }
+      renderForms();
+    };
+  });
+}
+
+// ── Conjoint ──────────────────────────────────────────────
+function removeConjoint() {
+  // Repasser la situation en Célibataire si on supprime manuellement
+  persons[0].ETAT = 'C';
+  persons[0].HISTORIQUE = 'N';
+  hasConj = false;
+  persons = persons.filter(p => p._role !== 'conjoint');
+  renderAll();
+}
+
+// ── XML ───────────────────────────────────────────────────
+function vr(key, val) {
+  return `    <Var key="${key}" name="${key}"><Value>${x(val||'')}</Value></Var>`;
+}
+
+function buildXml() {
+  // Numéros iNot : personne principale = 10000001, conjoint = 10000002
+  const numOf = (idx) => String(10000001 + idx);
+  const conjoint = persons.find(p => p._role === 'conjoint');
+  const conjIdx  = conjoint ? persons.indexOf(conjoint) : -1;
+
+  const xmlPersons = persons.map((p, i) => {
+    const num = numOf(i);
+    const isMain = p._role !== 'conjoint';
+    const mainSit = persons[0].ETAT || 'C';
+    const lienActif = ['M','I','S','P'].includes(mainSit);
+
+    // ETAT : M sur les deux fiches si couple marié
+    const sit = isMain ? (p.ETAT || 'C') : mainSit;
+    const showM = ['M','I','S'].includes(sit);
+    const showD = ['D','I'].includes(isMain ? sit : mainSit);
+
+    // HistoriqueMarital : UNIQUEMENT sur la fiche principale (évite fiche fantôme)
+    // Fiche conjoint : ETAT=M, HISTORIQUE=N, HistoriqueMarital vide
+    const hasH = isMain && p.HISTORIQUE === 'O';
+    const prenomComplet = ((p.PRENOMU||'') + (p.AUTPREN ? ' '+p.AUTPREN : '')).trim();
+    const cp = p.ADR3 || '';
+
+    // CONJ : vide (crée une fiche fantôme dans iNot)
+    const conjNum = '';
+
+    // LNCOMA/LPCOMA : nom/prénom du conjoint (uniquement sur fiche principale)
+    let lnco = '', lpco = '', datEvt = '', lieuEvt = '';
+    if (hasH) {
+      lnco = conjoint ? (conjoint.NOM||conjoint.NOMU||'').toUpperCase() : (p.LNCOMA||'').toUpperCase();
+      lpco = conjoint ? (conjoint.PRENOMU||'').trim() : (p.LPCOMA||'');
+      datEvt = showD ? toInotDate(p.DATDIV) : toInotDate(p.DATMA);
+      lieuEvt = showD ? (p.TRIBUNAL||'') : (p.CPVILMA||'');
+    }
+
+    // HistoriqueMarital : plein sur principale, VIDE sur conjoint
+    let histXml = '    <HistoriqueMarital />';
+    if (hasH) {
+      const cotyma = showD ? 'D' : sit;
+      histXml = `    <HistoriqueMarital>
+      <Evenement>
+        ${vr('COTYMA', cotyma)}
+        ${vr('DAMAMA', datEvt)}
+        ${vr('LVT1MA', lieuEvt)}
+        ${vr('LNCOMA', lnco)}
+        ${vr('LPCOMA', lpco)}
+        ${vr('COCRMA', '')}
+      </Evenement>
+    </HistoriqueMarital>`;
+    }
+
+    return `  <Person info="">
+${vr('NUMERO', num)}
+${vr('TYPE', 'PP')}
+${vr('ADR1', p.ADR1||'')}
+${vr('ADR2', p.ADR2||'')}
+${vr('ADR3', cp)}
+${vr('ADR4', p.ADR4||'')}
+${vr('RCS', '')}
+${vr('VILRCS', '')}
+${vr('CPRCS', '')}
+${vr('CPAYRCS', '')}
+${vr('NUMMB', '')}
+${vr('IDENMB', '')}
+${vr('ACCORD', p.ACCORD)}
+${vr('ADR1MB', '')}
+${vr('ADR2MB', '')}
+${vr('CPMB', '')}
+${vr('VILLEMB', '')}
+${vr('PRESENCE', '')}
+${vr('INTCONJ', '')}
+${vr('PRECONJ', '')}
+${vr('JODATE', '')}
+${vr('CPVILMA', isMain ? (p.CPVILMA||'') : '')}
+${vr('NOTMA', '')}
+${vr('HISTORIQUE', hasH ? 'O' : 'N')}
+${vr('INTCONJPURIEL', '')}
+${vr('CODCRU', '')}
+${vr('LVDCRU', '')}
+${vr('CPSTAT', '')}
+${vr('PREFDAT', '')}
+${vr('DEPTDO', p.DEPTDO || dept(cp))}
+${vr('CPAYDO', p.CPAYDO || 'FRANCE')}
+${vr('CONJ', conjNum)}
+${vr('ETAT', sit)}
+${vr('CODETITRE', p.CODETITRE)}
+${vr('NOMU', p.NOMU || p.NOM)}
+${vr('PRENOMU', (p.PRENOMU||'').trim())}
+${vr('PRENOM', prenomComplet)}
+${vr('PROF', p.PROF)}
+${vr('DATNA', toInotDate(p.DATNA))}
+${vr('DEPTNA', p.DEPTNA || dept(p.CODERU))}
+${vr('CPAYNA', p.CPAYNA || 'FRANCE')}
+${vr('DEPMOR', '')}
+${vr('NATION', p.NATION)}
+${vr('INCAPABLE', '')}
+${vr('TITRE', p.TITRE)}
+${vr('DATMOR', '')}
+${vr('DATMA', showM && isMain ? toInotDate(p.DATMA) : '')}
+${vr('CPAYMA', showM && isMain ? 'FR' : '')}
+${vr('ADR1IMP', p.ADR1IMP)}
+${vr('ADR2IMP', '')}
+${vr('CPIMP', p.CPIMP)}
+${vr('VILLEIMP', p.VILLEIMP)}
+${vr('CODERU', p.CODERU)}
+${vr('LVNARU', p.LVNARU)}
+${vr('NOM', p.NOM)}
+${vr('REGIME', showM && isMain ? (p.REGIME||'4') : '')}
+${vr('DATCONTR', '')}
+${vr('DATAN', '')}
+${vr('DATDECL', '')}
+${vr('DATHOM', '')}
+${vr('TGIME', '')}
+${vr('REGPRE', '')}
+${vr('LIEME', '')}
+${vr('NOTME', '')}
+${vr('NOPME', '')}
+${histXml}
+  </Person>`;
+  });
+
+  return `<?xml version="1.0" encoding="utf-8"?>\n<iNova><iNot><Customer><Folder>\n${xmlPersons.join('\n')}\n</Folder></Customer></iNot></iNova>`;
+}
+
+// ── OTP ───────────────────────────────────────────────────
+document.getElementById('iEmail').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSend').click(); });
+document.getElementById('iCode').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnVerify').click(); });
+
+document.getElementById('btnSend').onclick = async () => {
+  const em = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!em.includes('@')) { err.textContent = 'Adresse invalide.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:em}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Erreur');
+    email0 = em;
+    persons[0].EMAIL = em;
+    otpToken = d.token || '';
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${em}. Vérifiez vos spams si besoin.`;
+    document.getElementById('iCode').focus();
+  } catch(e) { err.textContent = e.message; }
+  finally { btn.disabled=false; btn.textContent='ENVOYER LE CODE'; }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display='none';
+  document.getElementById('sEmail').style.display='block';
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length!==6) { err.textContent='Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnVerify');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Vérification…';
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code, token:otpToken}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Code incorrect');
+    document.getElementById('sCode').style.display='none';
+    document.getElementById('sForm').style.display='block';
+    document.getElementById('pageSub').style.display='none';
+    renderAll();
+  } catch(e) { err.textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='VALIDER'; }
+};
+
+// ── Soumission état civil (→ dossier) ────────────────────
+function buildPiecesListEC(persons) {
+  const p = persons[0];
+  const sit = p.ETAT || 'C';
+  const sections = [];
+  sections.push({ section: "Pour chaque personne", pieces: [
+    "Copie de la pièce d'identité en cours de validité (CNI ou passeport)",
+    "Justificatif de domicile récent", "RIB", "Livret de famille",
+  ]});
+  if (sit === 'M') {
+    const ps = ["Acte de mariage (moins de 3 mois si possible)"];
+    if (p.REGIME && p.REGIME !== '4' && p.REGIME !== '30') ps.push("Contrat de mariage");
+    sections.push({ section: "Mariage", pieces: ps });
+  }
+  if (sit === 'P') sections.push({ section: "PACS", pieces: ["Convention de PACS", "Récépissé d'enregistrement du PACS"] });
+  if (sit === 'D' || sit === 'I') sections.push({ section: "Divorce", pieces: ["Jugement de divorce ou attestation de divorce"] });
+  if (sit === 'V') sections.push({ section: "Veuvage", pieces: ["Acte de décès du conjoint"] });
+  if (sit === 'S') sections.push({ section: "Séparation de corps", pieces: ["Jugement de séparation de corps"] });
+  if (p.NATION && p.NATION.toLowerCase() !== 'française') sections.push({ section: "Nationalité étrangère", pieces: ["Titre de séjour en cours de validité"] });
+  return sections;
+}
+
+// Appelé après validation OTP
+function showEtatCivil() {
+  document.getElementById('pageSub').textContent = 'État civil';
+  renderForms();
+  const submitSec = document.getElementById('submitSec');
+  if (submitSec) {
+    submitSec.style.display = 'block';
+    document.getElementById('btnSubmit').textContent = 'Continuer →';
+  }
+}
+
+
+document.getElementById('btnSubmit').onclick = async () => {
+  const ferr = document.getElementById('ferr');
+  ferr.style.display = 'none';
+
+  if (!SKIP_ETATCIVIL) {
+    // Validation état civil
+    for (let i=0; i<persons.length; i++) {
+      const p = persons[i];
+      const n = p._role==='conjoint' ? '2ème personne' : 'Vous';
+      if (!p.TITRE)   return showErr(`${n} : civilité obligatoire.`, i);
+      if (!p.NOM)     return showErr(`${n} : nom de naissance obligatoire.`, i);
+      if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
+      if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
+      if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
+      if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+      if (p._role !== 'conjoint') {
+        if (!p.ADR1 || !p.ADR4) return showErr(`Adresse incomplète.`, i);
+        if (!p.TEL) return showErr(`Téléphone obligatoire.`, i);
+        if (i===0 && !p.EMAIL) return showErr(`Email obligatoire.`, i);
+      }
+    }
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+    try {
+      const xml = buildXml();
+      const r = await fetch('/api/soumettre', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', pieces: buildPiecesListEC(persons) })
+      });
+      if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
+      // Lancer le formulaire dossier
+      document.getElementById('sForm').innerHTML = '<div class="form-wrap"></div>';
+      document.getElementById('pageSub').textContent = 'Questionnaire';
+      renderSection(0);
+      window.scrollTo(0,0);
+    } catch(e) {
+      ferr.textContent = e.message;
+      ferr.style.display = 'block';
+      document.getElementById('btnSubmit').disabled = false;
+      document.getElementById('btnSubmit').textContent = 'Continuer →';
+    }
+  } else {
+    // Déjà client : aller directement au formulaire dossier
+    renderSection(0);
+    window.scrollTo(0,0);
+  }
+};
+
+
+// ── Formulaire dossier ────────────────────────────────────
+
+// ── État global ───────────────────────────────────────────
 
 // Données du formulaire
 const D = {
@@ -384,41 +1143,6 @@ const SECTIONS = [
 
 
 // ── Accueil ───────────────────────────────────────────────
-function goSlide(n) {
-  [1,2,3,4].forEach(i => {
-    const el = document.getElementById('slide'+i);
-    if (el) el.style.display = (i===n) ? 'flex' : 'none';
-  });
-  document.querySelectorAll('.dot').forEach((d,i) => {
-    d.classList.toggle('dot-active', i < n);
-  });
-}
-
-function selectClient(dejaClient) {
-  document.querySelectorAll('.client-btn').forEach(b => b.classList.remove('selected'));
-  const btn = dejaClient ? document.getElementById('btnDejaClient') : document.getElementById('btnNouveauClient');
-  if (btn) btn.classList.add('selected');
-  window._skipEtatcivil = dejaClient;
-  const b1 = document.getElementById('btnSlide1');
-  if (b1) b1.disabled = false;
-}
-
-function checkRgpd() {
-  const rgpd = document.getElementById('cbRgpd') ? document.getElementById('cbRgpd').checked : false;
-  const lre  = document.getElementById('cbLre')  ? document.getElementById('cbLre').checked  : false;
-  const b3 = document.getElementById('btnSlide3');
-  const bA = document.getElementById('btnAccueil');
-  if (b3) b3.disabled = !rgpd;
-  if (bA) bA.disabled = !(rgpd && lre);
-}
-
-let SKIP_ETATCIVIL = false;
-function validerAccueil() {
-  SKIP_ETATCIVIL = window._skipEtatcivil || false;
-  document.getElementById('sAccueil').style.display = 'none';
-  document.getElementById('sEmail').style.display = 'block';
-}
-
 // ── OTP ───────────────────────────────────────────────────
 document.getElementById('btnSend').onclick = async () => {
   const email = document.getElementById('iEmail').value.trim();
@@ -1393,6 +2117,7 @@ function buildPiecesList(D) {
     btn.innerHTML = 'Envoyer mes réponses';
   }
 };
+
 </script>
 </body>
 </html>
