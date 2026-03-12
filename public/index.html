@@ -1029,24 +1029,41 @@ document.getElementById('btnSubmit').onclick = async () => {
       body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', pieces: buildPiecesList(persons) })
     });
     if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
-    // Construire la liste de pièces
-    const piecesSections = buildPiecesList(persons);
-    const piecesHtml = piecesSections.map(s => `
-      <div class="pieces-section">
-        <div class="ps-title">${s.section}</div>
-        <ul>${s.pieces.map(p => `<li>${p}</li>`).join("")}</ul>
-      </div>`).join("");
-
-    document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
-      <div class="icon">✓</div>
-      <h2>Merci, votre questionnaire a bien été transmis.</h2>
-      <p>Votre notaire a reçu vos informations et reviendra vers vous prochainement.</p>
-      <div class="pieces-wrap">
-        <h3>Pièces à nous faire parvenir</h3>
-        ${piecesHtml}
-        <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}. Merci d'adresser vos pièces à <strong>office@tagot.notaires.fr</strong></div>
-      </div>
-    </div></div>`;
+    // État civil soumis → rediriger vers le questionnaire dossier
+    const dossierUrls = {
+      'achat':             '/acquisition',
+      'vente-maison':      '/vente-maison',
+      'vente-appartement': '/vente-appartement',
+      'divorce':           '/divorce',
+      'succession':        '/succession'
+    };
+    const dossierUrl = dossierUrls[typeDossier];
+    if (dossierUrl) {
+      document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+        <div class="icon">✓</div>
+        <h2>Vos informations ont bien été transmises.</h2>
+        <p>Nous allons maintenant vous poser quelques questions sur votre dossier.</p>
+        <a href="${dossierUrl}?etatcivil=0" class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:24px;">CONTINUER VERS LE QUESTIONNAIRE →</a>
+      </div></div>`;
+    } else {
+      // Cas état civil seul (pas de dossier associé) : afficher récap normal
+      const piecesSections = buildPiecesList(persons);
+      const piecesHtml = piecesSections.map(s => `
+        <div class="pieces-section">
+          <div class="ps-title">${s.section}</div>
+          <ul>${s.pieces.map(p => `<li>${p}</li>`).join("")}</ul>
+        </div>`).join("");
+      document.getElementById('sForm').innerHTML = `<div class="form-wrap"><div class="confirm">
+        <div class="icon">✓</div>
+        <h2>Merci, votre questionnaire a bien été transmis.</h2>
+        <p>Votre notaire a reçu vos informations et reviendra vers vous prochainement.</p>
+        <div class="pieces-wrap">
+          <h3>Pièces à nous faire parvenir</h3>
+          ${piecesHtml}
+          <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}. Merci d'adresser vos pièces à <strong>office@tagot.notaires.fr</strong></div>
+        </div>
+      </div></div>`;
+    }
   } catch(e) {
     ferr.textContent = e.message;
     ferr.style.display = 'block';
