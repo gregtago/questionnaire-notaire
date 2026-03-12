@@ -1176,7 +1176,6 @@ function buildPiecesList(D) {
 
 document.getElementById('btnSubmit').onclick = async () => {
   document.getElementById('ferr').style.display = 'none';
-  if (!D.declarant.nom || !D.declarant.prenom) return showErr('Veuillez renseigner vos nom et prénom.');
   if (!D.epoux1.nom || !D.epoux1.prenoms) return showErr('Nom et prénoms de l\'Époux 1 obligatoires.');
   if (!D.epoux2.nom || !D.epoux2.prenoms) return showErr('Nom et prénoms de l\'Époux 2 obligatoires.');
 
