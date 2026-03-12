@@ -964,37 +964,6 @@ document.getElementById('btnResend').onclick = () => {
   document.getElementById('sEmail').style.display='block';
 };
 
-document.getElementById('btnVerify').onclick = async () => {
-  const code = document.getElementById('iCode').value.trim();
-  const err = document.getElementById('eCode');
-  if (code.length!==6) { err.textContent='Code à 6 chiffres requis.'; return; }
-  err.textContent = '';
-  const btn = document.getElementById('btnVerify');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Vérification…';
-  try {
-    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code, token:otpToken}) });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error||'Code incorrect');
-    document.getElementById('sCode').style.display='none';
-    document.getElementById('sEmail').style.display='none';
-    if (SKIP_ETATCIVIL) {
-      document.getElementById('sForm').style.display='block';
-      renderSection(0);
-    } else {
-      try {
-        showEtatCivil();
-      } catch(ecErr) {
-        // Afficher l'erreur directement sur la page pour diagnostic
-        document.body.insertAdjacentHTML('beforeend',
-          '<div style="position:fixed;top:0;left:0;right:0;background:red;color:#fff;padding:16px;z-index:9999;font-family:monospace;font-size:12px">'
-          + 'ERREUR showEtatCivil: ' + ecErr.message + '<br>' + (ecErr.stack||'').substring(0,400)
-          + '</div>');
-      }
-    }
-  } catch(e) { err.textContent=e.message; }
-  finally { btn.disabled=false; btn.textContent='VALIDER'; }
-};
 
 // ── Soumission état civil (→ dossier) ────────────────────
 function buildPiecesListEC(persons) {
@@ -1175,23 +1144,6 @@ document.getElementById('btnSend').onclick = async () => {
     document.getElementById('otpMsg').textContent = `Code envoyé à ${email}.`;
   } catch(e) { err.textContent = e.message; }
   finally { btn.disabled = false; btn.textContent = 'ENVOYER LE CODE'; }
-};
-document.getElementById('btnVerify').onclick = async () => {
-  const code = document.getElementById('iCode').value.trim();
-  const err = document.getElementById('eCode');
-  if (code.length !== 6) { err.textContent = 'Code à 6 chiffres requis.'; return; }
-  err.textContent = '';
-  document.getElementById('btnVerify').disabled = true;
-  try {
-    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email0, code, token: otpToken }) });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Code incorrect');
-    document.getElementById('sCode').style.display = 'none';
-    document.getElementById('sForm').style.display = 'block';
-    const _ec = new URLSearchParams(window.location.search).get('etatcivil');
-    renderSection(_ec === '0' ? 1 : 0);
-  } catch(e) { err.textContent = e.message; }
-  finally { document.getElementById('btnVerify').disabled = false; }
 };
 document.getElementById('btnResend').onclick = () => {
   document.getElementById('sCode').style.display = 'none';
