@@ -1702,6 +1702,8 @@ document.getElementById('btnSubmit').onclick = async () => {
       if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
       // Passer au formulaire dossier
       _phase = 'dossier';
+      btn.disabled = false;
+      btn.textContent = 'Envoyer mes réponses';
       // Pré-remplir D depuis persons[0] (état civil déjà saisi)
       if (persons[0]) {
         D.acquereur.nom = persons[0].NOM || '';
