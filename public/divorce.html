@@ -436,9 +436,12 @@ document.getElementById('btnVerify').onclick = async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error||'Code incorrect');
     document.getElementById('sCode').style.display='none';
-    document.getElementById('sForm').style.display='block';
-    document.getElementById('pageSub').style.display='none';
-    renderAll();
+    if (SKIP_ETATCIVIL) {
+      document.getElementById('sForm').style.display='block';
+      renderSection(0);
+    } else {
+      showEtatCivil();
+    }
   } catch(e) { err.textContent=e.message; }
   finally { btn.disabled=false; btn.textContent='VALIDER'; }
 };
@@ -966,9 +969,12 @@ document.getElementById('btnVerify').onclick = async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error||'Code incorrect');
     document.getElementById('sCode').style.display='none';
-    document.getElementById('sForm').style.display='block';
-    document.getElementById('pageSub').style.display='none';
-    renderAll();
+    if (SKIP_ETATCIVIL) {
+      document.getElementById('sForm').style.display='block';
+      renderSection(0);
+    } else {
+      showEtatCivil();
+    }
   } catch(e) { err.textContent=e.message; }
   finally { btn.disabled=false; btn.textContent='VALIDER'; }
 };
