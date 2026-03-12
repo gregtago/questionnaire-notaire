@@ -437,6 +437,7 @@ document.getElementById('btnVerify').onclick = async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error||'Code incorrect');
     document.getElementById('sCode').style.display='none';
+    document.getElementById('sEmail').style.display='none';
     if (SKIP_ETATCIVIL) {
       document.getElementById('sForm').style.display='block';
       renderSection(0);
@@ -970,6 +971,7 @@ document.getElementById('btnVerify').onclick = async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error||'Code incorrect');
     document.getElementById('sCode').style.display='none';
+    document.getElementById('sEmail').style.display='none';
     if (SKIP_ETATCIVIL) {
       document.getElementById('sForm').style.display='block';
       renderSection(0);
