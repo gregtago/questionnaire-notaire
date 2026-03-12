@@ -1005,6 +1005,7 @@ function buildPiecesListEC(persons) {
 // Appelé après validation OTP
 function showEtatCivil() {
   document.getElementById('pageSub').textContent = 'État civil';
+  document.getElementById('sAccueil').style.display = 'none';
   const sForm = document.getElementById('sForm');
   sForm.style.display = 'block';
   // Remplacer le contenu par les conteneurs état civil
