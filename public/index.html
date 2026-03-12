@@ -344,8 +344,9 @@ function selectDossier(btn) {
 
 
 function goSlide(n) {
-  [1,2,3].forEach(i => {
-    document.getElementById('slide'+i).style.display = (i===n) ? 'flex' : 'none';
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('slide'+i);
+    if (el) el.style.display = (i===n) ? 'flex' : 'none';
   });
   // Mettre à jour les dots
   document.querySelectorAll('.dot').forEach((d,i) => {
