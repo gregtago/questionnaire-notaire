@@ -1720,7 +1720,8 @@ document.getElementById('btnSubmit').onclick = async () => {
       document.getElementById('formNav').innerHTML = '';
       document.getElementById('submitSec').style.display = 'none';
       document.getElementById('btnSubmit').textContent = 'Envoyer mes réponses';
-      renderSection(0);
+      // Nouveau client : sauter l'étape Identification (déjà saisie dans l'état civil)
+      renderSection(SKIP_ETATCIVIL ? 0 : 1);
       window.scrollTo(0,0);
     } catch(e) {
       ferr.textContent = e.message; ferr.style.display = 'block';
