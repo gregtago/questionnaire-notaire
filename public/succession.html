@@ -1064,6 +1064,8 @@ const D = {
   },
   // Section 6 : Comptes bancaires
   banques: { comptes: [], coffreFort: '', assuranceVie: '' },
+  // Section 7b : Assurances-vie (actif)
+  assurancesVie: { connaissance: '', contrats: [] },
   // Section 7 : Biens immobiliers
   immobilier: { biens: [] },
   // Section 8 : Autres actifs
@@ -1079,7 +1081,9 @@ const D = {
     emprunts: '', empruntsDetail: '',
     caution: '', cautionDetail: '',
     factures: '', facturesDetail: '',
-    redressement: '', redressementDetail: ''
+    redressement: '', redressementDetail: '',
+    aideSociale: '', aideSocialeDetail: '',
+    employeur: '', employeurDetail: ''
   },
   // Section 10 : Fiscalité
   fiscalite: {
@@ -1097,6 +1101,7 @@ const SECTIONS = [
   { id: 's5', title: 'Comptes bancaires' },
   { id: 's6', title: 'Biens immobiliers' },
   { id: 's7', title: 'Autres actifs' },
+  { id: 's7b', title: 'Assurances-vie' },
   { id: 's8', title: 'Dettes' },
   { id: 's9', title: 'Fiscalité' }
 ];
@@ -1179,8 +1184,9 @@ function buildSectionHtml(idx) {
     case 4: return buildS6();
     case 5: return buildS7();
     case 6: return buildS8();
-    case 7: return buildS9();
-    case 8: return buildS10();
+    case 7: return buildSAV();
+    case 8: return buildS9();
+    case 9: return buildS10();
     default: return '';
   }
 }
@@ -1637,6 +1643,88 @@ function buildS8() {
   </div>`;
 }
 
+// Section 7b : Assurances-vie (actif)
+function newContratAV() { return { assureur: '', police: '', beneficiaire: '', montant: '' }; }
+
+function buildContratAVBlock(c, i) {
+  return `
+  <div class="repeat-block" id="contratAV_${i}">
+    <div class="repeat-block-header">
+      <span class="repeat-block-num">Contrat ${i+1}</span>
+      ${i > 0 ? `<button class="btn-remove" onclick="removeContratAV(${i})">Supprimer</button>` : ''}
+    </div>
+    <div class="row2">
+      <div class="field"><label>Assureur <span class="req">*</span></label><input type="text" data-av="${i}.assureur" value="${x(c.assureur)}" placeholder="ex : AXA, Allianz…"></div>
+      <div class="field"><label>N° de police</label><input type="text" data-av="${i}.police" value="${x(c.police)}"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Bénéficiaire désigné</label><input type="text" data-av="${i}.beneficiaire" value="${x(c.beneficiaire)}"></div>
+      <div class="field"><label>Capital estimé</label><input type="text" data-av="${i}.montant" value="${x(c.montant)}" placeholder="ex : 50 000 €"></div>
+    </div>
+  </div>`;
+}
+
+function addContratAV() {
+  D.assurancesVie.contrats.push(newContratAV());
+  document.getElementById('contratAVList').innerHTML = D.assurancesVie.contrats.map((c,i) => buildContratAVBlock(c,i)).join('');
+  bindAVContrats();
+}
+
+function removeContratAV(i) {
+  D.assurancesVie.contrats.splice(i, 1);
+  document.getElementById('contratAVList').innerHTML = D.assurancesVie.contrats.map((c,i) => buildContratAVBlock(c,i)).join('');
+  bindAVContrats();
+}
+
+function bindAVContrats() {
+  document.querySelectorAll('[data-av]').forEach(el => {
+    el.oninput = () => {
+      const [i, f] = el.dataset.av.split('.');
+      D.assurancesVie.contrats[+i][f] = el.value;
+    };
+  });
+}
+
+function bindAVChoices() {
+  document.querySelectorAll('[data-avq]').forEach(btn => {
+    btn.onclick = () => {
+      const k = btn.dataset.avq, v = btn.dataset.v;
+      D.assurancesVie[k] = v;
+      document.querySelectorAll(`[data-avq="${k}"]`).forEach(b => b.classList.toggle('on', b===btn));
+      const condEl = document.getElementById('condAVContrats');
+      if (condEl) condEl.classList.toggle('show', v === 'oui');
+    };
+  });
+  bindAVContrats();
+}
+
+function bindContrats() { bindAVContrats(); }
+
+function buildSAV() {
+  const av = D.assurancesVie;
+  if (!av.contrats.length && av.connaissance === 'oui') av.contrats.push(newContratAV());
+  return `
+  <div class="sec">
+    <div class="sec-heading">Assurances-vie</div>
+    <div class="sec-desc">Les contrats d'assurance-vie ne font pas partie de la succession mais doivent être identifiés.</div>
+    <div class="field">
+      <label>Avez-vous connaissance d'assurances-vie souscrites par le défunt ?</label>
+      <div class="btns">
+        <button type="button" class="choice${av.connaissance==='oui'?' on':''}" data-avq="connaissance" data-v="oui">Oui</button>
+        <button type="button" class="choice${av.connaissance==='non'?' on':''}" data-avq="connaissance" data-v="non">Non</button>
+        <button type="button" class="choice${av.connaissance==='inconnu'?' on':''}" data-avq="connaissance" data-v="inconnu">Je ne sais pas</button>
+      </div>
+    </div>
+    <div class="cond${av.connaissance==='oui'?' show':''}" id="condAVContrats">
+      <div id="contratAVList">
+        ${av.contrats.map((c,i) => buildContratAVBlock(c,i)).join('')}
+      </div>
+      <button class="btn-add" onclick="addContratAV()">Ajouter un contrat</button>
+    </div>
+  </div>`;
+}
+
+
 // Section 9 : Dettes
 function buildS9() {
   const d = D.dettes;
@@ -1644,7 +1732,9 @@ function buildS9() {
     ['emprunts','Emprunts bancaires en cours','Banque, capital restant dû'],
     ['caution','Engagement de caution','En faveur de qui, montant'],
     ['factures','Factures impayées ou dettes courantes','Nature et montant estimé'],
-    ['redressement','Redressement fiscal ou contrôle en cours','Préciser']
+    ['redressement','Redressement fiscal ou contrôle en cours','Préciser'],
+    ['aideSociale','Le défunt a-t-il bénéficié d\'une aide sociale ?','Nom de l\'aide, organisme débiteur'],
+    ['employeur','Le défunt avait-il un employeur ?','Nom de l\'employeur']
   ];
   return `
   <div class="sec">
@@ -1660,6 +1750,7 @@ function buildS9() {
       </div>
       <div class="cond${d[key]==='oui'?' show':''}" id="conddet_${key}">
         <input type="text" data-d="dettes.${key}Detail" value="${x(d[key+'Detail'])}" placeholder="${placeholder}">
+        ${key==='employeur' ? '<div class=\"note\" style=\"margin-top:8px\">📎 Joindre : contrat de travail, derniers bulletins de salaire.</div>' : ''}
       </div>
     </div>`).join('')}
   </div>`;
@@ -1733,6 +1824,7 @@ function bindSection(idx) {
   if (idx === 5) { bindComptes(); bindBanqChoices(); }
   if (idx === 6) bindBiens();
   if (idx === 7) bindAA();
+  if (idx === 7) { bindAVChoices(); bindContrats(); }
   if (idx === 8) bindDettes();
   if (idx === 9) bindFisc();
 }
