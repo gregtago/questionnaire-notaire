@@ -1232,14 +1232,14 @@ function buildS2() {
     <div class="sec-heading">Désignation du bien</div>
     <div class="field"><label>Adresse <span class="req">*</span></label><input type="text" data-d="bien.adresse" value="${x(b.adresse)}"></div>
     <div class="row2">
-      <div class="field"><label>Code postal</label><input type="text" data-d="bien.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
-      <div class="field"><label>Ville</label><input type="text" data-d="bien.ville" value="${x(b.ville)}"></div>
+      <div class="field"><label>Code postal <span class="req">*</span></label><input type="text" data-d="bien.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
+      <div class="field"><label>Ville <span class="req">*</span></label><input type="text" data-d="bien.ville" value="${x(b.ville)}"></div>
     </div>
   </div>
   <div class="sec">
     <div class="sec-heading">Résidence principale</div>
     <div class="field">
-      <label>Ce bien constitue-t-il votre résidence principale ?</label>
+      <label>Ce bien constitue-t-il votre résidence principale ? <span class="req">*</span></label>
       <div class="btns">
         <button type="button" class="choice${b.residencePrincipale==='oui'?' on':''}" data-b="residencePrincipale" data-v="oui">Oui</button>
         <button type="button" class="choice${b.residencePrincipale==='non'?' on':''}" data-b="residencePrincipale" data-v="non">Non</button>
@@ -1252,7 +1252,7 @@ function buildS2() {
   <div class="sec">
     <div class="sec-heading">Occupation du bien</div>
     <div class="field">
-      <label>Situation du bien le jour de la vente</label>
+      <label>Situation du bien le jour de la vente <span class="req">*</span></label>
       <div class="btns">
         <button type="button" class="choice${b.situationJour==='libre'?' on':''}" data-b="situationJour" data-v="libre">Libre de toute occupation</button>
         <button type="button" class="choice${loue?' on':''}" data-b="situationJour" data-v="loue">Loué</button>
@@ -1267,7 +1267,7 @@ function buildS2() {
       </div>
     </div>
     <div class="field" style="margin-top:16px">
-      <label>Le bien a-t-il été loué précédemment ?</label>
+      <label>Le bien a-t-il été loué précédemment ? <span class="req">*</span></label>
       <div class="btns">
         <button type="button" class="choice${b.locatairePrecedent==='oui'?' on':''}" data-b="locatairePrecedent" data-v="oui">Oui</button>
         <button type="button" class="choice${b.locatairePrecedent==='non'?' on':''}" data-b="locatairePrecedent" data-v="non">Non</button>
@@ -1290,35 +1290,7 @@ function buildS3() {
   <div class="sec">
     <div class="sec-heading">Structure</div>
     <div class="note" style="margin-bottom:18px">📎 <strong>À fournir :</strong> PV des 3 dernières assemblées générales, dernier relevé de charges trimestriel, règlement de copropriété et modificatifs, plans des étages.</div>
-    <div class="field">
-      <label>Division en volume ?</label>
-      <div class="btns">
-        <button type="button" class="choice${c.divisionVolume==='oui'?' on':''}" data-c="divisionVolume" data-v="oui">Oui</button>
-        <button type="button" class="choice${c.divisionVolume==='non'?' on':''}" data-c="divisionVolume" data-v="non">Non</button>
-      </div>
-    </div>
-    <div class="field">
-      <label>Lotissement ?</label>
-      <div class="btns">
-        <button type="button" class="choice${c.lotissement==='oui'?' on':''}" data-c="lotissement" data-v="oui">Oui</button>
-        <button type="button" class="choice${c.lotissement==='non'?' on':''}" data-c="lotissement" data-v="non">Non</button>
-      </div>
-    </div>
-    <div class="cond${c.lotissement==='oui'?' show':''}" id="condAsso">
-      <div class="field">
-        <label>Association syndicale ?</label>
-        <div class="btns">
-          <button type="button" class="choice${c.associationSyndicale==='oui'?' on':''}" data-c="associationSyndicale" data-v="oui">Oui</button>
-          <button type="button" class="choice${c.associationSyndicale==='non'?' on':''}" data-c="associationSyndicale" data-v="non">Non</button>
-        </div>
-      </div>
-      <div class="cond${c.associationSyndicale==='oui'?' show':''}" id="condPresident">
-        <div class="row2">
-          <div class="field"><label>Nom du président</label><input type="text" data-d="copro.presidentNom" value="${x(c.presidentNom)}"></div>
-          <div class="field"><label>Coordonnées</label><input type="text" data-d="copro.presidentCoord" value="${x(c.presidentCoord)}"></div>
-        </div>
-      </div>
-    </div>
+
   </div>
   <div class="sec">
     <div class="sec-heading">Syndic</div>
@@ -1363,10 +1335,11 @@ function buildS3() {
       </div>
       <div class="cond${c.degatEaux==='oui'?' show':''}" id="condDegat">
         <div class="field" style="margin-top:10px"><label>Convention avec l'acquéreur</label><input type="text" data-d="copro.degatEauxDetail" value="${x(c.degatEauxDetail)}"></div>
+        <div class="note" style="margin-top:8px">📎 Joindre : récépissé de déclaration de sinistre, expertise, toute correspondance afférente au sinistre.</div>
       </div>
     </div>
     <div class="field">
-      <label>Fonds travaux et/ou emprunt de copropriété ?</label>
+      <label>Avez-vous souscrit à un emprunt collectif ?</label>
       <div class="btns">
         <button type="button" class="choice${c.fondsTravaux==='oui'?' on':''}" data-c="fondsTravaux" data-v="oui">Oui</button>
         <button type="button" class="choice${c.fondsTravaux==='non'?' on':''}" data-c="fondsTravaux" data-v="non">Non</button>
@@ -1412,7 +1385,7 @@ function buildS4() {
           <button type="button" class="choice${t.autorisations==='oui'?' on':''}" data-t="autorisations" data-v="oui">Oui</button>
           <button type="button" class="choice${t.autorisations==='non'?' on':''}" data-t="autorisations" data-v="non">Non</button>
         </div>
-        <div class="note" style="margin-top:10px">📎 Si oui, joindre copie du dossier de demande et de la réponse.</div>
+        <div class="note" style="margin-top:10px">📎 Joindre : autorisation de travaux.</div>
       </div>
     </div>
   </div>
@@ -1431,6 +1404,9 @@ function buildS4() {
         <button type="button" class="choice${t.declarationImpots==='oui'?' on':''}" data-t="declarationImpots" data-v="oui">Oui</button>
         <button type="button" class="choice${t.declarationImpots==='non'?' on':''}" data-t="declarationImpots" data-v="non">Non</button>
         <button type="button" class="choice${t.declarationImpots==='na'?' on':''}" data-t="declarationImpots" data-v="na">Sans objet</button>
+      </div>
+      <div class="cond${t.declarationImpots==='oui'?' show':''}" id="condDeclImpots" style="margin-top:8px">
+        <div class="note">📎 Joindre : déclaration H2.</div>
       </div>
     </div>
     <div class="note">📎 <strong>Diagnostics techniques :</strong> merci de nous transmettre le dossier complet (surface, amiante, termites, plomb, DPE, gaz, électricité…).</div>
@@ -1486,7 +1462,7 @@ function buildS6() {
     <div class="sec-heading">Plus-values immobilières</div>
     <div class="sec-desc">Ces informations permettent de déterminer l'impôt éventuellement dû sur la vente.</div>
     <div class="field">
-      <label>Le bien vendu constitue-t-il votre résidence principale ?</label>
+      <label>Le bien vendu constitue-t-il votre résidence principale ? <span class="req">*</span></label>
       <div class="btns">
         <button type="button" class="choice${pv.residencePrincipale==='oui'?' on':''}" data-pv="residencePrincipale" data-v="oui">Oui</button>
         <button type="button" class="choice${pv.residencePrincipale==='non'?' on':''}" data-pv="residencePrincipale" data-v="non">Non</button>
@@ -1524,7 +1500,7 @@ function buildS6() {
           <button type="button" class="choice${pv.droitsMutation==='non'?' on':''}" data-pv="droitsMutation" data-v="non">Non</button>
           <button type="button" class="choice${pv.droitsMutation==='na'?' on':''}" data-pv="droitsMutation" data-v="na">Sans objet</button>
         </div>
-        <div class="note" style="margin-top:8px">📎 Si oui, joindre copie de la déclaration fiscale ou de l'acte de donation. Dans tous les cas, joindre le compte notarial d'acquisition.</div>
+        <div class="note" style="margin-top:8px">📎 Joindre : déclaration de succession ou acte de donation. Dans tous les cas, joindre le compte notarial d'acquisition.</div>
       </div>
     </div>
   </div>
@@ -1897,11 +1873,12 @@ function buildPiecesList(D) {
   const hasTva = D.fiscalite && D.fiscalite.tva === "oui";
 
   sections.push({ section: "Documents obligatoires", pieces: [
-    "Titre de propriete",
-    "Dossier de diagnostics techniques complet (DPE, amiante, termites, plomb, gaz, electricite...)",
-    "Derniers proces-verbaux d'assemblee generale (3 derniers)",
-    "Reglement de copropriete et etat descriptif de division",
-    "Dernier appel de charges trimestriel",
+    "Titre de propriété",
+    "Dossier de diagnostics obligatoires (DPE, amiante, termites, plomb, gaz, électricité…)",
+    "PV des 3 dernières assemblées générales",
+    "Relevé de charges trimestriel",
+    "Règlement de copropriété et état descriptif de division",
+    "Plans des étages",
   ]});
 
   if (isLoue) sections.push({ section: "Location", pieces: [
@@ -1913,7 +1890,7 @@ function buildPiecesList(D) {
   ]});
 
   if (hasSci) sections.push({ section: "Societe civile", pieces: [
-    "Statuts a jour", "Extrait Kbis", "Derniers bilans",
+    "Statuts à jour", "Extrait Kbis", "Procès-verbal d'assemblée générale autorisant la vente",
   ]});
 
   if (hasAlarme) sections.push({ section: "Alarme", pieces: [
