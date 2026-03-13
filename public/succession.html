@@ -1210,7 +1210,7 @@ function buildS1() {
     <div class="sec-heading">Informations sur la personne décédée</div>
     <div class="sec-desc">Renseignez l'état civil complet du défunt.</div>
     <div class="field">
-      <label>Civilité</label>
+      <label>Civilité <span class="req">*</span></label>
       <div class="btns">
         ${['Monsieur','Madame'].map(c=>`<button type="button" class="choice${d.civilite===c?' on':''}" data-dciv="${c}">${c}</button>`).join('')}
       </div>
@@ -1231,15 +1231,15 @@ function buildS1() {
     </div>
     <div class="row3">
       <div class="field">
-        <label>Date de naissance</label>
+        <label>Date de naissance <span class="req">*</span></label>
         <input type="date" data-d="defunt.dateNaissance" value="${x(d.dateNaissance)}">
       </div>
       <div class="field">
-        <label>Lieu de naissance</label>
+        <label>Lieu de naissance <span class="req">*</span></label>
         <input type="text" data-d="defunt.lieuNaissance" value="${x(d.lieuNaissance)}">
       </div>
       <div class="field">
-        <label>CP de naissance</label>
+        <label>CP du lieu de naissance <span class="req">*</span></label>
         <input type="text" data-d="defunt.cpNaissance" value="${x(d.cpNaissance)}" maxlength="5" inputmode="numeric">
       </div>
     </div>
@@ -1253,16 +1253,10 @@ function buildS1() {
         <input type="text" data-d="defunt.nationalite" value="${x(d.nationalite)}">
       </div>
     </div>
-    <div class="row2">
-      <div class="field">
-        <label>Profession</label>
-        <input type="text" data-d="defunt.profession" value="${x(d.profession)}">
-      </div>
-      <div class="field">
+    <div class="field">
         <label>N° de sécurité sociale</label>
         <input type="text" data-d="defunt.numSecu" value="${x(d.numSecu)}" inputmode="numeric" maxlength="15">
       </div>
-    </div>
     <div class="row2">
       <div class="field">
         <label>Date du décès <span class="req">*</span></label>
@@ -1274,7 +1268,7 @@ function buildS1() {
       </div>
     </div>
     <div class="field">
-      <label>Dernière adresse</label>
+      <label>Dernière adresse <span class="req">*</span></label>
       <input type="text" data-d="defunt.adresse" value="${x(d.adresse)}">
     </div>
   </div>`;
@@ -1377,7 +1371,7 @@ function buildHeritierBlock(h, i) {
       ${i > 0 ? `<button class="btn-remove" onclick="removeHeritier(${i})">Supprimer</button>` : ''}
     </div>
     <div class="row2">
-      <div class="field"><label>Nom</label><input type="text" data-h="${i}.nom" value="${x(h.nom)}"></div>
+      <div class="field"><label>Nom <span class="req">*</span></label><input type="text" data-h="${i}.nom" value="${x(h.nom)}"></div>
       <div class="field"><label>Prénom</label><input type="text" data-h="${i}.prenom" value="${x(h.prenom)}"></div>
     </div>
     <div class="field">
@@ -1415,7 +1409,7 @@ function buildS5() {
     <div class="sec-heading">Dispositions du défunt</div>
     <div class="sec-desc">Ces informations sont essentielles pour déterminer les droits de chaque héritier.</div>
     <div class="field">
-      <label>Testament</label>
+      <label>Testament <span class="req">*</span></label>
       <div class="btns">
         ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
           `<button type="button" class="choice${d.testament===k?' on':''}" data-dis="testament" data-v="${k}">${v}</button>`
@@ -1423,7 +1417,7 @@ function buildS5() {
       </div>
     </div>
     <div class="field">
-      <label>Donation entre époux (donation au dernier vivant)</label>
+      <label>Donation entre époux (donation au dernier vivant) <span class="req">*</span></label>
       <div class="btns">
         ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
           `<button type="button" class="choice${d.donationEntreEpoux===k?' on':''}" data-dis="donationEntreEpoux" data-v="${k}">${v}</button>`
@@ -1431,7 +1425,7 @@ function buildS5() {
       </div>
     </div>
     <div class="field">
-      <label>Donations antérieures consenties</label>
+      <label>Donations antérieures consenties <span class="req">*</span></label>
       <div class="btns">
         ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
           `<button type="button" class="choice${d.donationsAnterieures===k?' on':''}" data-dis="donationsAnterieures" data-v="${k}">${v}</button>`
@@ -1508,14 +1502,7 @@ function buildS6() {
           ).join('')}
         </div>
       </div>
-      <div class="field">
-        <label>Contrat(s) d'assurance-vie</label>
-        <div class="btns">
-          ${[['oui','Oui'],['non','Non'],['inconnu','Je ne sais pas']].map(([k,v])=>
-            `<button type="button" class="choice${b.assuranceVie===k?' on':''}" data-banq="assuranceVie" data-v="${k}">${v}</button>`
-          ).join('')}
-        </div>
-      </div>
+
     </div>
   </div>`;
 }
@@ -1569,7 +1556,7 @@ function buildS7() {
   </div>`;
 }
 
-function newBien() { return { adresse:'', type:'', quotePart:'', loue:'', valeur:'' }; }
+function newBien() { return { adresse:'', cp:'', ville:'', type:'', quotePart:'', loue:'', valeur:'' }; }
 
 function buildBienBlock(b, i) {
   return `
@@ -1579,6 +1566,10 @@ function buildBienBlock(b, i) {
       <button class="btn-remove" onclick="removeBien(${i})">Supprimer</button>
     </div>
     <div class="field"><label>Adresse</label><input type="text" data-bi="${i}.adresse" value="${x(b.adresse)}"></div>
+    <div class="row2">
+      <div class="field"><label>Code postal</label><input type="text" data-bi="${i}.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
+      <div class="field"><label>Ville</label><input type="text" data-bi="${i}.ville" value="${x(b.ville)}"></div>
+    </div>
     <div class="row3">
       <div class="field"><label>Type</label>
         <select data-bi="${i}.type">
@@ -1589,7 +1580,9 @@ function buildBienBlock(b, i) {
         </select>
       </div>
       <div class="field"><label>Quote-part détenue</label><input type="text" data-bi="${i}.quotePart" value="${x(b.quotePart)}" placeholder="ex : 100% ou 1/2"></div>
-      <div class="field"><label>Valeur estimée</label><input type="text" data-bi="${i}.valeur" value="${x(b.valeur)}" placeholder="ex : 250 000 €"></div>
+      <div class="field"><label>Valeur estimée</label><input type="text" data-bi="${i}.valeur" value="${x(b.valeur)}" placeholder="ex : 250 000 €">
+        <div class="note" style="margin-top:6px">📎 Joindre : estimation du bien.</div>
+      </div>
     </div>
     <div class="field">
       <label>Bien loué</label>
