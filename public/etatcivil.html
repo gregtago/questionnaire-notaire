@@ -280,14 +280,7 @@
 const _urlParams = new URLSearchParams(window.location.search);
 const SKIP_ETATCIVIL = false; // jamais sur /etatcivil
 
-function goSlide(n) {
-  [1,2,3].forEach(i => {
-    document.getElementById('slide'+i).style.display = (i===n) ? 'flex' : 'none';
-  });
-  document.querySelectorAll('.dot').forEach((d,i) => {
-    d.classList.toggle('dot-active', i < n);
-  });
-}
+
 
 function checkRgpd() {
   const rgpd = document.getElementById('cbRgpd')?.checked || false;
@@ -301,12 +294,7 @@ function checkRgpd() {
   if (bA) bA.disabled = !(rgpd && lre);
 }
 
-function validerAccueil() {
-  document.getElementById('pageTitle').textContent = 'État civil';
-  document.getElementById('pageSub').textContent = 'Vérifiez votre adresse email';
-  document.getElementById('sAccueil').style.display = 'none';
-  document.getElementById('sEmail').style.display = 'block';
-}
+
 
 'use strict';
 
