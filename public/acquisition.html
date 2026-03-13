@@ -1222,9 +1222,8 @@ function buildS2() {
       <div class="sec-heading" style="font-size:14px;margin-bottom:12px;">Société civile immobilière</div>
       <div class="row2">
         <div class="field"><label>Nom de la société</label><input type="text" data-d="sci.nom" value="${x(D.sci.nom)}"></div>
-        <div class="field"><label>Siège social</label><input type="text" data-d="sci.siege" value="${x(D.sci.siege)}"></div>
+        <div class="field"><label>N° SIREN</label><input type="text" data-d="sci.siren" value="${x(D.sci.siren||'')}"></div>
       </div>
-      <div class="field"><label>Répartition des parts</label><input type="text" data-d="sci.repartition" value="${x(D.sci.repartition)}" placeholder="ex: 50% M. Dupont, 50% Mme Dupont"></div>
     </div>
   </div>`;
 }
