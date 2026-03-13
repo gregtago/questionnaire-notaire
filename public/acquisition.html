@@ -1206,6 +1206,10 @@ function buildS2() {
         <div class="field"><label>Nom</label><input type="text" data-d="acquereur2.nom" value="${x(D.acquereur2.nom)}"></div>
         <div class="field"><label>Prénoms</label><input type="text" data-d="acquereur2.prenoms" value="${x(D.acquereur2.prenoms)}"></div>
       </div>
+      <div class="row2">
+        <div class="field"><label>Email</label><input type="email" data-d="acquereur2.email" value="${x(D.acquereur2.email||'')}"></div>
+        <div class="field"><label>Téléphone</label><input type="text" data-d="acquereur2.tel" value="${x(D.acquereur2.tel||'')}"></div>
+      </div>
     </div>
 
     <div class="cond${showIndi?' show':''}" id="condIndivision">
