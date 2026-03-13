@@ -511,7 +511,7 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="LVNARU" value="${x(p.LVNARU)}">
       </div>
       <div class="field">
-        <label>Code postal de naissance <span class="req">*</span></label>
+        <label>Code postal du lieu de naissance <span class="req">*</span></label>
         <input type="text" data-f="CODERU" value="${x(p.CODERU)}" maxlength="5" inputmode="numeric">
       </div>
     </div>
@@ -682,7 +682,7 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
       </div>
       <div class="field">
-        <label>Pays</label>
+        <label>Pays <span class="req">*</span></label>
         <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
       </div>
     </div>
