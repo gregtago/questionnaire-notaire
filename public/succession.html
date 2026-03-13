@@ -1631,6 +1631,9 @@ function buildS8() {
       </div>
       <div class="cond${a[key]==='oui'?' show':''}" id="cond_${key}">
         <input type="text" data-d="autresActifs.${key}Detail" value="${x(a[key+'Detail'])}" placeholder="${placeholder}">
+        ${key==='vehicules' ? '<div class=\"note\" style=\"margin-top:6px\">📎 Joindre : carte grise, kilométrage.</div>' : ''}
+        ${key==='partsSociete' ? '<div class=\"note\" style=\"margin-top:6px\">📎 Joindre : statuts, Kbis, estimation d\'expert-comptable.</div>' : ''}
+        ${key==='fondsCommerce' ? '<div class=\"note\" style=\"margin-top:6px\">📎 Joindre : bilan.</div>' : ''}
       </div>
     </div>`).join('')}
   </div>`;
