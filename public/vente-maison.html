@@ -1462,6 +1462,9 @@ function buildS4() {
             <button type="button" class="choice${a.bonEtat==='oui'?' on':''}" data-a="bonEtat" data-v="oui">Oui</button>
             <button type="button" class="choice${a.bonEtat==='non'?' on':''}" data-a="bonEtat" data-v="non">Non</button>
           </div>
+          <div class="cond${a.bonEtat==='oui'?' show':''}" id="condBonEtatNote" style="margin-top:8px">
+            <div class="note">📎 Joindre : diagnostic de l'installation d'assainissement.</div>
+          </div>
         </div>
       </div>
     </div>
