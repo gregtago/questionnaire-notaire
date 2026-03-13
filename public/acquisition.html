@@ -529,7 +529,7 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="LVNARU" value="${x(p.LVNARU)}">
       </div>
       <div class="field">
-        <label>Code postal de naissance <span class="req">*</span></label>
+        <label>Code postal du lieu de naissance <span class="req">*</span></label>
         <input type="text" data-f="CODERU" value="${x(p.CODERU)}" maxlength="5" inputmode="numeric">
       </div>
     </div>
@@ -700,7 +700,7 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
       </div>
       <div class="field">
-        <label>Pays</label>
+        <label>Pays <span class="req">*</span></label>
         <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
       </div>
     </div>
@@ -1192,7 +1192,7 @@ function buildS2() {
 
   return `
   <div class="sec">
-    <div class="sec-heading">Qui achète ?</div>
+    <div class="sec-heading">Vous achetez ?</div>
     <div class="field">
       <div class="btns">
         ${[['seul','Seul(e)'],['couple','En couple'],['indivision','Indivision'],['sci','SCI']].map(([k,v])=>`
@@ -1252,11 +1252,11 @@ function buildS3() {
     <div class="sec-heading">Identification du bien</div>
     <div class="field"><label>Adresse <span class="req">*</span></label><input type="text" data-d="bien.adresse" value="${x(b.adresse)}"></div>
     <div class="row2">
-      <div class="field"><label>Code postal</label><input type="text" data-d="bien.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
-      <div class="field"><label>Ville</label><input type="text" data-d="bien.ville" value="${x(b.ville)}"></div>
+      <div class="field"><label>Code postal <span class="req">*</span></label><input type="text" data-d="bien.cp" value="${x(b.cp)}" maxlength="5" inputmode="numeric"></div>
+      <div class="field"><label>Ville <span class="req">*</span></label><input type="text" data-d="bien.ville" value="${x(b.ville)}"></div>
     </div>
     <div class="field">
-      <label>Type de bien</label>
+      <label>Type de bien <span class="req">*</span></label>
       <div class="btns">
         ${[['appartement','Appartement'],['maison','Maison'],['terrain','Terrain'],['autre','Autre']].map(([k,v])=>`
           <button type="button" class="choice${b.type===k?' on':''}" data-bien-type="${k}">${v}</button>`).join('')}
@@ -1599,7 +1599,7 @@ function buildPiecesList(D) {
     if (hasPretRelais) ps.push("Offre de pret relais");
     sections.push({ section: "Financement", pieces: ps });
   } else {
-    sections.push({ section: "Financement", pieces: ["Attestation de fonds propres ou releve de compte"] });
+    sections.push({ section: "Financement", pieces: [] });
   }
 
   if (isLoc) sections.push({ section: "Investissement locatif", pieces: [
@@ -1607,7 +1607,7 @@ function buildPiecesList(D) {
   ]});
 
   if (isSci) sections.push({ section: "Societe civile", pieces: [
-    "Statuts de la SCI", "Extrait Kbis", "Liste des associes avec domicile fiscal",
+    "Statuts de la SCI", "Extrait Kbis",
   ]});
 
   return sections;
