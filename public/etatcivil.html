@@ -188,7 +188,7 @@
       </div>
       <div class="rgpd-check" id="wrapRgpd">
         <input type="checkbox" id="cbRgpd" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-        <label class="rgpd-accept-bar" for="cbRgpd">
+        <label class="rgpd-accept-bar" for="cbRgpd" onclick="setTimeout(checkRgpd,0)">
           <em>J'ai lu et j'accepte la mention relative à la protection de mes données personnelles.</em>
           <span class="toggle"></span>
         </label>
@@ -207,7 +207,7 @@
       </div>
       <div class="rgpd-check" id="wrapLre">
         <input type="checkbox" id="cbLre" style="display:none" onchange="checkRgpd(); this.closest('.rgpd-check').classList.toggle('checked', this.checked)">
-        <label class="rgpd-accept-bar" for="cbLre">
+        <label class="rgpd-accept-bar" for="cbLre" onclick="setTimeout(checkRgpd,0)">
           <em>J'accepte de recevoir des recommandés électroniques à mon adresse email.</em>
           <span class="toggle"></span>
         </label>
