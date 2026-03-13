@@ -294,8 +294,10 @@ function checkRgpd() {
   const lreEl = document.getElementById('cbLre');
   const lre   = lreEl ? lreEl.checked : false;
   const b2 = document.getElementById('btnSlide2');
+  const b3 = document.getElementById('btnSlide3');
   const bA = document.getElementById('btnAccueil');
   if (b2) b2.disabled = !rgpd;
+  if (b3) b3.disabled = !rgpd;
   if (bA) bA.disabled = !(rgpd && lre);
 }
 
@@ -343,14 +345,7 @@ function goSlide(n) {
   });
 }
 
-function checkRgpd() {
-  const rgpd = document.getElementById('cbRgpd') ? document.getElementById('cbRgpd').checked : false;
-  const lre  = document.getElementById('cbLre')  ? document.getElementById('cbLre').checked  : false;
-  const b3 = document.getElementById('btnSlide3');
-  const bA = document.getElementById('btnAccueil');
-  if (b3) b3.disabled = !rgpd;
-  if (bA) bA.disabled = !(rgpd && lre);
-}
+
 
 function validerAccueil() {
   if (!typeDossier || !document.getElementById('cbRgpd').checked) return;
