@@ -1046,7 +1046,8 @@ const D = {
     location: '', // meublee | nue
     division: '',
     travaux: '',
-    changementDestination: ''
+    changementDestination: '',
+    proprietaireRP: ''
   },
 
   // S5 : Financement
@@ -1054,7 +1055,9 @@ const D = {
     prixBien: '', prixMeubles: '',
     apportMontant: '', apportOrigine: '',
     pretMontant: '', pretDuree: '', pretBanque: '', pretTauxMax: '',
-    conditionsSuspensives: [] // pret | vente_prealable | permis | autre
+    conditionsSuspensives: [], // pret | vente_prealable | permis | autre
+    commissionCharge: '',
+    commissionMontant: ''
   },
 
   // S6 : Origine des fonds
@@ -1071,21 +1074,6 @@ const D = {
     compromis: '', dateSignature: ''
   },
 
-  // S8 : Assurance et garanties
-  garanties: {
-    assuranceEmprunteur: '',
-    typeGarantie: '' // caution | hypotheque | autre
-  },
-
-  // S9 : Fiscalité et résidence
-  fiscalite: {
-    residenceFiscale: '',
-    pays: '',
-    numeroFiscal: ''
-  },
-
-  // S10 : Coordonnées bancaires
-  banque: { banque: '', iban: '', bic: '' }
 };
 
 const SECTIONS = [
@@ -1096,9 +1084,7 @@ const SECTIONS = [
   { title: 'Financement' },
   { title: 'Origine des fonds' },
   { title: 'Revente d\'un bien' },
-  { title: 'Assurance et garanties' },
-  { title: 'Fiscalité et résidence' },
-  { title: 'Coordonnées bancaires' }
+
 ];
 
 
@@ -1176,9 +1162,7 @@ function buildSection(idx) {
     case 4: return buildS5();
     case 5: return buildS6();
     case 6: return buildS7();
-    case 7: return buildS8();
-    case 8: return buildS9();
-    case 9: return buildS10();
+
     default: return '';
   }
 }
@@ -1352,6 +1336,13 @@ function buildS4() {
           <button type="button" class="choice${p.changementDestination===k?' on':''}" data-changdest="${k}">${v}</button>`).join('')}
       </div>
     </div>
+    <div class="field">
+      <label>Êtes-vous déjà propriétaire de votre résidence principale ?</label>
+      <div class="btns">
+        ${[['oui','Oui'],['non','Non']].map(([k,v])=>`
+          <button type="button" class="choice${p.proprietaireRP===k?' on':''}" data-proprp="${k}">${v}</button>`).join('')}
+      </div>
+    </div>
   </div>`;
 }
 
@@ -1364,6 +1355,19 @@ function buildS5() {
     <div class="row2">
       <div class="field"><label>Prix du bien <span class="req">*</span></label><input type="text" data-d="financement.prixBien" value="${x(f.prixBien)}" inputmode="numeric" placeholder="ex: 350 000 €"></div>
       <div class="field"><label>Montant des meubles <span class="opt">(si applicable)</span></label><input type="text" data-d="financement.prixMeubles" value="${x(f.prixMeubles)}" inputmode="numeric"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Commission d'agence à la charge de</label>
+        <div class="btns">
+          ${[['vendeur','Vendeur'],['acquereur','Acquéreur']].map(([k,v])=>`
+            <button type="button" class="choice${f.commissionCharge===k?' on':''}" data-commcharge="${k}">${v}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field cond${f.commissionCharge==='acquereur'?' show':''}" id="condCommission">
+        <label>Montant de la commission TTC</label>
+        <input type="text" data-d="financement.commissionMontant" value="${x(f.commissionMontant)}" inputmode="numeric" placeholder="ex: 12 000 €">
+      </div>
     </div>
   </div>
   <div class="sec">
@@ -1458,68 +1462,6 @@ function buildS7() {
   </div>`;
 }
 
-// S8 : Assurance et garanties
-function buildS8() {
-  const g = D.garanties;
-  return `
-  <div class="sec">
-    <div class="sec-heading">Assurance emprunteur</div>
-    <div class="field">
-      <label>Assurance emprunteur souscrite ou envisagée ?</label>
-      <div class="btns">
-        ${[['banque','Auprès de la banque'],['externe','Déléguée (autre assureur)'],['non','Non / À définir']].map(([k,v])=>`
-          <button type="button" class="choice${g.assuranceEmprunteur===k?' on':''}" data-assur="${k}">${v}</button>`).join('')}
-      </div>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-heading">Garantie du prêt</div>
-    <div class="field">
-      <label>Type de garantie choisie par la banque</label>
-      <div class="btns">
-        ${[['caution','Caution bancaire'],['hypotheque','Hypothèque'],['ppd','PPD'],['non','Non précisée']].map(([k,v])=>`
-          <button type="button" class="choice${g.typeGarantie===k?' on':''}" data-gartype="${k}">${v}</button>`).join('')}
-      </div>
-    </div>
-  </div>`;
-}
-
-// S9 : Fiscalité et résidence
-function buildS9() {
-  const f = D.fiscalite;
-  return `
-  <div class="sec">
-    <div class="sec-heading">Fiscalité et résidence</div>
-    <div class="sec-desc">Ces informations sont nécessaires aux formalités fiscales et à la conformité LCB-FT.</div>
-    <div class="field">
-      <label>Résidence fiscale</label>
-      <div class="btns">
-        ${[['france','France'],['etranger','Étranger']].map(([k,v])=>`
-          <button type="button" class="choice${f.residenceFiscale===k?' on':''}" data-resfis="${k}">${v}</button>`).join('')}
-      </div>
-    </div>
-    <div class="cond${f.residenceFiscale==='etranger'?' show':''}" id="condEtranger">
-      <div class="field"><label>Pays de résidence</label><input type="text" data-d="fiscalite.pays" value="${x(f.pays)}"></div>
-    </div>
-    <div class="field"><label>Numéro fiscal (NIF) <span class="opt">(si connu)</span></label><input type="text" data-d="fiscalite.numeroFiscal" value="${x(f.numeroFiscal)}"></div>
-  </div>`;
-}
-
-// S10 : Coordonnées bancaires
-function buildS10() {
-  const b = D.banque;
-  return `
-  <div class="sec">
-    <div class="sec-heading">Coordonnées bancaires</div>
-    <div class="sec-desc">Utilisées pour les appels de fonds et la restitution éventuelle de sommes.</div>
-    <div class="field"><label>Banque</label><input type="text" data-d="banque.banque" value="${x(b.banque)}"></div>
-    <div class="row2">
-      <div class="field"><label>IBAN</label><input type="text" data-d="banque.iban" value="${x(b.iban)}" placeholder="FR76…"></div>
-      <div class="field"><label>BIC</label><input type="text" data-d="banque.bic" value="${x(b.bic)}"></div>
-    </div>
-  </div>`;
-}
-
 // ── Binding ───────────────────────────────────────────────
 function bindSection(idx) {
   // data-d générique
@@ -1540,10 +1482,26 @@ function bindSection(idx) {
   });
   if (idx === 1) bindMode();
   if (idx === 2) bindBien();
-  if (idx === 3) bindProjet();
+  if (idx === 3) {
+    bindProjet();
+    document.querySelectorAll('[data-proprp]').forEach(btn => {
+      btn.onclick = () => {
+        D.projet.proprietaireRP = btn.dataset.proprp;
+        document.querySelectorAll('[data-proprp]').forEach(b=>b.classList.toggle('on',b===btn));
+      };
+    });
+  }
+  if (idx === 4) {
+    document.querySelectorAll('[data-commcharge]').forEach(btn => {
+      btn.onclick = () => {
+        D.financement.commissionCharge = btn.dataset.commcharge;
+        document.querySelectorAll('[data-commcharge]').forEach(b=>b.classList.toggle('on',b===btn));
+        const cond = document.getElementById('condCommission');
+        if (cond) cond.classList.toggle('show', D.financement.commissionCharge==='acquereur');
+      };
+    });
+  }
   if (idx === 6) bindRevente();
-  if (idx === 7) bindGaranties();
-  if (idx === 8) bindFiscalite();
   if (idx === 1) bindIndi();
 }
 
@@ -1615,25 +1573,6 @@ function bindRevente() {
     btn.onclick = () => { D.revente.compromis=btn.dataset.compromis; document.querySelectorAll('[data-compromis]').forEach(b=>b.classList.toggle('on',b===btn)); };
   });
 }
-function bindGaranties() {
-  document.querySelectorAll('[data-assur]').forEach(btn => {
-    btn.onclick = () => { D.garanties.assuranceEmprunteur=btn.dataset.assur; document.querySelectorAll('[data-assur]').forEach(b=>b.classList.toggle('on',b===btn)); };
-  });
-  document.querySelectorAll('[data-gartype]').forEach(btn => {
-    btn.onclick = () => { D.garanties.typeGarantie=btn.dataset.gartype; document.querySelectorAll('[data-gartype]').forEach(b=>b.classList.toggle('on',b===btn)); };
-  });
-}
-function bindFiscalite() {
-  document.querySelectorAll('[data-resfis]').forEach(btn => {
-    btn.onclick = () => {
-      D.fiscalite.residenceFiscale=btn.dataset.resfis;
-      document.querySelectorAll('[data-resfis]').forEach(b=>b.classList.toggle('on',b===btn));
-      document.getElementById('condEtranger').classList.toggle('show', D.fiscalite.residenceFiscale==='etranger');
-    };
-  });
-}
-
-// ── Envoi ─────────────────────────────────────────────────
 function showErr(msg) {
   const el = document.getElementById('ferr');
   el.textContent = msg;
