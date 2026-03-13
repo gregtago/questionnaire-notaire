@@ -2023,7 +2023,7 @@ function buildPiecesList(D) {
   const hasBiens = D.immobilier && D.immobilier.biens && D.immobilier.biens.length > 0;
   const hasBienLoue = hasBiens && D.immobilier.biens.some(b => b.loue === 'oui');
   const hasComptes = D.banques && D.banques.comptes && D.banques.comptes.length > 0;
-  const hasAssuranceVie = D.banques && D.banques.assuranceVie === 'oui';
+  const hasAssuranceVie = D.assurancesVie && D.assurancesVie.connaissance === 'oui';
   const hasCoffre = D.banques && D.banques.coffreFort === 'oui';
   const hasTestament = D.dispositions && D.dispositions.testament === 'oui';
   const hasDonationEntreEpoux = D.dispositions && D.dispositions.donationEntreEpoux === 'oui';
@@ -2112,23 +2112,19 @@ function buildPiecesList(D) {
   // ── Autres actifs ───────────────────────────────────────────────────────
   if (hasPartsSociete) {
     sections.push({ section: 'Parts de société', pieces: [
-      'Statuts de la société',
-      'Extrait Kbis',
-      'Estimation par un expert-comptable',
+      'Statuts, Kbis, estimation d\'expert-comptable',
     ]});
   }
   if (hasVehicules) {
     sections.push({ section: 'Véhicules', pieces: [
-      'Carte grise de chaque véhicule',
-      'Estimation (cote Argus)',
+      'Carte grise, kilométrage',
     ]});
   }
 
   // ── Dettes ──────────────────────────────────────────────────────────────
   if (hasEmprunt) {
     sections.push({ section: 'Prêts et emprunts', pieces: [
-      'Offre(s) de prêt',
-      'Tableau d\'amortissement (capital restant dû au jour du décès)',
+      'Offre de prêt, tableau d\'amortissement',
     ]});
   }
   if (hasObseques) {
