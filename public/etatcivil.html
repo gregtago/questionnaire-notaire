@@ -290,8 +290,9 @@ function goSlide(n) {
 }
 
 function checkRgpd() {
-  const rgpd = document.getElementById('cbRgpd').checked;
-  const lre  = document.getElementById('cbLre').checked;
+  const rgpd = document.getElementById('cbRgpd')?.checked || false;
+  const lreEl = document.getElementById('cbLre');
+  const lre   = lreEl ? lreEl.checked : false;
   const b2 = document.getElementById('btnSlide2');
   const bA = document.getElementById('btnAccueil');
   if (b2) b2.disabled = !rgpd;
