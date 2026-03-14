@@ -1815,11 +1815,11 @@ function bindSection(idx) {
     };
   });
   if (idx === 1) bindS2();
-  if (idx === 3) bindHeritiers();
   if (idx === 4) { bindDispositions(); bindDonations(); }
   if (idx === 5) { bindComptes(); bindBanqChoices(); }
-  if (idx === 6) bindBiens();
-  if (idx === 7) bindAA();
+  if (idx === 2) bindHeritiers();
+  if (idx === 5) bindBiens();
+  if (idx === 6) bindAA();
   if (idx === 7) { bindAVChoices(); bindContrats(); }
   if (idx === 8) bindDettes();
   if (idx === 9) bindFisc();
@@ -2007,8 +2007,15 @@ document.getElementById('btnSubmit').onclick = async () => {
       document.getElementById('formNav').innerHTML = '';
       document.getElementById('submitSec').style.display = 'none';
       document.getElementById('btnSubmit').textContent = 'Envoyer mes réponses';
-      // Nouveau client : sauter l'étape Identification (déjà saisie dans l'état civil)
-      renderSection(SKIP_ETATCIVIL ? 0 : 1);
+      // Pré-remplir nom/prénom du défunt depuis l'état civil si saisi
+      if (typeof persons !== 'undefined' && persons[0]) {
+        const ec = persons[0];
+        if (!D.declarant.nom && ec.NOMU) D.declarant.nom = ec.NOMU || ec.NOM || '';
+        if (!D.declarant.prenom && ec.PRENOMU) D.declarant.prenom = ec.PRENOMU || '';
+        if (!D.defunt.nom && (ec.NOMU || ec.NOM)) D.defunt.nom = ec.NOMU || ec.NOM || '';
+        if (!D.defunt.prenoms && ec.PRENOMU) D.defunt.prenoms = ec.PRENOMU || '';
+      }
+      renderSection(0);
       window.scrollTo(0,0);
     } catch(e) {
       ferr.textContent = e.message; ferr.style.display = 'block';
@@ -2075,7 +2082,10 @@ function buildPiecesList(D) {
   // ── Héritiers ───────────────────────────────────────────────────────────
   sections.push({
     section: 'Pour chaque héritier',
-    pieces: ['Copie de la pièce d\'identité en cours de validité (CNI ou passeport)']
+    pieces: [
+      'Copie de la pièce d\'identité en cours de validité (CNI ou passeport)',
+      'RIB',
+    ]
   });
 
   // ── Dispositions ────────────────────────────────────────────────────────
