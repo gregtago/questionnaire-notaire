@@ -1047,7 +1047,7 @@ const D = {
   defunt: {
     civilite: '', nom: '', nomNaissance: '', prenoms: '',
     dateNaissance: '', lieuNaissance: '', cpNaissance: '', nationalite: '',
-    profession: '', numSecu: '', dateDeces: '', lieuDeces: '', adresse: '',
+    profession: '', numSecu: '', dateDeces: '', lieuDeces: '', adresse: '', adresseCompl: '',
     cp: '', ville: ''
   },
   // Section 2 : Situation familiale
@@ -1267,9 +1267,24 @@ function buildS1() {
         <input type="text" data-d="defunt.lieuDeces" value="${x(d.lieuDeces)}">
       </div>
     </div>
+    <div class="sec-title" style="margin-top:16px">Domicile du défunt</div>
     <div class="field">
-      <label>Dernière adresse <span class="req">*</span></label>
-      <input type="text" data-d="defunt.adresse" value="${x(d.adresse)}">
+      <label>Adresse <span class="req">*</span></label>
+      <input type="text" data-d="defunt.adresse" value="${x(d.adresse)}" placeholder="Numéro et voie">
+    </div>
+    <div class="field">
+      <label>Complément d'adresse</label>
+      <input type="text" data-d="defunt.adresseCompl" value="${x(d.adresseCompl)}" placeholder="Bâtiment, appartement…">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Code postal <span class="req">*</span></label>
+        <input type="text" data-d="defunt.cp" value="${x(d.cp)}" maxlength="5" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Ville <span class="req">*</span></label>
+        <input type="text" data-d="defunt.ville" value="${x(d.ville)}">
+      </div>
     </div>
   </div>`;
 }
