@@ -1808,21 +1808,22 @@ function bindSection(idx) {
   document.querySelectorAll('[data-d]').forEach(el => {
     el.oninput = () => setNested(D, el.dataset.d, el.value);
   });
+  // Civilité défunt (S1)
   document.querySelectorAll('[data-dciv]').forEach(btn => {
     btn.onclick = () => {
       D.defunt.civilite = btn.dataset.dciv;
       document.querySelectorAll('[data-dciv]').forEach(b => b.classList.toggle('on', b===btn));
     };
   });
-  if (idx === 1) bindS2();
-  if (idx === 4) { bindDispositions(); bindDonations(); }
-  if (idx === 5) { bindComptes(); bindBanqChoices(); }
-  if (idx === 2) bindHeritiers();
-  if (idx === 5) bindBiens();
-  if (idx === 6) bindAA();
-  if (idx === 7) { bindAVChoices(); bindContrats(); }
-  if (idx === 8) bindDettes();
-  if (idx === 9) bindFisc();
+  if (idx === 1) bindS2();                              // Situation familiale
+  if (idx === 2) bindHeritiers();                       // Héritiers
+  if (idx === 3) { bindDispositions(); bindDonations(); } // Dispositions
+  if (idx === 4) { bindComptes(); bindBanqChoices(); }  // Comptes bancaires
+  if (idx === 5) bindBiens();                           // Biens immobiliers
+  if (idx === 6) bindAA();                              // Autres actifs
+  if (idx === 7) { bindAVChoices(); bindContrats(); }   // Assurances-vie
+  if (idx === 8) bindDettes();                          // Dettes
+  if (idx === 9) bindFisc();                            // Fiscalité
 }
 
 function bindS2() {
@@ -2007,13 +2008,11 @@ document.getElementById('btnSubmit').onclick = async () => {
       document.getElementById('formNav').innerHTML = '';
       document.getElementById('submitSec').style.display = 'none';
       document.getElementById('btnSubmit').textContent = 'Envoyer mes réponses';
-      // Pré-remplir nom/prénom du défunt depuis l'état civil si saisi
+      // Pré-remplir nom/prénom du déclarant depuis l'état civil
       if (typeof persons !== 'undefined' && persons[0]) {
         const ec = persons[0];
-        if (!D.declarant.nom && ec.NOMU) D.declarant.nom = ec.NOMU || ec.NOM || '';
-        if (!D.declarant.prenom && ec.PRENOMU) D.declarant.prenom = ec.PRENOMU || '';
-        if (!D.defunt.nom && (ec.NOMU || ec.NOM)) D.defunt.nom = ec.NOMU || ec.NOM || '';
-        if (!D.defunt.prenoms && ec.PRENOMU) D.defunt.prenoms = ec.PRENOMU || '';
+        if (!D.declarant.nom)    D.declarant.nom    = ec.NOMU || ec.NOM || '';
+        if (!D.declarant.prenom) D.declarant.prenom = ec.PRENOMU || '';
       }
       renderSection(0);
       window.scrollTo(0,0);
