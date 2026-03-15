@@ -443,6 +443,17 @@ document.getElementById('btnVerify').onclick = async () => {
     if (!r.ok) throw new Error(d.error||'Code incorrect');
     document.getElementById('sCode').style.display='none';
     document.getElementById('sEmail').style.display='none';
+    // Pré-remplir identification acquéreur depuis l'état civil (tous les cas)
+    if (typeof persons !== 'undefined' && persons[0]) {
+      const ec = persons[0];
+      D.acquereur.nom     = (ec.NOMU || ec.NOM || '').toUpperCase();
+      D.acquereur.prenoms = ec.PRENOMU || '';
+      if (persons[1]) {
+        const ec2 = persons[1];
+        D.acquereur2.nom     = (ec2.NOMU || ec2.NOM || '').toUpperCase();
+        D.acquereur2.prenoms = ec2.PRENOMU || '';
+      }
+    }
     if (SKIP_ETATCIVIL) {
       document.getElementById('sForm').style.display='block';
       renderSection(0);
@@ -1675,16 +1686,6 @@ document.getElementById('btnSubmit').onclick = async () => {
       document.getElementById('submitSec').style.display = 'none';
       document.getElementById('btnSubmit').textContent = 'Envoyer mes réponses';
       // Nouveau client : sauter l'étape Identification (déjà saisie dans l'état civil)
-      if (typeof persons !== 'undefined' && persons[0]) {
-        const ec = persons[0];
-        if (!D.acquereur.nom)     D.acquereur.nom     = (ec.NOMU || ec.NOM || '').toUpperCase();
-        if (!D.acquereur.prenoms) D.acquereur.prenoms = ec.PRENOMU || '';
-        if (persons[1]) {
-          const ec2 = persons[1];
-          if (!D.acquereur2.nom)     D.acquereur2.nom     = (ec2.NOMU || ec2.NOM || '').toUpperCase();
-          if (!D.acquereur2.prenoms) D.acquereur2.prenoms = ec2.PRENOMU || '';
-        }
-      }
       renderSection(0);
       window.scrollTo(0,0);
     } catch(e) {
