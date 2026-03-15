@@ -1028,7 +1028,7 @@ const D = {
   // S2 : Mode d'acquisition
   mode: '', // seul | couple | indivision | sci
   indivision: [], // [{ nom:'', quotePart:'' }]
-  sci: { nom: '', siege: '', repartition: '' },
+  sci: { nom: '', siren: '', repartition: '' },
 
   // S3 : Désignation du bien
   bien: {
@@ -1585,32 +1585,37 @@ function showErr(msg) {
 
 function buildPiecesList(D) {
   const sections = [];
-  const hasPret = D.financement && D.financement.pret === "oui";
-  const hasPretRelais = D.financement && D.financement.pretRelais === "oui";
-  const isLoc = D.projet && D.projet.destination === "investissement_locatif";
-  const isSci = D.mode === "sci";
+  const hasPret = D.financement && !!D.financement.pretMontant;
+  const isLoc = D.projet && D.projet.destination === 'investissement_locatif';
+  const isSci = D.mode === 'sci';
+  const hasVentePrealable = D.financement && D.financement.conditionsSuspensives && D.financement.conditionsSuspensives.includes('vente_prealable');
 
-  sections.push({ section: "Pour chaque acquereur", pieces: [
-    "Copie de la piece d'identite en cours de validite (CNI ou passeport)",
-    "Justificatif de domicile recent",
-    "RIB (pour le versement des fonds)",
+  sections.push({ section: "Pour chaque acquéreur", pieces: [
+    "Copie de la pièce d'identité en cours de validité (CNI ou passeport)",
+    "Justificatif de domicile récent",
+    "RIB",
+    "Livret de famille",
   ]});
 
-  if (hasPret || hasPretRelais) {
-    const ps = [];
-    if (hasPret) { ps.push("Offre de pret definitive"); ps.push("Tableau d'amortissement"); }
-    if (hasPretRelais) ps.push("Offre de pret relais");
-    sections.push({ section: "Financement", pieces: ps });
-  } else {
-    sections.push({ section: "Financement", pieces: [] });
+  if (hasPret) {
+    sections.push({ section: "Financement", pieces: [
+      "Offre de prêt définitive",
+      "Tableau d'amortissement",
+    ]});
+  }
+
+  if (hasVentePrealable) {
+    sections.push({ section: "Vente préalable", pieces: [
+      "Compromis de vente du bien à revendre",
+    ]});
   }
 
   if (isLoc) sections.push({ section: "Investissement locatif", pieces: [
-    "Bail projete (si deja redige)",
+    "Bail projeté (si déjà rédigé)",
   ]});
 
-  if (isSci) sections.push({ section: "Societe civile", pieces: [
-    "Statuts de la SCI", "Extrait Kbis",
+  if (isSci) sections.push({ section: "Société civile immobilière", pieces: [
+    "Statuts SCI, Kbis, procès-verbal autorisant l'acquisition",
   ]});
 
   return sections;
@@ -1670,7 +1675,17 @@ document.getElementById('btnSubmit').onclick = async () => {
       document.getElementById('submitSec').style.display = 'none';
       document.getElementById('btnSubmit').textContent = 'Envoyer mes réponses';
       // Nouveau client : sauter l'étape Identification (déjà saisie dans l'état civil)
-      renderSection(SKIP_ETATCIVIL ? 0 : 1);
+      if (typeof persons !== 'undefined' && persons[0]) {
+        const ec = persons[0];
+        if (!D.acquereur.nom)     D.acquereur.nom     = (ec.NOMU || ec.NOM || '').toUpperCase();
+        if (!D.acquereur.prenoms) D.acquereur.prenoms = ec.PRENOMU || '';
+        if (persons[1]) {
+          const ec2 = persons[1];
+          if (!D.acquereur2.nom)     D.acquereur2.nom     = (ec2.NOMU || ec2.NOM || '').toUpperCase();
+          if (!D.acquereur2.prenoms) D.acquereur2.prenoms = ec2.PRENOMU || '';
+        }
+      }
+      renderSection(0);
       window.scrollTo(0,0);
     } catch(e) {
       ferr.textContent = e.message; ferr.style.display = 'block';
