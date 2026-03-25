@@ -135,6 +135,9 @@
     .btn-ghost-outline { width: auto; padding: 12px 20px; background: #fff; color: #111; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; letter-spacing: .05em; cursor: pointer; white-space: nowrap; }
     .btn-ghost-outline:hover { background: #f5f5f5; }
 
+    .btn-dropfile { display: inline-block; margin-top: 16px; padding: 12px 24px; background: #111; color: #fff; border-radius: 4px; font-size: 13px; font-weight: 600; text-decoration: none; letter-spacing: .04em; }
+    .btn-dropfile:hover { background: #333; }
+    .dropfile-note { margin-top: 8px; font-size: 11px; color: #aaa; text-align: center; }
     </style>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -1056,6 +1059,10 @@ document.getElementById('btnSubmit').onclick = async () => {
           <h3>Pièces à nous faire parvenir</h3>
           ${piecesHtml}
           <div class="pieces-email-note">Cette liste vous a été envoyée par email à ${email0}. Merci d'adresser vos pièces à <strong>office@tagot.notaires.fr</strong></div>
+          <div style="text-align:center;margin-top:20px;">
+            <a class="btn-dropfile" href="https://tagot-my.sharepoint.com/:f:/g/personal/gregoiretagot_tagot_notaires_fr/IgCR5rXsF-6cTr-2Obo6iiQXAUYhsjUlMlHkCJFwHs7UFOU" target="_blank" rel="noopener">📎 Déposer mes pièces en ligne</a>
+            <div class="dropfile-note">Espace de dépôt sécurisé OneDrive</div>
+          </div>
         </div>
       </div></div>`;
   } catch(e) {
