@@ -199,11 +199,21 @@ module.exports = async (req, res) => {
     <div style="padding:28px 30px;">
       <p style="font-size:14px;color:#555;margin:0 0 20px;">Bonjour,<br><br>Suite à votre questionnaire, voici la liste des pièces à nous faire parvenir.</p>
       <table style="width:100%;border-collapse:collapse;">${piecesHtml}</table>
-      <p style="font-size:12px;color:#999;margin-top:24px;">Merci d'adresser vos pièces à <a href="mailto:office@tagot.notaires.fr" style="color:#333;font-weight:600;">office@tagot.notaires.fr</a> ou de les déposer directement à l'étude (2 rue Dante, 75005 Paris).</p>
-      <div style="text-align:center;margin-top:20px;">
-        <a href="https://tagot-my.sharepoint.com/:f:/g/personal/gregoiretagot_tagot_notaires_fr/IgCal5Y01LdvS7A9DoB1NtOPAeoQduoKOFkvOemcQ_TcARA" target="_blank" style="display:inline-block;padding:12px 24px;background:#111;color:#fff;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;letter-spacing:.04em;">📎 Déposer mes pièces en ligne</a>
-        <p style="margin:8px 0 0;font-size:11px;color:#bbb;">Espace de dépôt sécurisé OneDrive</p>
-      </div>
+      <table style="width:100%;border-collapse:collapse;margin-top:28px;">
+        <tr>
+          <td style="width:50%;padding:16px 20px;vertical-align:top;border:1px solid #e5e5e5;border-radius:4px;">
+            <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.06em;">Envoi par email</p>
+            <p style="margin:0;font-size:13px;color:#444;line-height:1.5;">Merci d'envoyer les pièces demandées à :<br><a href="mailto:office@tagot.notaires.fr" style="color:#111;font-weight:600;">office@tagot.notaires.fr</a></p>
+          </td>
+          <td style="width:4%;"></td>
+          <td style="width:46%;padding:16px 20px;vertical-align:top;background:#f8f8f6;border:1px solid #e5e5e5;border-radius:4px;text-align:center;">
+            <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.06em;">Envoi en ligne</p>
+            <p style="margin:0 0 14px;font-size:13px;color:#444;line-height:1.5;">Merci d'uploader les pièces demandées en suivant ce lien :</p>
+            <a href="https://tagot-my.sharepoint.com/:f:/g/personal/gregoiretagot_tagot_notaires_fr/IgCal5Y01LdvS7A9DoB1NtOPAeoQduoKOFkvOemcQ_TcARA" target="_blank" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;border-radius:4px;font-size:12px;font-weight:600;text-decoration:none;letter-spacing:.04em;">&#128206; Déposer mes pièces</a>
+          </td>
+        </tr>
+      </table>
+      <p style="font-size:11px;color:#bbb;margin-top:16px;text-align:center;">Le dépôt peut également se faire en papier directement à l'étude : 2 rue Dante, 75005 Paris.</p>
     </div>
     <div style="background:#f5f5f5;padding:14px 30px;border-top:1px solid #eee;">
       <p style="margin:0;font-size:10px;color:#bbb;">Grégoire TAGOT | notaire — 2 rue Dante, 75005 Paris</p>
