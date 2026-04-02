@@ -908,6 +908,8 @@ ${vr('REGPRE', '')}
 ${vr('LIEME', '')}
 ${vr('NOTME', '')}
 ${vr('NOPME', '')}
+${vr('TEL', p.TEL||'')}
+${vr('EMAIL', i===0 ? (p.EMAIL||email0||'') : (p.EMAIL||''))}
 ${histXml}
   </Person>`;
   });
