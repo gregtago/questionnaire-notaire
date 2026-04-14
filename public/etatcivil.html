@@ -1049,7 +1049,7 @@ document.getElementById('btnSubmit').onclick = async () => {
     const r = await fetch('/api/soumettre', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', pieces: buildPiecesList(persons) })
+      body: JSON.stringify({ personnes: persons, xml, type: 'etatcivil', email: email0, pieces: buildPiecesList(persons) })
     });
     if (!r.ok) { const e=await r.json().catch(()=>({})); throw new Error(e.error||'Erreur serveur'); }
     // Afficher récap
