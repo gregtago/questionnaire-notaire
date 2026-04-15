@@ -14,6 +14,8 @@ module.exports = async (req, res) => {
   // ── Email client — liste de pièces ──────────────────────────────────
   if (email && pieces && pieces.length) {
     const nomDossier = "questionnaire état civil";
+    const prenomClient = personnes[0]?.PRENOMU || '';
+    const nomClient = personnes[0]?.NOMU || '';
     const piecesHtml = pieces.map(s => `
       <tr><td colspan="2" style="padding:14px 0 4px;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #eee;">${s.section}</td></tr>
       ${s.pieces.map(p => `<tr><td style="padding:5px 0 5px 12px;font-size:13px;color:#444;border-bottom:1px solid #f8f8f8;">&rarr; ${p}</td></tr>`).join('')}
@@ -27,7 +29,7 @@ module.exports = async (req, res) => {
       <div style="font-size:12px;color:#666;margin-top:4px;">${nomDossier}</div>
     </div>
     <div style="padding:28px 30px;">
-      <p style="font-size:14px;color:#555;margin:0 0 20px;">Bonjour ${personnes[0]?.PRENOMU ? personnes[0].PRENOMU : ''},<br><br>Suite à votre questionnaire, voici la liste des pièces à nous faire parvenir.</p>
+      <p style="font-size:14px;color:#555;margin:0 0 20px;">Bonjour ${prenomClient},<br><br>Suite à votre questionnaire, voici la liste des pièces à nous faire parvenir.</p>
       <table style="width:100%;border-collapse:collapse;">${piecesHtml}</table>
       <table style="width:100%;border-collapse:collapse;margin-top:28px;">
         <tr>
@@ -53,7 +55,7 @@ module.exports = async (req, res) => {
     try {
       const nodemailer = require('nodemailer');
       const t = nodemailer.createTransport({ host: process.env.SMTP_HOST, port: +process.env.SMTP_PORT, secure: true, auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
-      await t.sendMail({ from: process.env.SMTP_USER, to: email, subject: `État civil — pièces à fournir${personnes[0]?.NOMU ? ' — ' + personnes[0].NOMU + ' ' + (personnes[0].PRENOMU||'') : ''}`, html: clientHtml });
+      await t.sendMail({ from: process.env.SMTP_USER, to: email, subject: `État civil — pièces à fournir${nomClient ? ' — ' + nomClient + ' ' + prenomClient : ''}`, html: clientHtml });
     } catch(e) { console.error('Email client pieces:', e.message); }
   }
 
