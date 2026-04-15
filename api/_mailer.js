@@ -34,7 +34,7 @@ function sec(title) {
 
 async function sendAll(personnes, xml, type) {
   const typeLabel = TYPE_LABELS[type] || type;
-  const noms = personnes.map(p => `${p.NOMU||p.NOM||""} ${p.PRENOMU||""}`.trim()).join(", ");
+  const noms = personnes.map(p => `${p.NOM||""} ${p.PRENOMU||""}`.trim()).join(", ");
   const today = new Date().toLocaleDateString("fr-FR");
 
   const personnesHtml = personnes.map((p, i) => {
@@ -84,7 +84,7 @@ async function sendAll(personnes, xml, type) {
     } else {
       rows += `<tr><td colspan="2" style="font-size:11px;color:#aaa;padding:5px 0;font-style:italic;">Conjoint / Partenaire</td></tr>`;
     }
-    const nomComplet = `${p.TITRE||""} ${p.NOMU||p.NOM||""} ${p.PRENOMU||""}`.trim();
+    const nomComplet = `${p.TITRE||""} ${p.NOM||""} ${p.PRENOMU||""}`.trim();
     return `${i > 0 ? '<tr><td colspan="2" style="padding:20px 0 6px;"><hr style="border:none;border-top:2px solid #111;margin:0;"/></td></tr>' : ""}
       <tr><td colspan="2" style="padding-bottom:6px;"><strong style="font-size:15px;color:#111;">${nomComplet}</strong></td></tr>${rows}`;
   }).join("");
