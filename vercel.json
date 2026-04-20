@@ -1,85 +1,14 @@
 {
   "rewrites": [
-    {
-      "source": "/etat-civil",
-      "destination": "/etat-civil.html"
-    },
-    {
-      "source": "/api/otp/envoyer",
-      "destination": "/api/otp/envoyer"
-    },
-    {
-      "source": "/api/otp/verifier",
-      "destination": "/api/otp/verifier"
-    },
-    {
-      "source": "/api/soumettre",
-      "destination": "/api/soumettre"
-    },
-    {
-      "source": "/api/soumettre-succession",
-      "destination": "/api/soumettre-succession"
-    },
-    {
-      "source": "/api/soumettre-divorce",
-      "destination": "/api/soumettre-divorce"
-    },
-    {
-      "source": "/api/soumettre-lcbft",
-      "destination": "/api/soumettre-lcbft"
-    },
-    {
-      "source": "/api/envoyer-lien",
-      "destination": "/api/envoyer-lien"
-    },
-    {
-      "source": "/succession",
-      "destination": "/public/succession.html"
-    },
-    {
-      "source": "/divorce",
-      "destination": "/public/divorce.html"
-    },
-    {
-      "source": "/lcbft",
-      "destination": "/public/lcbft.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/public/admin.html"
-    },
-    {
-      "source": "/api/soumettre-acquisition",
-      "destination": "/api/soumettre-acquisition"
-    },
-    {
-      "source": "/acquisition",
-      "destination": "/public/acquisition.html"
-    },
-    {
-      "source": "/api/soumettre-vente-appartement",
-      "destination": "/api/soumettre-vente-appartement"
-    },
-    {
-      "source": "/vente-appartement",
-      "destination": "/public/vente-appartement.html"
-    },
-    {
-      "source": "/api/soumettre-vente-maison",
-      "destination": "/api/soumettre-vente-maison"
-    },
-    {
-      "source": "/vente-maison",
-      "destination": "/public/vente-maison.html"
-    },
-    {
-      "source": "/etatcivil",
-      "destination": "/public/etatcivil.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/index.html"
-    }
+    { "source": "/succession",        "destination": "/succession.html" },
+    { "source": "/divorce",           "destination": "/divorce.html" },
+    { "source": "/acquisition",       "destination": "/acquisition.html" },
+    { "source": "/vente-appartement", "destination": "/vente-appartement.html" },
+    { "source": "/vente-maison",      "destination": "/vente-maison.html" },
+    { "source": "/etatcivil",         "destination": "/etatcivil.html" },
+    { "source": "/etat-civil",        "destination": "/etat-civil.html" },
+    { "source": "/lcbft",             "destination": "/lcbft.html" },
+    { "source": "/admin",             "destination": "/admin.html" }
   ],
   "headers": [
     {
@@ -129,12 +58,12 @@
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
-    }
-  ],
-  "routes": [
+    },
     {
-      "src": "/etatcivil",
-      "dest": "/etatcivil.html"
+      "source": "/etatcivil",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
     }
   ]
 }
