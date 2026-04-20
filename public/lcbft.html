@@ -97,10 +97,11 @@
     .confirm p { color: #777; font-size: 14px; }
 
     /* Sélecteur de langue */
-    .lang-switch { display: flex; gap: 4px; align-items: center; }
-    .lang-btn { background: none; border: 1px solid rgba(255,255,255,.15); border-radius: 3px; padding: 4px 8px; cursor: pointer; font-size: 16px; line-height: 1; transition: border-color .15s, background .15s; opacity: .55; }
-    .lang-btn:hover { opacity: .85; border-color: rgba(255,255,255,.35); }
-    .lang-btn.active { opacity: 1; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.06); }
+    .lang-switch { display: flex; gap: 6px; align-items: center; }
+    .lang-btn { background: none; border: 1px solid rgba(255,255,255,.2); border-radius: 3px; padding: 3px 6px; cursor: pointer; line-height: 0; transition: border-color .15s, background .15s, opacity .15s; opacity: .6; display: inline-flex; align-items: center; justify-content: center; }
+    .lang-btn svg { display: block; border-radius: 1px; }
+    .lang-btn:hover { opacity: .9; border-color: rgba(255,255,255,.4); }
+    .lang-btn.active { opacity: 1; border-color: rgba(255,255,255,.6); background: rgba(255,255,255,.08); }
 
     /* RGPD accueil — version propre */
     .rgpd-box { font-size: 13px; color: #444; line-height: 1.7; background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 22px 24px; }
@@ -172,8 +173,23 @@
   <div class="top-bar">
     <div class="cabinet">Grégoire TAGOT&nbsp;|&nbsp;notaire</div>
     <div class="lang-switch">
-      <button type="button" class="lang-btn active" data-lang="fr" title="Français" aria-label="Français">🇫🇷</button>
-      <button type="button" class="lang-btn" data-lang="en" title="English" aria-label="English">🇬🇧</button>
+      <button type="button" class="lang-btn active" data-lang="fr" title="Français" aria-label="Français">
+        <svg width="22" height="16" viewBox="0 0 22 16" xmlns="http://www.w3.org/2000/svg">
+          <rect width="7.33" height="16" fill="#0055A4"/>
+          <rect x="7.33" width="7.34" height="16" fill="#FFFFFF"/>
+          <rect x="14.67" width="7.33" height="16" fill="#EF4135"/>
+        </svg>
+      </button>
+      <button type="button" class="lang-btn" data-lang="en" title="English" aria-label="English">
+        <svg width="22" height="16" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+          <clipPath id="uk-clip"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+          <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+          <path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFFFFF" stroke-width="6"/>
+          <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#uk-clip)" stroke="#C8102E" stroke-width="4"/>
+          <path d="M30,0 v30 M0,15 h60" stroke="#FFFFFF" stroke-width="10"/>
+          <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+        </svg>
+      </button>
     </div>
   </div>
   <div class="title-bar">
