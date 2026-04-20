@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Envoi de questionnaire — Grégoire TAGOT | notaire</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+    .header { background: #111; color: #fff; }
+    .header .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .header .cabinet { font-size: 13px; letter-spacing: .04em; color: rgba(255,255,255,.55); font-weight: 400; }
+    .header .site-link { font-size: 11px; color: rgba(255,255,255,.35); text-decoration: none; letter-spacing: .04em; }
+    .header .site-link:hover { color: rgba(255,255,255,.7); }
+    .header .title-bar { padding: 14px 28px 18px; background: #1a1a1a; }
+    .header h1 { font-size: 22px; font-weight: 300; }
+    .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+    .screen { max-width: 520px; margin: 28px auto; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p.intro { color: #777; font-size: 14px; margin-bottom: 28px; }
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input, .fg select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; background: #fff; font-family: inherit; color: #1a1a1a; }
+    .fg input:focus, .fg select:focus { border-color: #111; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #999; cursor: not-allowed; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 13px; padding: 12px 14px; border-radius: 4px; margin-top: 16px; }
+    .confirm { text-align: center; padding: 30px 10px 10px; }
+    .confirm .icon { font-size: 40px; margin-bottom: 14px; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; margin-bottom: 24px; }
+    .btn-ghost { background: none; border: 1px solid #ddd; color: #555; font-size: 12px; padding: 10px 20px; border-radius: 4px; cursor: pointer; letter-spacing: .06em; text-transform: uppercase; font-family: inherit; }
+    .btn-ghost:hover { border-color: #111; color: #111; }
+    .hidden { display: none; }
+    .recap { background: #f9f9f7; border: 1px solid #eee; border-radius: 4px; padding: 14px 16px; margin-bottom: 16px; text-align: left; font-size: 13px; color: #444; }
+    .recap .r-line { padding: 3px 0; }
+    .recap .r-lbl { color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="top-bar">
+      <div class="cabinet">Grégoire TAGOT&nbsp;|&nbsp;notaire</div>
+      <a href="https://tagot.notaires.fr" class="site-link" target="_blank">tagot.notaires.fr ↗</a>
+    </div>
+    <div class="title-bar">
+      <h1>Envoi d'un questionnaire</h1>
+      <div class="subtitle">Interface interne — étude</div>
+    </div>
+  </div>
+
+  <!-- ÉCRAN MOT DE PASSE -->
+  <div class="screen" id="screen-auth">
+    <div class="card">
+      <h2>Authentification</h2>
+      <p class="intro">Saisissez le mot de passe pour accéder à l'interface d'envoi.</p>
+      <form id="authForm">
+        <div class="fg">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn">Entrer</button>
+        <div class="err" id="authErr"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ÉCRAN ENVOI -->
+  <div class="screen hidden" id="screen-send">
+    <div class="card">
+      <h2>Envoyer un questionnaire</h2>
+      <p class="intro">Sélectionnez le questionnaire, saisissez les coordonnées du client et envoyez le lien par email.</p>
+      <form id="sendForm">
+        <div class="fg">
+          <label for="type">Questionnaire</label>
+          <select id="type" required>
+            <option value="">— Choisir —</option>
+            <option value="etatcivil">État civil</option>
+            <option value="acquisition">Achat immobilier</option>
+            <option value="vente-maison">Vente — Maison</option>
+            <option value="vente-appartement">Vente — Appartement</option>
+            <option value="divorce">Divorce</option>
+            <option value="succession">Succession</option>
+            <option value="lcbft">LCB-FT — Origine des fonds</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="fg">
+            <label for="prenom">Prénom (optionnel)</label>
+            <input type="text" id="prenom" autocomplete="given-name">
+          </div>
+          <div class="fg">
+            <label for="nom">Nom (optionnel)</label>
+            <input type="text" id="nom" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="fg">
+          <label for="email">Email du client</label>
+          <input type="email" id="email" autocomplete="email" required>
+        </div>
+        <button type="submit" class="btn" id="sendBtn">Envoyer le lien</button>
+        <div class="err" id="sendErr"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ÉCRAN CONFIRMATION -->
+  <div class="screen hidden" id="screen-done">
+    <div class="card">
+      <div class="confirm">
+        <div class="icon">✓</div>
+        <h2>Email envoyé</h2>
+        <p>Le client va recevoir le lien du questionnaire.</p>
+        <div class="recap" id="recap"></div>
+        <button type="button" class="btn-ghost" id="btnAgain">Envoyer un autre lien</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const show = (id) => { ['screen-auth','screen-send','screen-done'].forEach(s => $(s).classList.toggle('hidden', s !== id)); };
+let storedPassword = '';
+
+$('authForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('authErr').textContent = '';
+  const pw = $('password').value.trim();
+  if (!pw) { $('authErr').textContent = 'Mot de passe requis'; return; }
+  // Validation : on tente un envoi avec un email invalide juste pour tester le mot de passe
+  // Plutôt : on stocke le mot de passe et on le validera à l'envoi réel
+  storedPassword = pw;
+  show('screen-send');
+});
+
+$('sendForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('sendErr').textContent = '';
+  const btn = $('sendBtn');
+  const type = $('type').value;
+  const email = $('email').value.trim();
+  const prenom = $('prenom').value.trim();
+  const nom = $('nom').value.trim();
+  if (!type) { $('sendErr').textContent = 'Sélectionnez un questionnaire'; return; }
+  if (!email.includes('@')) { $('sendErr').textContent = 'Email invalide'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+  try {
+    const r = await fetch('/api/envoyer-lien', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: storedPassword, type, email, prenom, nom })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      if (r.status === 401) {
+        $('sendErr').textContent = 'Mot de passe incorrect.';
+        storedPassword = '';
+        setTimeout(() => show('screen-auth'), 800);
+      } else {
+        $('sendErr').textContent = data.error || 'Erreur lors de l\'envoi';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Envoyer le lien';
+      return;
+    }
+    const typeLabel = $('type').selectedOptions[0].textContent;
+    $('recap').innerHTML = `
+      <div class="r-line"><span class="r-lbl">Questionnaire</span>${typeLabel}</div>
+      <div class="r-line"><span class="r-lbl">Destinataire</span>${email}</div>
+      ${(prenom || nom) ? `<div class="r-line"><span class="r-lbl">Client</span>${[prenom, nom].filter(Boolean).join(' ')}</div>` : ''}
+    `;
+    show('screen-done');
+    $('sendForm').reset();
+  } catch (err) {
+    $('sendErr').textContent = 'Erreur réseau';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer le lien';
+  }
+});
+
+$('btnAgain').addEventListener('click', () => show('screen-send'));
+</script>
+</body>
+</html>
