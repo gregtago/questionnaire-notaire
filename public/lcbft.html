@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire LCB-FT — Grégoire TAGOT | notaire</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; }
+    .header { background: #111; color: #fff; }
+    .header .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .header .cabinet { font-size: 13px; letter-spacing: .04em; color: rgba(255,255,255,.55); font-weight: 400; }
+    .header .site-link { font-size: 11px; color: rgba(255,255,255,.35); text-decoration: none; letter-spacing: .04em; }
+    .header .site-link:hover { color: rgba(255,255,255,.7); }
+    .header .title-bar { padding: 14px 28px 18px; background: #1a1a1a; }
+    .header h1 { font-size: 22px; font-weight: 300; }
+    .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+
+    .screen { max-width: 520px; margin: 28px auto; padding: 0 20px; }
+    .screen-wide { max-width: 820px !important; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 40px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p.intro { color: #777; font-size: 14px; margin-bottom: 28px; }
+
+    .fg { margin-bottom: 20px; }
+    .fg label { display: block; font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input, .fg select, .fg textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; font-family: inherit; background: #fff; color: #1a1a1a; }
+    .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: #111; }
+
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-ghost { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 12px; font-family: inherit; }
+    .btn-ghost-outline { width: auto; padding: 12px 20px; background: #fff; color: #111; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; letter-spacing: .05em; cursor: pointer; white-space: nowrap; font-family: inherit; }
+    .btn-ghost-outline:hover { background: #f5f5f5; }
+
+    .err { color: #c0392b; font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .otp-input { text-align: center; font-size: 28px; letter-spacing: .3em; font-weight: 600; }
+    .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: sp .6s linear infinite; margin-right: 7px; vertical-align: middle; }
+    @keyframes sp { to { transform: rotate(360deg); } }
+
+    .form-wrap { max-width: 820px; margin: 0 auto; padding: 28px 20px 80px; }
+    .sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 24px 28px; margin-bottom: 14px; }
+    .sec-title { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #999; margin-bottom: 6px; }
+    .sec-desc { font-size: 12px; color: #aaa; margin-bottom: 20px; line-height: 1.6; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #999; margin-bottom: 5px; }
+    .field label .req { color: #c0392b; }
+    .field label .opt { color: #ccc; font-size: 10px; font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: 6px; }
+    .field input, .field select, .field textarea { width: 100%; padding: 9px 11px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #fff; outline: none; font-family: inherit; color: #1a1a1a; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #111; }
+    .field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+    .choice { padding: 7px 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; cursor: pointer; background: #fff; color: #555; font-family: inherit; }
+    .choice.on { background: #111; color: #fff; border-color: #111; }
+
+    .cond { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .cond.show { display: block; }
+
+    /* Cases à cocher style liste */
+    .checklist { display: flex; flex-direction: column; gap: 6px; }
+    .chk { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid #e5e5e5; border-radius: 4px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .chk:hover { border-color: #aaa; }
+    .chk.on { border-color: #111; background: #fafafa; }
+    .chk input[type=checkbox] { margin-top: 2px; accent-color: #111; }
+    .chk .chk-lbl { font-size: 14px; color: #333; flex: 1; line-height: 1.4; }
+    .chk .chk-sub { font-size: 12px; color: #888; margin-top: 3px; }
+
+    .submit-sec { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 28px; }
+    .btn-submit { width: 100%; padding: 14px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+    .btn-submit:hover { background: #333; }
+    .btn-submit:disabled { background: #999; cursor: not-allowed; }
+    .ferr { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
+
+    .attestation { background: #f9f9f7; border: 1px solid #e5e5e5; border-radius: 4px; padding: 18px 22px; margin-bottom: 20px; font-size: 13px; color: #444; line-height: 1.7; }
+    .attestation strong { color: #111; }
+    .attestation ul { margin: 10px 0 0 20px; padding: 0; }
+    .attestation li { margin-bottom: 6px; font-size: 13px; }
+
+    .signature-box { background: #fff; border: 2px solid #111; border-radius: 4px; padding: 20px; margin-top: 16px; }
+    .signature-box label { display: block; font-size: 11px; font-weight: 700; color: #111; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+    .signature-box .mention { font-size: 12px; color: #666; font-style: italic; margin-bottom: 10px; line-height: 1.5; }
+    .signature-box input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-family: 'Brush Script MT', cursive; font-style: italic; }
+
+    .rgpd { font-size: 11px; color: #aaa; line-height: 1.6; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+
+    .confirm { text-align: center; padding: 40px 20px 20px; }
+    .confirm .icon { font-size: 44px; margin-bottom: 14px; color: #15803d; }
+    .confirm h2 { font-size: 20px; font-weight: 300; margin-bottom: 10px; }
+    .confirm p { color: #777; font-size: 14px; }
+
+    /* RGPD check accueil */
+    .rgpd-box { font-size: 12px; color: #555; line-height: 1.75; background: #fafafa; border: 1px solid #e5e5e5; border-radius: 4px; padding: 20px; }
+    .rgpd-check { margin-top: 14px; padding: 14px 16px; background: #f8f8f8; border-radius: 4px; border: 1px solid #e5e5e5; transition: border-color .15s; font-size: 12px; color: #666; line-height: 1.6; cursor: pointer; }
+    .rgpd-check.checked { border-color: #111; background: #fafafa; }
+    .rgpd-check input[type=checkbox] { display: none; }
+    .rgpd-check strong { color: #111; font-size: 12px; }
+    .rgpd-accept { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 0; }
+    .rgpd-accept em { font-style: normal; font-size: 12px; font-weight: 600; color: #111; }
+    .toggle { min-width: 36px; height: 20px; background: #ddd; border-radius: 10px; position: relative; transition: background .2s; flex-shrink: 0; }
+    .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 50%; top: 2px; left: 2px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle { background: #111; }
+    .rgpd-check input[type=checkbox]:checked ~ .rgpd-accept .toggle::after { left: 18px; }
+
+    footer { padding: 32px 28px 28px; border-top: 1px solid #e8e8e5; display: flex; justify-content: space-between; align-items: flex-start; max-width: 700px; margin: 0 auto; }
+    footer .f-left .f-name { font-size: 12px; font-weight: 500; color: #555; }
+    footer .f-left .f-url { font-size: 11px; color: #bbb; margin-top: 2px; }
+    footer .f-right { text-align: right; font-size: 11px; color: #bbb; line-height: 1.8; }
+
+    @media(max-width:600px){ .row2,.row3{ grid-template-columns:1fr; } .card{ padding: 24px; } .header .top-bar, .header .title-bar { padding-left:18px; padding-right:18px; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="top-bar">
+    <div class="cabinet">Grégoire TAGOT&nbsp;|&nbsp;notaire</div>
+    <a href="https://tagot.notaires.fr" target="_blank" class="site-link">tagot.notaires.fr ↗</a>
+  </div>
+  <div class="title-bar">
+    <h1 id="pageTitle">Questionnaire LCB-FT</h1>
+    <div class="subtitle" id="pageSub">Attestation sur l'honneur d'origine des fonds</div>
+  </div>
+</div>
+
+<!-- ÉCRAN 0 : Accueil + RGPD -->
+<div id="sAccueil" class="screen">
+  <div class="card">
+    <h2>Obligations de vigilance</h2>
+    <p class="intro">
+      Conformément aux articles L.561-5 et suivants du Code monétaire et financier, les notaires sont tenus d'identifier leurs clients et de recueillir certaines informations avant la réalisation d'une opération.
+      Ce questionnaire nous permet de satisfaire à ces obligations.
+    </p>
+    <div class="rgpd-box">
+      <strong>Protection des données — Information RGPD.</strong><br>
+      Les informations recueillies par le présent questionnaire font l'objet d'un traitement informatique destiné à l'accomplissement des obligations légales et réglementaires de l'office notarial, notamment en matière de lutte contre le blanchiment de capitaux et le financement du terrorisme. Elles sont conservées pour la durée strictement nécessaire. Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et, dans les limites légales, d'opposition ou d'effacement, à exercer auprès de l'office : <a href="mailto:office@tagot.notaires.fr" style="color:#111;">office@tagot.notaires.fr</a>.
+    </div>
+    <label class="rgpd-check" id="rgpdLabel">
+      <input type="checkbox" id="cbRgpd">
+      <div class="rgpd-accept">
+        <em>J'ai lu et j'accepte les conditions ci-dessus.</em>
+        <span class="toggle"></span>
+      </div>
+    </label>
+    <button class="btn" id="btnAccueil" disabled style="margin-top:18px" onclick="validerAccueil()">COMMENCER</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 1 : Email -->
+<div id="sEmail" class="screen" style="display:none">
+  <div class="card">
+    <h2>Vérification email</h2>
+    <p class="intro">Saisissez votre adresse email. Vous recevrez un code à 6 chiffres pour accéder au questionnaire.</p>
+    <div class="fg">
+      <label>Adresse email <span style="color:#c0392b">*</span></label>
+      <input type="email" id="iEmail" autocomplete="email">
+    </div>
+    <button class="btn" id="btnSend">ENVOYER LE CODE</button>
+    <div class="err" id="eEmail"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN 2 : Code -->
+<div id="sCode" class="screen" style="display:none">
+  <div class="card">
+    <h2>Code de vérification</h2>
+    <p class="intro" id="otpMsg">Saisissez le code reçu par email.</p>
+    <div class="fg">
+      <label>Code à 6 chiffres</label>
+      <input type="text" id="iCode" class="otp-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+    </div>
+    <button class="btn" id="btnVerify">VALIDER</button>
+    <div class="err" id="eCode"></div>
+    <br><button class="btn-ghost" id="btnResend">Renvoyer le code</button>
+  </div>
+</div>
+
+<!-- ÉCRAN 3 : Formulaire -->
+<div id="sForm" style="display:none">
+  <div class="form-wrap">
+
+    <!-- I. IDENTITÉ DU DÉCLARANT -->
+    <div class="sec">
+      <div class="sec-title">I. Identité du déclarant</div>
+      <div class="sec-desc">Informations relatives à la personne qui souscrit la présente attestation.</div>
+      <div class="field">
+        <label>Agissant en qualité de <span class="req">*</span></label>
+        <div class="btns" id="btnQualite">
+          <button type="button" class="choice" data-val="ACQ">Acquéreur</button>
+          <button type="button" class="choice" data-val="VEN">Vendeur</button>
+          <button type="button" class="choice" data-val="REP">Représentant / mandataire</button>
+          <button type="button" class="choice" data-val="AUT">Autre</button>
+        </div>
+      </div>
+      <div class="field cond" id="qualiteAutreWrap">
+        <label>Précisez la qualité</label>
+        <input type="text" id="qualiteAutre" placeholder="Ex. gérant de la SCI, héritier…">
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label>Civilité</label>
+          <select id="civ">
+            <option value="">—</option>
+            <option value="M.">M.</option>
+            <option value="Mme">Mme</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nom de naissance <span class="req">*</span></label>
+          <input type="text" id="nom">
+        </div>
+        <div class="field">
+          <label>Nom d'usage <span class="opt">(si différent)</span></label>
+          <input type="text" id="nomu">
+        </div>
+      </div>
+      <div class="field">
+        <label>Prénom(s) <span class="req">*</span></label>
+        <input type="text" id="prenoms">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Date de naissance <span class="req">*</span></label>
+          <input type="date" id="dateNaiss">
+        </div>
+        <div class="field">
+          <label>Lieu de naissance <span class="req">*</span></label>
+          <input type="text" id="lieuNaiss" placeholder="Ville (pays si étranger)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Nationalité <span class="req">*</span></label>
+        <input type="text" id="nationalite" value="Française">
+      </div>
+      <div class="field">
+        <label>Adresse complète <span class="req">*</span></label>
+        <input type="text" id="adresse" placeholder="N° et voie, code postal, ville">
+      </div>
+      <div class="field">
+        <label>Profession <span class="opt">(facultatif mais utile)</span></label>
+        <input type="text" id="profession">
+      </div>
+    </div>
+
+    <!-- I bis. PPE -->
+    <div class="sec">
+      <div class="sec-title">II. Personne politiquement exposée (PPE)</div>
+      <div class="sec-desc">
+        Une PPE est une personne exerçant ou ayant exercé, au cours des douze derniers mois, des fonctions publiques importantes (chef d'État, ministre, parlementaire, ambassadeur, magistrat de haute juridiction, dirigeant d'entreprise publique, etc.), ainsi que les membres directs de sa famille et ses proches collaborateurs.
+      </div>
+      <div class="field">
+        <label>Êtes-vous, ou avez-vous été dans les 12 derniers mois, une PPE ? <span class="req">*</span></label>
+        <div class="btns" id="btnPpeSelf">
+          <button type="button" class="choice" data-val="N">Non</button>
+          <button type="button" class="choice" data-val="O">Oui</button>
+        </div>
+      </div>
+      <div class="field cond" id="ppeSelfPrec">
+        <label>Précisez la fonction exercée</label>
+        <input type="text" id="ppeSelfFonction" placeholder="Ex. parlementaire, ambassadeur…">
+      </div>
+      <div class="field">
+        <label>Un membre de votre famille proche est-il une PPE ? <span class="req">*</span></label>
+        <div class="sec-desc" style="margin:0 0 8px;font-size:11px;">Conjoint, partenaire, enfants, parents.</div>
+        <div class="btns" id="btnPpeFam">
+          <button type="button" class="choice" data-val="N">Non</button>
+          <button type="button" class="choice" data-val="O">Oui</button>
+        </div>
+      </div>
+      <div class="field cond" id="ppeFamPrec">
+        <label>Précisez (lien de parenté, fonction)</label>
+        <input type="text" id="ppeFamFonction" placeholder="Ex. conjoint, ministre…">
+      </div>
+      <div class="field">
+        <label>Êtes-vous proche collaborateur d'une PPE ? <span class="req">*</span></label>
+        <div class="btns" id="btnPpeColl">
+          <button type="button" class="choice" data-val="N">Non</button>
+          <button type="button" class="choice" data-val="O">Oui</button>
+        </div>
+      </div>
+      <div class="field cond" id="ppeCollPrec">
+        <label>Précisez</label>
+        <input type="text" id="ppeCollFonction" placeholder="Nature du lien, fonction de la PPE…">
+      </div>
+    </div>
+
+    <!-- II. OPÉRATION -->
+    <div class="sec">
+      <div class="sec-title">III. Opération concernée</div>
+      <div class="sec-desc">Informations relatives à l'acte ou au projet pour lequel la présente attestation est établie.</div>
+      <div class="field">
+        <label>Nature de l'opération <span class="req">*</span></label>
+        <select id="natureOp">
+          <option value="">—</option>
+          <option value="Acquisition immobilière">Acquisition immobilière</option>
+          <option value="Vente immobilière">Vente immobilière</option>
+          <option value="Donation">Donation</option>
+          <option value="Constitution de société">Constitution de société</option>
+          <option value="Apport / cession de parts">Apport / cession de parts</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div class="field cond" id="natureAutreWrap">
+        <label>Précisez</label>
+        <input type="text" id="natureAutre">
+      </div>
+      <div class="field">
+        <label>Description du bien ou de l'opération <span class="req">*</span></label>
+        <textarea id="descOp" placeholder="Ex. appartement sis 12 rue Dante 75005 Paris, 3 pièces, 65 m²"></textarea>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Prix ou montant de l'opération (hors frais) <span class="req">*</span></label>
+          <input type="number" id="prix" min="0" step="1" placeholder="€">
+        </div>
+        <div class="field">
+          <label>Date prévisionnelle <span class="opt">(si connue)</span></label>
+          <input type="date" id="datePrev">
+        </div>
+      </div>
+    </div>
+
+    <!-- II bis. BÉNÉFICIAIRE EFFECTIF -->
+    <div class="sec">
+      <div class="sec-title">IV. Personne morale &amp; bénéficiaire(s) effectif(s)</div>
+      <div class="sec-desc">À compléter uniquement si l'opération est réalisée par ou au profit d'une société, d'une association ou de toute autre personne morale.</div>
+      <div class="field">
+        <label>L'opération implique-t-elle une personne morale (société, SCI, association…) ? <span class="req">*</span></label>
+        <div class="btns" id="btnPm">
+          <button type="button" class="choice" data-val="N">Non</button>
+          <button type="button" class="choice" data-val="O">Oui</button>
+        </div>
+      </div>
+      <div class="cond" id="pmWrap">
+        <div class="row2">
+          <div class="field">
+            <label>Dénomination sociale</label>
+            <input type="text" id="pmDenom">
+          </div>
+          <div class="field">
+            <label>Forme juridique</label>
+            <input type="text" id="pmForme" placeholder="SCI, SARL, SAS…">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>SIREN / SIRET</label>
+            <input type="text" id="pmSiren">
+          </div>
+          <div class="field">
+            <label>Siège social</label>
+            <input type="text" id="pmSiege">
+          </div>
+        </div>
+
+        <div class="sec-title" style="margin-top:20px">Bénéficiaire(s) effectif(s)</div>
+        <div class="sec-desc">Personnes physiques qui, en dernier ressort, détiennent directement ou indirectement plus de 25 % du capital ou des droits de vote, ou qui exercent un contrôle sur la société par tout autre moyen.</div>
+        <div id="beList"></div>
+        <button type="button" class="btn-ghost-outline" id="btnAddBe" style="margin-top:6px">+ Ajouter un bénéficiaire effectif</button>
+      </div>
+    </div>
+
+    <!-- III. ORIGINE DES FONDS -->
+    <div class="sec" id="secFonds">
+      <div class="sec-title">V. Origine des fonds</div>
+      <div class="sec-desc">Indiquez la ou les sources à l'origine des fonds destinés à financer l'opération. Plusieurs choix possibles.</div>
+      <div class="checklist" id="fondsList">
+        <label class="chk" data-key="epargne"><input type="checkbox"><div class="chk-lbl">Épargne personnelle<div class="chk-sub">Revenus professionnels, économies</div></div></label>
+        <label class="chk" data-key="vente"><input type="checkbox"><div class="chk-lbl">Vente d'un bien immobilier</div></label>
+        <label class="chk" data-key="succession"><input type="checkbox"><div class="chk-lbl">Succession ou donation</div></label>
+        <label class="chk" data-key="pret"><input type="checkbox"><div class="chk-lbl">Prêt bancaire</div></label>
+        <label class="chk" data-key="titres"><input type="checkbox"><div class="chk-lbl">Cession de titres ou valeurs mobilières</div></label>
+        <label class="chk" data-key="indem"><input type="checkbox"><div class="chk-lbl">Indemnité<div class="chk-sub">Assurance, licenciement, etc.</div></div></label>
+        <label class="chk" data-key="autre"><input type="checkbox"><div class="chk-lbl">Autre origine</div></label>
+      </div>
+
+      <div class="cond" id="detVente">
+        <div class="field"><label>Précisez (bien vendu)</label><input type="text" id="detVenteTxt" placeholder="Ex. appartement vendu le 12/03/2025 pour 320 000 €"></div>
+      </div>
+      <div class="cond" id="detSucc">
+        <div class="field"><label>Précisez (succession / donation)</label><input type="text" id="detSuccTxt" placeholder="Ex. succession de mon père, reçue en 2024"></div>
+      </div>
+      <div class="cond" id="detPret">
+        <div class="field"><label>Établissement prêteur</label><input type="text" id="detPretTxt" placeholder="Nom de la banque"></div>
+      </div>
+      <div class="cond" id="detAutre">
+        <div class="field"><label>Précisez l'autre origine <span class="req">*</span></label><input type="text" id="detAutreTxt"></div>
+      </div>
+
+      <div class="row2" style="margin-top:18px">
+        <div class="field">
+          <label>Montant des fonds personnels apportés (€) <span class="req">*</span></label>
+          <input type="number" id="montantApport" min="0" step="1">
+        </div>
+        <div class="field">
+          <label>Montant du prêt (€) <span class="opt">(le cas échéant)</span></label>
+          <input type="number" id="montantPret" min="0" step="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- III bis. ÉVALUATION DU RISQUE / OBJET -->
+    <div class="sec">
+      <div class="sec-title">VI. Objet &amp; contexte de l'opération</div>
+      <div class="sec-desc">Ces éléments nous permettent de vérifier la cohérence de l'opération avec votre situation et de satisfaire à nos obligations de vigilance.</div>
+      <div class="field">
+        <label>Objet de l'opération <span class="req">*</span></label>
+        <select id="objetOp">
+          <option value="">—</option>
+          <option value="residence_principale">Résidence principale</option>
+          <option value="residence_secondaire">Résidence secondaire</option>
+          <option value="investissement_locatif">Investissement locatif</option>
+          <option value="transmission_familiale">Transmission familiale</option>
+          <option value="activite_professionnelle">Usage professionnel / activité</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+      <div class="field cond" id="objetAutreWrap">
+        <label>Précisez</label>
+        <input type="text" id="objetAutreTxt">
+      </div>
+      <div class="field">
+        <label>L'opération est-elle cohérente avec votre situation professionnelle et patrimoniale ? <span class="req">*</span></label>
+        <div class="btns" id="btnCoherence">
+          <button type="button" class="choice" data-val="O">Oui</button>
+          <button type="button" class="choice" data-val="N">Non / à préciser</button>
+        </div>
+      </div>
+      <div class="field cond" id="coherencePrec">
+        <label>Précisez</label>
+        <textarea id="coherenceTxt" placeholder="Contexte particulier, élément que vous souhaitez porter à notre connaissance…"></textarea>
+      </div>
+      <div class="field">
+        <label>Intervenez-vous pour le compte d'un tiers (autre que vous-même) ? <span class="req">*</span></label>
+        <div class="btns" id="btnTiers">
+          <button type="button" class="choice" data-val="N">Non</button>
+          <button type="button" class="choice" data-val="O">Oui</button>
+        </div>
+      </div>
+      <div class="field cond" id="tiersPrec">
+        <label>Identité du tiers &amp; nature du mandat</label>
+        <textarea id="tiersTxt"></textarea>
+      </div>
+      <div class="field">
+        <label>Les fonds proviennent-ils, tout ou partie, de l'étranger ? <span class="req">*</span></label>
+        <div class="btns" id="btnEtranger">
+          <button type="button" class="choice" data-val="N">Non</button>
+          <button type="button" class="choice" data-val="O">Oui</button>
+        </div>
+      </div>
+      <div class="field cond" id="etrangerPrec">
+        <label>Pays d'origine des fonds</label>
+        <input type="text" id="etrangerTxt">
+      </div>
+    </div>
+
+    <!-- IV. ATTESTATION -->
+    <div class="sec">
+      <div class="sec-title">VII. Déclarations sur l'honneur</div>
+      <div class="attestation">
+        <strong>Je certifie sur l'honneur que&nbsp;:</strong>
+        <ul>
+          <li>Les fonds utilisés ne proviennent pas d'une activité illicite et ne participent pas au financement du terrorisme ;</li>
+          <li>Les informations fournies dans le présent questionnaire sont exactes, sincères et complètes ;</li>
+          <li>Je m'engage à fournir, à première demande du notaire, tout justificatif permettant d'établir l'origine des fonds (relevés bancaires, actes de vente, attestations bancaires, etc.) ;</li>
+          <li>Je suis informé(e) que le notaire est soumis aux obligations de vigilance prévues par le Code monétaire et financier et qu'il peut être amené à effectuer une déclaration à TRACFIN en cas de doute sur l'origine des fonds, sans m'en informer.</li>
+        </ul>
+      </div>
+
+      <div class="sec-title" style="margin-top:24px">VIII. Pièces justificatives jointes ou à transmettre</div>
+      <div class="checklist" id="piecesList">
+        <label class="chk" data-key="releves"><input type="checkbox"><div class="chk-lbl">Relevés bancaires</div></label>
+        <label class="chk" data-key="pret"><input type="checkbox"><div class="chk-lbl">Attestation ou offre de prêt</div></label>
+        <label class="chk" data-key="acte"><input type="checkbox"><div class="chk-lbl">Acte de vente (bien précédent)</div></label>
+        <label class="chk" data-key="succ"><input type="checkbox"><div class="chk-lbl">Attestation de donation ou de succession</div></label>
+        <label class="chk" data-key="autre"><input type="checkbox"><div class="chk-lbl">Autres pièces</div></label>
+      </div>
+      <div class="field cond" id="piecesAutreWrap" style="margin-top:12px">
+        <label>Précisez les autres pièces</label>
+        <input type="text" id="piecesAutreTxt">
+      </div>
+
+      <div class="signature-box" style="margin-top:28px">
+        <label>Signature électronique</label>
+        <div class="mention">Pour valider votre attestation, saisissez ci-dessous la mention manuscrite :<br>
+          <strong style="color:#111;font-style:normal">Lu et approuvé, bon pour attestation sur l'honneur de l'origine des fonds</strong>
+        </div>
+        <input type="text" id="mention" placeholder="Recopiez la mention exacte">
+        <div class="row2" style="margin-top:14px">
+          <div class="field" style="margin:0">
+            <label>Fait à</label>
+            <input type="text" id="faitA" placeholder="Ville">
+          </div>
+          <div class="field" style="margin:0">
+            <label>Le</label>
+            <input type="date" id="faitLe">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-sec">
+      <button class="btn-submit" id="btnSubmit">Envoyer mon attestation</button>
+      <div class="ferr" id="ferr"></div>
+      <div class="rgpd">✓ Mentions RGPD acceptées en début de questionnaire.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ÉCRAN 4 : Confirmation -->
+<div id="sDone" class="screen" style="display:none">
+  <div class="card">
+    <div class="confirm">
+      <div class="icon">✓</div>
+      <h2>Attestation envoyée</h2>
+      <p>Nous avons bien reçu votre attestation sur l'honneur d'origine des fonds.<br>
+         Un récapitulatif vous a été envoyé par email.</p>
+      <p style="margin-top:24px;font-size:12px;color:#999;">
+        L'étude TAGOT pourra vous recontacter pour vous demander les pièces justificatives correspondantes.
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="f-left">
+    <div class="f-name">Grégoire TAGOT&nbsp;|&nbsp;notaire</div>
+    <div class="f-url"><a href="https://tagot.notaires.fr" target="_blank" style="color:#bbb;text-decoration:none;">tagot.notaires.fr</a></div>
+  </div>
+  <div class="f-right">2 rue Dante<br>75005 Paris</div>
+</footer>
+
+<script>
+'use strict';
+let email0 = '';
+let otpToken = '';
+
+// ── RGPD accueil ────────────────────────────────────────────
+const cbRgpd = document.getElementById('cbRgpd');
+cbRgpd.addEventListener('change', () => {
+  document.getElementById('rgpdLabel').classList.toggle('checked', cbRgpd.checked);
+  document.getElementById('btnAccueil').disabled = !cbRgpd.checked;
+});
+
+function validerAccueil() {
+  document.getElementById('sAccueil').style.display = 'none';
+  document.getElementById('sEmail').style.display = 'block';
+}
+
+// ── OTP ─────────────────────────────────────────────────────
+document.getElementById('iEmail').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnSend').click(); });
+document.getElementById('iCode').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnVerify').click(); });
+
+document.getElementById('btnSend').onclick = async () => {
+  const em = document.getElementById('iEmail').value.trim();
+  const err = document.getElementById('eEmail');
+  if (!em.includes('@')) { err.textContent = 'Adresse invalide.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnSend');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Envoi…';
+  try {
+    const r = await fetch('/api/otp/envoyer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:em}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Erreur');
+    email0 = em;
+    otpToken = d.token || '';
+    document.getElementById('sEmail').style.display = 'none';
+    document.getElementById('sCode').style.display = 'block';
+    document.getElementById('otpMsg').textContent = `Code envoyé à ${em}. Vérifiez vos spams si besoin.`;
+    document.getElementById('iCode').focus();
+  } catch(e) { err.textContent = e.message; }
+  finally { btn.disabled=false; btn.textContent='ENVOYER LE CODE'; }
+};
+
+document.getElementById('btnResend').onclick = () => {
+  document.getElementById('sCode').style.display='none';
+  document.getElementById('sEmail').style.display='block';
+};
+
+document.getElementById('btnVerify').onclick = async () => {
+  const code = document.getElementById('iCode').value.trim();
+  const err = document.getElementById('eCode');
+  if (code.length!==6) { err.textContent='Code à 6 chiffres requis.'; return; }
+  err.textContent = '';
+  const btn = document.getElementById('btnVerify');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Vérification…';
+  try {
+    const r = await fetch('/api/otp/verifier', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:email0, code, token:otpToken}) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error||'Code incorrect');
+    document.getElementById('sCode').style.display='none';
+    document.getElementById('sForm').style.display='block';
+    document.getElementById('pageSub').style.display='none';
+    // Pré-remplir "Fait le" avec aujourd'hui
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('faitLe').value = today;
+  } catch(e) { err.textContent=e.message; }
+  finally { btn.disabled=false; btn.textContent='VALIDER'; }
+};
+
+// ── Helpers choix (boutons radio) ───────────────────────────
+function bindChoice(groupId, onChange) {
+  const g = document.getElementById(groupId);
+  if (!g) return;
+  g.querySelectorAll('.choice').forEach(b => {
+    b.onclick = () => {
+      g.querySelectorAll('.choice').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      g.dataset.val = b.dataset.val;
+      if (onChange) onChange(b.dataset.val);
+    };
+  });
+}
+const getChoice = (id) => document.getElementById(id)?.dataset.val || '';
+
+// Qualité
+bindChoice('btnQualite', v => document.getElementById('qualiteAutreWrap').classList.toggle('show', v==='AUT' || v==='REP'));
+// PPE
+bindChoice('btnPpeSelf', v => document.getElementById('ppeSelfPrec').classList.toggle('show', v==='O'));
+bindChoice('btnPpeFam',  v => document.getElementById('ppeFamPrec').classList.toggle('show',  v==='O'));
+bindChoice('btnPpeColl', v => document.getElementById('ppeCollPrec').classList.toggle('show', v==='O'));
+// Personne morale
+bindChoice('btnPm', v => document.getElementById('pmWrap').classList.toggle('show', v==='O'));
+// Cohérence / tiers / étranger
+bindChoice('btnCoherence', v => document.getElementById('coherencePrec').classList.toggle('show', v==='N'));
+bindChoice('btnTiers',     v => document.getElementById('tiersPrec').classList.toggle('show', v==='O'));
+bindChoice('btnEtranger',  v => document.getElementById('etrangerPrec').classList.toggle('show', v==='O'));
+
+// Objet
+document.getElementById('objetOp').addEventListener('change', e => {
+  document.getElementById('objetAutreWrap').classList.toggle('show', e.target.value==='autre');
+});
+// Nature opération
+document.getElementById('natureOp').addEventListener('change', e => {
+  document.getElementById('natureAutreWrap').classList.toggle('show', e.target.value==='Autre');
+});
+
+// ── Checkboxes fonds (avec détails conditionnels) ───────────
+document.querySelectorAll('#fondsList .chk input').forEach(inp => {
+  inp.addEventListener('change', () => {
+    const lbl = inp.closest('.chk');
+    lbl.classList.toggle('on', inp.checked);
+    const key = lbl.dataset.key;
+    const map = { vente:'detVente', succession:'detSucc', pret:'detPret', autre:'detAutre' };
+    if (map[key]) document.getElementById(map[key]).classList.toggle('show', inp.checked);
+  });
+});
+document.querySelectorAll('#piecesList .chk input').forEach(inp => {
+  inp.addEventListener('change', () => {
+    const lbl = inp.closest('.chk');
+    lbl.classList.toggle('on', inp.checked);
+    if (lbl.dataset.key === 'autre') document.getElementById('piecesAutreWrap').classList.toggle('show', inp.checked);
+  });
+});
+
+// ── Bénéficiaires effectifs ─────────────────────────────────
+let beCounter = 0;
+function renderBe() {
+  const host = document.getElementById('beList');
+  host.innerHTML = '';
+  document.querySelectorAll('[data-be]').forEach(n => n.remove());
+}
+document.getElementById('btnAddBe').onclick = () => {
+  const idx = ++beCounter;
+  const host = document.getElementById('beList');
+  const div = document.createElement('div');
+  div.className = 'sec';
+  div.style.cssText = 'padding:18px;background:#fafafa;margin-bottom:10px;border:1px solid #eee;';
+  div.dataset.be = idx;
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:700;color:#111;letter-spacing:.06em;text-transform:uppercase;">Bénéficiaire effectif #${idx}</div>
+      <button type="button" style="background:none;border:none;color:#c0392b;font-size:12px;cursor:pointer;" onclick="this.closest('[data-be]').remove()">Retirer</button>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nom</label><input type="text" class="be-nom"></div>
+      <div class="field"><label>Prénom(s)</label><input type="text" class="be-prenom"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Date de naissance</label><input type="date" class="be-datena"></div>
+      <div class="field"><label>Lieu de naissance</label><input type="text" class="be-lieuna"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nationalité</label><input type="text" class="be-nat"></div>
+      <div class="field"><label>% de détention</label><input type="number" class="be-pct" min="0" max="100" step="0.01" placeholder="ex. 50"></div>
+    </div>
+    <div class="field"><label>Adresse</label><input type="text" class="be-adr"></div>
+  `;
+  host.appendChild(div);
+};
+
+// ── Soumission ──────────────────────────────────────────────
+function collectBe() {
+  return Array.from(document.querySelectorAll('[data-be]')).map(d => ({
+    nom: d.querySelector('.be-nom').value.trim(),
+    prenom: d.querySelector('.be-prenom').value.trim(),
+    dateNaiss: d.querySelector('.be-datena').value,
+    lieuNaiss: d.querySelector('.be-lieuna').value.trim(),
+    nationalite: d.querySelector('.be-nat').value.trim(),
+    detention: d.querySelector('.be-pct').value,
+    adresse: d.querySelector('.be-adr').value.trim(),
+  })).filter(b => b.nom || b.prenom);
+}
+
+function collectFonds() {
+  const keys = [];
+  document.querySelectorAll('#fondsList .chk input').forEach(inp => {
+    if (inp.checked) keys.push(inp.closest('.chk').dataset.key);
+  });
+  return keys;
+}
+function collectPieces() {
+  const keys = [];
+  document.querySelectorAll('#piecesList .chk input').forEach(inp => {
+    if (inp.checked) keys.push(inp.closest('.chk').dataset.key);
+  });
+  return keys;
+}
+
+document.getElementById('btnSubmit').onclick = async () => {
+  const ferr = document.getElementById('ferr');
+  ferr.style.display = 'none';
+  ferr.textContent = '';
+
+  // Validation
+  const required = [
+    ['nom', 'Nom'],
+    ['prenoms', 'Prénoms'],
+    ['dateNaiss', 'Date de naissance'],
+    ['lieuNaiss', 'Lieu de naissance'],
+    ['nationalite', 'Nationalité'],
+    ['adresse', 'Adresse'],
+    ['descOp', 'Description de l\'opération'],
+    ['prix', 'Prix de l\'opération'],
+    ['montantApport', 'Montant des fonds personnels'],
+    ['faitA', 'Lieu de signature'],
+    ['faitLe', 'Date de signature'],
+  ];
+  for (const [id, label] of required) {
+    if (!document.getElementById(id).value.trim()) {
+      ferr.textContent = `Champ requis : ${label}`;
+      ferr.style.display = 'block';
+      document.getElementById(id).focus();
+      return;
+    }
+  }
+
+  const qualite = getChoice('btnQualite');
+  if (!qualite) { ferr.textContent = 'Indiquez votre qualité (acquéreur, vendeur…)'; ferr.style.display='block'; return; }
+  if (!document.getElementById('natureOp').value) { ferr.textContent = 'Indiquez la nature de l\'opération.'; ferr.style.display='block'; return; }
+  if (!document.getElementById('objetOp').value) { ferr.textContent = 'Indiquez l\'objet de l\'opération.'; ferr.style.display='block'; return; }
+
+  if (!getChoice('btnPpeSelf') || !getChoice('btnPpeFam') || !getChoice('btnPpeColl')) {
+    ferr.textContent = 'Répondez aux 3 questions PPE.'; ferr.style.display='block'; return;
+  }
+  if (!getChoice('btnPm')) { ferr.textContent = 'Indiquez si une personne morale est impliquée.'; ferr.style.display='block'; return; }
+  if (!getChoice('btnCoherence') || !getChoice('btnTiers') || !getChoice('btnEtranger')) {
+    ferr.textContent = 'Répondez aux questions de la section "Objet & contexte".'; ferr.style.display='block'; return;
+  }
+
+  const fonds = collectFonds();
+  if (!fonds.length) { ferr.textContent = 'Indiquez l\'origine des fonds (au moins une case).'; ferr.style.display='block'; return; }
+
+  const mention = document.getElementById('mention').value.trim().toLowerCase().replace(/\s+/g,' ');
+  const expected = "lu et approuvé, bon pour attestation sur l'honneur de l'origine des fonds";
+  const normalize = s => s.toLowerCase().replace(/\s+/g,' ').replace(/['’]/g,"'").replace(/,/g,',').trim();
+  if (normalize(mention) !== normalize(expected)) {
+    ferr.textContent = 'Recopiez exactement la mention : « Lu et approuvé, bon pour attestation sur l\'honneur de l\'origine des fonds ».';
+    ferr.style.display='block';
+    return;
+  }
+
+  const payload = {
+    email: email0,
+    identite: {
+      qualite,
+      qualiteAutre: document.getElementById('qualiteAutre').value.trim(),
+      civilite: document.getElementById('civ').value,
+      nom: document.getElementById('nom').value.trim(),
+      nomUsage: document.getElementById('nomu').value.trim(),
+      prenoms: document.getElementById('prenoms').value.trim(),
+      dateNaissance: document.getElementById('dateNaiss').value,
+      lieuNaissance: document.getElementById('lieuNaiss').value.trim(),
+      nationalite: document.getElementById('nationalite').value.trim(),
+      adresse: document.getElementById('adresse').value.trim(),
+      profession: document.getElementById('profession').value.trim(),
+    },
+    ppe: {
+      self: getChoice('btnPpeSelf'),
+      selfFonction: document.getElementById('ppeSelfFonction').value.trim(),
+      famille: getChoice('btnPpeFam'),
+      familleFonction: document.getElementById('ppeFamFonction').value.trim(),
+      collaborateur: getChoice('btnPpeColl'),
+      collaborateurFonction: document.getElementById('ppeCollFonction').value.trim(),
+    },
+    operation: {
+      nature: document.getElementById('natureOp').value,
+      natureAutre: document.getElementById('natureAutre').value.trim(),
+      description: document.getElementById('descOp').value.trim(),
+      prix: document.getElementById('prix').value,
+      datePrevisionnelle: document.getElementById('datePrev').value,
+    },
+    personneMorale: {
+      existe: getChoice('btnPm'),
+      denomination: document.getElementById('pmDenom').value.trim(),
+      forme: document.getElementById('pmForme').value.trim(),
+      siren: document.getElementById('pmSiren').value.trim(),
+      siege: document.getElementById('pmSiege').value.trim(),
+      beneficiairesEffectifs: collectBe(),
+    },
+    origineFonds: {
+      sources: fonds,
+      venteDetail: document.getElementById('detVenteTxt').value.trim(),
+      successionDetail: document.getElementById('detSuccTxt').value.trim(),
+      pretEtablissement: document.getElementById('detPretTxt').value.trim(),
+      autreDetail: document.getElementById('detAutreTxt').value.trim(),
+      montantApport: document.getElementById('montantApport').value,
+      montantPret: document.getElementById('montantPret').value,
+    },
+    contexte: {
+      objet: document.getElementById('objetOp').value,
+      objetAutre: document.getElementById('objetAutreTxt').value.trim(),
+      coherence: getChoice('btnCoherence'),
+      coherenceTxt: document.getElementById('coherenceTxt').value.trim(),
+      pourTiers: getChoice('btnTiers'),
+      tiersTxt: document.getElementById('tiersTxt').value.trim(),
+      fondsEtranger: getChoice('btnEtranger'),
+      etrangerTxt: document.getElementById('etrangerTxt').value.trim(),
+    },
+    pieces: collectPieces(),
+    piecesAutreTxt: document.getElementById('piecesAutreTxt').value.trim(),
+    signature: {
+      mention: document.getElementById('mention').value.trim(),
+      faitA: document.getElementById('faitA').value.trim(),
+      faitLe: document.getElementById('faitLe').value,
+    },
+  };
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
+  try {
+    const r = await fetch('/api/soumettre-lcbft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Erreur lors de l\'envoi');
+    document.getElementById('sForm').style.display = 'none';
+    document.getElementById('sDone').style.display = 'block';
+    window.scrollTo(0, 0);
+  } catch (e) {
+    ferr.textContent = e.message;
+    ferr.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Envoyer mon attestation';
+  }
+};
+</script>
+</body>
+</html>
