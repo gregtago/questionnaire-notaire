@@ -25,12 +25,28 @@
       "destination": "/api/soumettre-divorce"
     },
     {
+      "source": "/api/soumettre-lcbft",
+      "destination": "/api/soumettre-lcbft"
+    },
+    {
+      "source": "/api/envoyer-lien",
+      "destination": "/api/envoyer-lien"
+    },
+    {
       "source": "/succession",
       "destination": "/public/succession.html"
     },
     {
       "source": "/divorce",
       "destination": "/public/divorce.html"
+    },
+    {
+      "source": "/lcbft",
+      "destination": "/public/lcbft.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/public/admin.html"
     },
     {
       "source": "/api/soumettre-acquisition",
@@ -69,55 +85,49 @@
     {
       "source": "/(.*).html",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     },
     {
       "source": "/divorce",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     },
     {
       "source": "/succession",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     },
     {
       "source": "/acquisition",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     },
     {
       "source": "/vente-appartement",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     },
     {
       "source": "/vente-maison",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/lcbft",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/admin",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     }
   ],
