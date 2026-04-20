@@ -101,7 +101,7 @@ module.exports = async (req, res) => {
       <p style="font-size:12px;color:#888;margin:32px 0 0;line-height:1.6;border-top:1px solid #eee;padding-top:20px;">
         Nous restons à votre disposition pour toute question.<br>
         Bien cordialement,<br>
-        <strong style="color:#333;">L'étude TAGOT</strong>
+        <strong style="color:#333;">Grégoire TAGOT | notaire</strong>
       </p>
     </div>
     <div style="background:#f5f5f5;padding:14px 30px;border-top:1px solid #eee;">
