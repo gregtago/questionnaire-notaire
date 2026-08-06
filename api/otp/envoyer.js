@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const FROM   = `"Grégoire TAGOT | notaire" <${process.env.SMTP_USER}>`;
-const SECRET = process.env.OTP_SECRET || 'changeme';
+const SECRET = process.env.OTP_SECRET;
 
 function transporter() {
   return nodemailer.createTransport({
@@ -13,10 +13,13 @@ function transporter() {
   });
 }
 
+// Le token voyage chez le client : il ne doit donc pas contenir le code.
+// Seule l'empreinte HMAC du code y figure — le code lui-même ne circule que
+// par email, et le serveur le revérifie en recalculant l'empreinte.
 function signToken(code, email, expires) {
-  const payload = `${code}|${email.toLowerCase()}|${expires}`;
-  const hmac = crypto.createHmac('sha256', SECRET).update(payload).digest('hex').slice(0,16);
-  return Buffer.from(`${payload}|${hmac}`).toString('base64url');
+  const addr = email.toLowerCase();
+  const hmac = crypto.createHmac('sha256', SECRET).update(`${code}|${addr}|${expires}`).digest('hex');
+  return Buffer.from(`${addr}|${expires}|${hmac}`).toString('base64url');
 }
 
 module.exports = async (req, res) => {
@@ -24,6 +27,10 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
   const { email } = req.body || {};
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email invalide' });
+  if (!SECRET) {
+    console.error('OTP_SECRET absent de l\'environnement — envoi refusé');
+    return res.status(500).json({ error: 'Configuration incomplète' });
+  }
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const expires = Date.now() + 10 * 60 * 1000;
