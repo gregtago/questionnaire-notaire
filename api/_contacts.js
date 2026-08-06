@@ -254,7 +254,7 @@ async function upsertContact(p) {
 async function upsertContactSafe(p) {
   try {
     const res = await upsertContact(p);
-    console.log(`[contacts] ${res.action} — ${p.nom} ${p.prenom}`);
+    console.log(`[contacts] ${res.action}`);
     return res;
   } catch (e) {
     console.error('[contacts] échec, ignoré :', e.message);
