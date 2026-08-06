@@ -69,7 +69,22 @@ async function graph(method, path, body) {
     body: body ? JSON.stringify(body) : undefined
   });
 
-  if (!r.ok) throw new Error(`Graph ${method} ${path} → ${r.status} : ${await r.text()}`);
+  if (!r.ok) {
+    // Ni le corps de réponse ni la query string ne doivent partir dans les
+    // logs : Graph cite parfois la valeur fautive, et le $filter de
+    // findExisting porte l'email du client. On ne garde que le code d'erreur
+    // Graph (énuméré, jamais nominatif) et le request-id, qui suffisent au
+    // diagnostic et sont ce que le support Microsoft demande.
+    const corps = await r.text();
+    let code = '';
+    try { code = JSON.parse(corps)?.error?.code || ''; } catch { /* corps non JSON */ }
+    const reqId = r.headers.get('request-id') || '';
+    throw new Error(
+      `Graph ${method} ${path.split('?')[0]} → ${r.status}` +
+      (code  ? ` (${code})` : '') +
+      (reqId ? ` [request-id ${reqId}]` : '')
+    );
+  }
   return r.status === 204 ? null : r.json();
 }
 
