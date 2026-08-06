@@ -1,4 +1,5 @@
 const { sendAll } = require("./_mailer");
+const { upsertContactSafe } = require('./_contacts');
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).end();
@@ -9,6 +10,21 @@ module.exports = async (req, res) => {
     await sendAll(personnes, xml, type);
   } catch(e) {
     console.error("Erreur email:", e.message);
+  }
+
+  for (const p of personnes) {
+    if (!p.EMAIL) continue;
+    await upsertContactSafe({
+      nom: p.NOMU || p.NOM,
+      prenom: p.PRENOMU || p.PRENOM,
+      email: p.EMAIL,
+      telephone: p.TEL,
+      adresse: [p.ADR1, p.ADR2].filter(Boolean).join(' '),
+      codePostal: p.ADR3,
+      ville: p.ADR4,
+      dateNaissance: p.DATNA,
+      natureDossier: type
+    });
   }
 
   // ── Email client — liste de pièces ──────────────────────────────────
