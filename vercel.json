@@ -1,4 +1,5 @@
 {
+  "regions": ["cdg1"],
   "rewrites": [
     { "source": "/succession",        "destination": "/succession.html" },
     { "source": "/divorce",           "destination": "/divorce.html" },
