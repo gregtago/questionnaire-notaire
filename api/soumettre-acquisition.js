@@ -64,7 +64,6 @@ module.exports = async (req, res) => {
   const revente    = data.reventeDetails || data.revente || {};
   const garanties  = data.assurances || data.garanties || {};
   const fiscalite  = data.fiscalite || {};
-  const banque     = data.coordonneesBancaires || data.banque || {};
 
   const nomAcq = [acquereur.prenoms, acquereur.nom].filter(Boolean).join(' ');
   const adresseBien = [bien.adresse, bien.cp, bien.ville].filter(Boolean).join(', ');
@@ -156,11 +155,6 @@ module.exports = async (req, res) => {
       ${sec('FISCALITÉ')}
       ${row('Résidence fiscale', fiscalite.residenceFiscale === 'etranger' ? `Étranger — ${fiscalite.pays || ''}` : 'France')}
       ${row('N° fiscal (NIF)', fiscalite.numeroFiscal)}
-
-      ${sec('COORDONNÉES BANCAIRES')}
-      ${row('Banque', banque.banque)}
-      ${row('IBAN', banque.iban)}
-      ${row('BIC', banque.bic)}
 
     </table>
   </td></tr>
