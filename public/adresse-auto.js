@@ -270,8 +270,10 @@
       'box-shadow:0 6px 20px rgba(0,0,0,.10);overflow:hidden;display:none;font-size:14px;color:#1a1a1a;',
       "font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;}",
       '.aa-menu.open{display:block;}',
-      '.aa-list{max-height:260px;overflow-y:auto;}',
+      '.aa-list{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}',
       '.aa-item{padding:8px 11px;cursor:pointer;border-bottom:1px solid #f2f2f2;line-height:1.35;}',
+      // Au doigt, il faut de quoi viser.
+      '@media (pointer:coarse){.aa-item{padding:11px 12px;}}',
       '.aa-item:last-child{border-bottom:none;}',
       '.aa-item.on,.aa-item:hover{background:#f5f5f5;}',
       '.aa-main{display:block;color:#111;}',
@@ -297,15 +299,53 @@
     });
   }
 
+  var GAP = 4;      // écart entre le champ et le menu
+  var EDGE = 8;     // marge minimale aux bords de l'écran
+  var MIN_H = 96;   // en deçà, le menu ne vaut plus la peine d'être ouvert
+  var MAX_H = 280;
+
+  /**
+   * Zone réellement visible, en coordonnées de la fenêtre de mise en page —
+   * les mêmes que celles de getBoundingClientRect() et de `position: fixed`.
+   *
+   * Sur mobile, `window.innerHeight` ne diminue pas quand le clavier virtuel
+   * s'ouvre : seul visualViewport rend compte de la place qui reste. S'en
+   * remettre à innerHeight fait croire à une hauteur disponible qui n'existe
+   * pas, et le menu se retrouve placé hors de l'écran.
+   */
+  function viewport() {
+    var vv = window.visualViewport;
+    if (!vv) return { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight };
+    return { top: vv.offsetTop, left: vv.offsetLeft, width: vv.width, height: vv.height };
+  }
+
   function place() {
-    if (!current) return;
+    if (!current || !menu) return;
     var r = current.el.getBoundingClientRect();
-    var h = menu.offsetHeight || 0;
-    var below = window.innerHeight - r.bottom;
-    menu.style.left = Math.round(r.left) + 'px';
+    var v = viewport();
+    var list = menu.querySelector('.aa-list');
+
+    // Hauteur naturelle, avant toute contrainte, pour connaître la hauteur du
+    // pied et des bordures.
+    list.style.maxHeight = 'none';
+    var natural = menu.offsetHeight;
+    var chrome = natural - list.offsetHeight;
+
+    var below = v.top + v.height - r.bottom - GAP - EDGE;
+    var above = r.top - v.top - GAP - EDGE;
+    var down = below >= Math.min(natural, MIN_H) || below >= above;
+    var avail = Math.min(MAX_H, Math.max(down ? below : above, MIN_H));
+
+    list.style.maxHeight = Math.max(avail - chrome, 48) + 'px';
+    var h = menu.offsetHeight;
+
+    var minLeft = v.left + EDGE;
+    var maxLeft = v.left + v.width - EDGE - r.width;
+    var left = maxLeft > minLeft ? Math.min(Math.max(r.left, minLeft), maxLeft) : minLeft;
+
+    menu.style.left = Math.round(left) + 'px';
     menu.style.width = Math.round(r.width) + 'px';
-    if (below < h + 8 && r.top > h + 8) menu.style.top = Math.round(r.top - h - 4) + 'px';
-    else menu.style.top = Math.round(r.bottom + 4) + 'px';
+    menu.style.top = Math.round(down ? r.bottom + GAP : r.top - GAP - h) + 'px';
   }
 
   function close() {
@@ -502,6 +542,13 @@
 
   window.addEventListener('scroll', function () { if (current) place(); }, true);
   window.addEventListener('resize', function () { if (current) place(); });
+
+  // Ouverture et fermeture du clavier virtuel : la zone visible change sans
+  // qu'aucun événement de redimensionnement classique ne soit émis.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function () { if (current) place(); });
+    window.visualViewport.addEventListener('scroll', function () { if (current) place(); });
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', buildMenu);
