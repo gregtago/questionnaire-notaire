@@ -58,6 +58,30 @@ async function getToken() {
   return tokenCache.value;
 }
 
+/**
+ * Rôles applicatifs effectivement portés par le jeton.
+ *
+ * Un 403 d'Exchange ne dit pas s'il vient d'une permission manquante ou d'une
+ * Application Access Policy : les deux rendent ErrorAccessDenied. Le portail
+ * Azure n'aide pas non plus — une permission déléguée y affiche un consentement
+ * vert tout en restant sans effet en client credentials. Lire la revendication
+ * `roles` du jeton délivré tranche sans ambiguïté.
+ *
+ * Ne sont journalisés que des noms de permissions (« Contacts.ReadWrite »),
+ * jamais le jeton lui-même ni la moindre donnée client.
+ */
+function rolesDuJeton(token) {
+  try {
+    const payload = JSON.parse(
+      Buffer.from(String(token).split('.')[1], 'base64url').toString('utf8')
+    );
+    const roles = payload.roles || [];
+    return roles.length ? roles.join(', ') : 'aucun';
+  } catch {
+    return 'illisible';
+  }
+}
+
 async function graph(method, path, body) {
   const token = await getToken();
   const r = await fetch(`${GRAPH}${path}`, {
@@ -82,7 +106,8 @@ async function graph(method, path, body) {
     throw new Error(
       `Graph ${method} ${path.split('?')[0]} → ${r.status}` +
       (code  ? ` (${code})` : '') +
-      (reqId ? ` [request-id ${reqId}]` : '')
+      (reqId ? ` [request-id ${reqId}]` : '') +
+      (r.status === 403 ? ` [rôles ${rolesDuJeton(token)}]` : '')
     );
   }
   return r.status === 204 ? null : r.json();
