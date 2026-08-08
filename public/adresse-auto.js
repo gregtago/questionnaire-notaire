@@ -282,9 +282,7 @@
       '.aa-item:last-child{border-bottom:none;}',
       '.aa-item.on,.aa-item:hover{background:#f5f5f5;}',
       '.aa-main{display:block;color:#111;}',
-      '.aa-sub{display:block;font-size:12px;color:#999;margin-top:1px;}',
-      '.aa-foot{padding:5px 11px;font-size:10px;color:#bbb;background:#fafafa;border-top:1px solid #f0f0f0;',
-      'letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+      '.aa-sub{display:block;font-size:12px;color:#999;margin-top:1px;}'
     ].join('');
     document.head.appendChild(style);
 
@@ -292,7 +290,7 @@
     menu.className = 'aa-menu';
     menu.setAttribute('role', 'listbox');
     menu.id = 'aa-menu';
-    menu.innerHTML = '<div class="aa-list"></div><div class="aa-foot">data.gouv.fr</div>';
+    menu.innerHTML = '<div class="aa-list"></div>';
     document.body.appendChild(menu);
 
     // mousedown : on agit avant le blur du champ.
