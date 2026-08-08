@@ -302,4 +302,37 @@ async function upsertContactSafe(p) {
   }
 }
 
-module.exports = { upsertContact, upsertContactSafe };
+/* ------------------------------------------------------------------ */
+/* Lecture du répertoire                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Renvoie les fiches du dossier « Clients », page après page.
+ *
+ * Exchange reste l'unique dépôt : rien n'est recopié ailleurs, la consultation
+ * lit la source à chaque appel.
+ */
+async function listContacts() {
+  const folderId = await getFolderId();
+  const champs = [
+    'id', 'givenName', 'surname', 'displayName', 'emailAddresses', 'mobilePhone',
+    'homeAddress', 'birthday', 'categories', 'createdDateTime', 'lastModifiedDateTime'
+  ].join(',');
+
+  let chemin = `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}` +
+               `/contacts?$select=${champs}&$top=100`;
+  const fiches = [];
+
+  // Garde-fou : le répertoire d'une étude ne dépasse pas ces volumes, et une
+  // pagination qui boucle ne doit pas épuiser la fonction serverless.
+  for (let page = 0; chemin && page < 50; page++) {
+    const lot = await graph('GET', chemin);
+    fiches.push(...(lot.value || []));
+    const suivant = lot['@odata.nextLink'];
+    chemin = suivant ? suivant.replace(GRAPH, '') : null;
+  }
+
+  return fiches;
+}
+
+module.exports = { upsertContact, upsertContactSafe, listContacts };

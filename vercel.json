@@ -8,7 +8,8 @@
     { "source": "/etatcivil",         "destination": "/etatcivil.html" },
     { "source": "/etat-civil",        "destination": "/etat-civil.html" },
     { "source": "/lcbft",             "destination": "/lcbft.html" },
-    { "source": "/admin",             "destination": "/admin.html" }
+    { "source": "/admin",             "destination": "/admin.html" },
+    { "source": "/repertoire",        "destination": "/repertoire.html" }
   ],
   "headers": [
     {
@@ -69,6 +70,13 @@
       "source": "/etatcivil",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/repertoire",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
     }
   ]
