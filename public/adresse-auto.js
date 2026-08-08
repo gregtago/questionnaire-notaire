@@ -266,10 +266,15 @@
   function buildMenu() {
     var style = document.createElement('style');
     style.textContent = [
-      '.aa-menu{position:fixed;z-index:9999;background:#fff;border:1px solid #ddd;border-radius:4px;',
-      'box-shadow:0 6px 20px rgba(0,0,0,.10);overflow:hidden;display:none;font-size:14px;color:#1a1a1a;',
-      "font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;}",
+      '.aa-menu{background:#fff;border:1px solid #ddd;border-radius:4px;overflow:hidden;display:none;',
+      "font-size:14px;color:#1a1a1a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;}",
       '.aa-menu.open{display:block;}',
+      // Sur grand écran, le menu flotte au-dessus de la page.
+      '.aa-menu.aa-float{position:fixed;z-index:9999;box-shadow:0 6px 20px rgba(0,0,0,.10);}',
+      // Sur mobile, il s'insère sous le champ : aucun calcul de position, donc
+      // rien qui puisse le placer hors de l'écran.
+      '.aa-menu.aa-inline{position:static;width:auto;margin:6px 0 2px;box-shadow:0 2px 8px rgba(0,0,0,.06);}',
+      '.aa-inline .aa-list{max-height:240px;}',
       '.aa-list{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}',
       '.aa-item{padding:8px 11px;cursor:pointer;border-bottom:1px solid #f2f2f2;line-height:1.35;}',
       // Au doigt, il faut de quoi viser.
@@ -319,8 +324,22 @@
     return { top: vv.offsetTop, left: vv.offsetLeft, width: vv.width, height: vv.height };
   }
 
+  /**
+   * Sur mobile, le menu s'insère dans le flux plutôt que de flotter.
+   *
+   * `position: fixed` est pris en défaut dès que le clavier virtuel est
+   * ouvert : iOS décale la fenêtre visible sans en informer la mise en page,
+   * et l'élément se retrouve hors de l'écran quoi qu'on calcule. Inséré sous
+   * le champ, le menu est placé par le navigateur — il ne peut plus se perdre.
+   */
+  function useInline() {
+    return window.matchMedia
+      ? window.matchMedia('(max-width: 700px), (pointer: coarse)').matches
+      : window.innerWidth <= 700;
+  }
+
   function place() {
-    if (!current || !menu) return;
+    if (!current || !menu || current.inline) return;
     var r = current.el.getBoundingClientRect();
     var v = viewport();
     var list = menu.querySelector('.aa-list');
@@ -356,11 +375,49 @@
       current.el.removeAttribute('aria-activedescendant');
     }
     current = null;
+    // Le menu ne reste jamais dans le formulaire : les pages remplacent des
+    // sections entières par innerHTML, autant ne rien laisser sur leur chemin.
+    if (menu.parentNode !== document.body) document.body.appendChild(menu);
+  }
+
+  /**
+   * Remonte le champ vers le haut de la zone visible pour dégager la place
+   * qu'occupera la liste. Sans cela, un champ situé juste au-dessus du clavier
+   * verrait ses suggestions s'afficher derrière celui-ci.
+   */
+  function revealField(el) {
+    var v = viewport();
+    // La liste tient déjà sous le champ : inutile de bouger la page.
+    if (v.top + v.height - el.getBoundingClientRect().bottom >= menu.offsetHeight + 16) return;
+
+    // On vise le bloc entier, libellé compris : remonter jusqu'au champ seul
+    // ferait disparaître son intitulé sous le bord de l'écran.
+    var bloc = el.closest('.field, .fg') || el;
+    var delta = bloc.getBoundingClientRect().top - (v.top + 12);
+    if (delta <= 8) return;                       // on ne descend jamais le champ
+    try { window.scrollBy({ top: delta, behavior: 'smooth' }); }
+    catch (e) { window.scrollBy(0, delta); }
   }
 
   function open(el, role, items) {
     if (!menu || !items.length) { close(); return; }
-    current = { el: el, role: role, items: items, index: -1 };
+    var inline = useInline();
+    var reopening = menu.classList.contains('open') && current && current.el === el;
+    current = { el: el, role: role, items: items, index: -1, inline: inline };
+
+    menu.classList.toggle('aa-inline', inline);
+    menu.classList.toggle('aa-float', !inline);
+    if (inline) {
+      // Juste après le champ, à l'intérieur de son bloc : la ligne .row2/.row3
+      // repasse sur une colonne en dessous de 640 px, le menu occupe donc
+      // toute la largeur utile.
+      menu.style.left = menu.style.top = menu.style.width = '';
+      menu.querySelector('.aa-list').style.maxHeight = '';
+      if (menu.previousSibling !== el) el.parentNode.insertBefore(menu, el.nextSibling);
+    } else if (menu.parentNode !== document.body) {
+      document.body.appendChild(menu);
+    }
+
     var list = menu.querySelector('.aa-list');
     list.innerHTML = items.map(function (it, i) {
       return '<div class="aa-item" role="option" id="aa-opt-' + i + '" data-i="' + i + '">' +
@@ -373,6 +430,7 @@
     el.setAttribute('aria-expanded', 'true');
     el.setAttribute('aria-controls', 'aa-menu');
     place();
+    if (inline && !reopening) revealField(el);
   }
 
   function highlight(i) {
