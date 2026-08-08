@@ -569,8 +569,10 @@
     var el = ev.target;
     if (!el || el.tagName !== 'INPUT' || !roleOf(el)) return;
     if (!el.hasAttribute('aria-autocomplete')) {
-      // L'autocomplétion native ferait double emploi avec notre menu.
-      el.setAttribute('autocomplete', 'off');
+      // On ne touche pas à l'attribut `autocomplete` : les pages y déclarent le
+      // type de donnée personnelle attendu, ce qui permet au navigateur de
+      // proposer celles qu'il connaît déjà de l'utilisateur. Nos suggestions
+      // s'ajoutent à cette proposition, elles ne la remplacent pas.
       el.setAttribute('role', 'combobox');
       el.setAttribute('aria-autocomplete', 'list');
       el.setAttribute('aria-controls', 'aa-menu');

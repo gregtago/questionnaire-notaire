@@ -478,7 +478,7 @@ function buildPageHtml(p0, p1) {
     <div class="row2">
       <div class="field">
         <label>Nom de naissance <span class="req">*</span></label>
-        <input type="text" data-f="NOM" value="${x(p.NOM)}">
+        <input type="text" data-f="NOM" value="${x(p.NOM)}"${i===0?' autocomplete="family-name"':''}>
       </div>
       <div class="field">
         <label>Nom d'usage <span class="opt">(si différent)</span></label>
@@ -488,17 +488,17 @@ function buildPageHtml(p0, p1) {
     <div class="row2">
       <div class="field">
         <label>Prénom usuel <span class="req">*</span></label>
-        <input type="text" data-f="PRENOMU" value="${x(p.PRENOMU)}">
+        <input type="text" data-f="PRENOMU" value="${x(p.PRENOMU)}"${i===0?' autocomplete="given-name"':''}>
       </div>
       <div class="field">
         <label>Autres prénoms <span class="opt">(2e, 3e…)</span></label>
-        <input type="text" data-f="AUTPREN" value="${x(p.AUTPREN)}">
+        <input type="text" data-f="AUTPREN" value="${x(p.AUTPREN)}"${i===0?' autocomplete="additional-name"':''}>
       </div>
     </div>
     <div class="row3">
       <div class="field">
         <label>Date de naissance <span class="req">*</span></label>
-        <input type="date" data-f="DATNA" value="${x(p.DATNA)}">
+        <input type="date" data-f="DATNA" value="${x(p.DATNA)}"${i===0?' autocomplete="bday"':''}>
       </div>
       <div class="field">
         <label>Lieu de naissance <span class="req">*</span></label>
@@ -511,8 +511,8 @@ function buildPageHtml(p0, p1) {
     </div>
     <div class="row2">
       <div class="field">
-        <label>Profession</label>
-        <input type="text" data-f="PROF" value="${x(p.PROF)}">
+        <label>Profession <span class="req">*</span></label>
+        <input type="text" data-f="PROF" value="${x(p.PROF)}"${i===0?' autocomplete="organization-title"':''}>
       </div>
       <div class="field">
         <label>Nationalité</label>
@@ -660,24 +660,24 @@ function buildPageHtml(p0, p1) {
     <div class="sec-title">Adresse domicile${showP2 && p1 ? ' — commune aux deux' : ''}</div>
     <div class="field">
       <label>Adresse (numéro et voie) <span class="req">*</span></label>
-      <input type="text" data-f="ADR1" value="${x(p0.ADR1)}" autocomplete="street-address">
+      <input type="text" data-f="ADR1" value="${x(p0.ADR1)}" autocomplete="address-line1">
     </div>
     <div class="field">
       <label>Complément d'adresse</label>
-      <input type="text" data-f="ADR2" value="${x(p0.ADR2)}">
+      <input type="text" data-f="ADR2" value="${x(p0.ADR2)}" autocomplete="address-line2">
     </div>
     <div class="row3">
       <div class="field">
         <label>Code postal${isFR?' <span class="req">*</span>':''}</label>
-        <input type="text" data-f="ADR3" value="${x(p0.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric">
+        <input type="text" data-f="ADR3" value="${x(p0.ADR3)}" maxlength="${isFR?'5':'10'}" inputmode="numeric" autocomplete="postal-code">
       </div>
       <div class="field">
         <label>Ville <span class="req">*</span></label>
-        <input type="text" data-f="ADR4" value="${x(p0.ADR4)}">
+        <input type="text" data-f="ADR4" value="${x(p0.ADR4)}" autocomplete="address-level2">
       </div>
       <div class="field">
         <label>Pays <span class="req">*</span></label>
-        <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}">
+        <input type="text" data-f="CPAYDO" value="${x(p0.CPAYDO||'FRANCE')}" autocomplete="country-name">
       </div>
     </div>
   </div>
@@ -1033,6 +1033,7 @@ document.getElementById('btnSubmit').onclick = async () => {
       if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
       if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
       if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+      if (!p.PROF)    return showErr(`${n} : profession obligatoire.`, i);
     }
     if (p._role !== 'conjoint') {
       if (!p.ADR1 || !p.ADR4) return showErr(`Adresse incomplète.`, i);
@@ -1123,5 +1124,23 @@ if (MODE_ETATCIVIL) {
 
 </script>
 <script defer src="/adresse-auto.js"></script>
+<script>
+// Le champ du code de vérification ne doit jamais présenter un code périmé.
+// Deux sources de résurgence : la restauration des valeurs saisies que le
+// navigateur opère au rechargement et au retour arrière, et le retour sur
+// l'écran du code après une nouvelle demande. Les gestionnaires d'envoi étant
+// définis plusieurs fois selon les pages, on s'accroche à l'écran lui-même
+// plutôt qu'au bouton, afin de couvrir tous les chemins.
+(function () {
+  var champ = document.getElementById('iCode');
+  var ecran = document.getElementById('sCode');
+  if (!champ || !ecran) return;
+  var vider = function () { champ.value = ''; };
+  window.addEventListener('pageshow', vider);
+  new MutationObserver(function () {
+    if (ecran.style.display !== 'none') vider();
+  }).observe(ecran, { attributes: true, attributeFilter: ['style'] });
+})();
+</script>
 </body>
 </html>

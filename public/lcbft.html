@@ -310,7 +310,7 @@
         </div>
         <div class="field">
           <label><span data-i18n="lblNom">Nom de naissance</span> <span class="req">*</span></label>
-          <input type="text" id="nom">
+          <input type="text" id="nom" autocomplete="family-name">
         </div>
         <div class="field">
           <label><span data-i18n="lblNomUsage">Nom d'usage</span> <span class="opt" data-i18n="optDifferent">(si différent)</span></label>
@@ -319,12 +319,12 @@
       </div>
       <div class="field">
         <label><span data-i18n="lblPrenoms">Prénom(s)</span> <span class="req">*</span></label>
-        <input type="text" id="prenoms">
+        <input type="text" id="prenoms" autocomplete="given-name">
       </div>
       <div class="row2">
         <div class="field">
           <label><span data-i18n="lblDateNaiss">Date de naissance</span> <span class="req">*</span></label>
-          <input type="date" id="dateNaiss">
+          <input type="date" id="dateNaiss" autocomplete="bday">
         </div>
         <div class="field">
           <label><span data-i18n="lblLieuNaiss">Lieu de naissance</span> <span class="req">*</span></label>
@@ -337,21 +337,21 @@
       </div>
       <div class="field">
         <label><span data-i18n="lblAdresseVoie">Adresse (n° et voie)</span> <span class="req">*</span></label>
-        <input type="text" id="adresseVoie" placeholder="Ex. 12 rue Dante" data-i18n-ph="phAdresseVoie">
+        <input type="text" id="adresseVoie" placeholder="Ex. 12 rue Dante" data-i18n-ph="phAdresseVoie" autocomplete="address-line1">
       </div>
       <div class="row2">
         <div class="field">
           <label><span data-i18n="lblCp">Code postal</span> <span class="req">*</span></label>
-          <input type="text" id="cp" maxlength="10" placeholder="Ex. 75005" data-i18n-ph="phCp">
+          <input type="text" id="cp" maxlength="10" placeholder="Ex. 75005" data-i18n-ph="phCp" autocomplete="postal-code">
         </div>
         <div class="field">
           <label><span data-i18n="lblVille">Ville</span> <span class="req">*</span></label>
-          <input type="text" id="ville" placeholder="Ex. Paris" data-i18n-ph="phVille">
+          <input type="text" id="ville" placeholder="Ex. Paris" data-i18n-ph="phVille" autocomplete="address-level2">
         </div>
       </div>
       <div class="field">
         <label><span data-i18n="lblProfession">Profession</span> <span class="opt" data-i18n="optFacultatif">(facultatif mais utile)</span></label>
-        <input type="text" id="profession">
+        <input type="text" id="profession" autocomplete="organization-title">
       </div>
     </div>
 
@@ -1434,5 +1434,23 @@ document.getElementById('btnSubmit').onclick = async () => {
 };
 </script>
 <script defer src="/adresse-auto.js"></script>
+<script>
+// Le champ du code de vérification ne doit jamais présenter un code périmé.
+// Deux sources de résurgence : la restauration des valeurs saisies que le
+// navigateur opère au rechargement et au retour arrière, et le retour sur
+// l'écran du code après une nouvelle demande. Les gestionnaires d'envoi étant
+// définis plusieurs fois selon les pages, on s'accroche à l'écran lui-même
+// plutôt qu'au bouton, afin de couvrir tous les chemins.
+(function () {
+  var champ = document.getElementById('iCode');
+  var ecran = document.getElementById('sCode');
+  if (!champ || !ecran) return;
+  var vider = function () { champ.value = ''; };
+  window.addEventListener('pageshow', vider);
+  new MutationObserver(function () {
+    if (ecran.style.display !== 'none') vider();
+  }).observe(ecran, { attributes: true, attributeFilter: ['style'] });
+})();
+</script>
 </body>
 </html>
