@@ -148,6 +148,7 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="/filiation.js"></script>
 </head>
 <body>
 
@@ -495,16 +496,22 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="AUTPREN" value="${x(p.AUTPREN)}"${i===0?' autocomplete="additional-name"':''}>
       </div>
     </div>
-    <div class="row3">
+    <div class="row2">
       <div class="field">
         <label>Date de naissance <span class="req">*</span></label>
         <input type="date" data-f="DATNA" value="${x(p.DATNA)}"${i===0?' autocomplete="bday"':''}>
       </div>
       <div class="field">
+        <label>Pays de naissance <span class="req">*</span></label>
+        <input type="text" data-f="CPAYNA" value="${x(p.CPAYNA)}">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
         <label>Lieu de naissance <span class="req">*</span></label>
         <input type="text" data-f="LVNARU" value="${x(p.LVNARU)}">
       </div>
-      <div class="field">
+      <div class="field"${window.Filiation && !Filiation.estFrance(p.CPAYNA) ? ' style="display:none"' : ''}>
         <label>Code postal du lieu de naissance <span class="req">*</span></label>
         <input type="text" data-f="CODERU" value="${x(p.CODERU)}" maxlength="5" inputmode="numeric">
       </div>
@@ -519,6 +526,7 @@ function buildPageHtml(p0, p1) {
         <input type="text" data-f="NATION" value="${x(p.NATION)}">
       </div>
     </div>
+    ${window.Filiation ? Filiation.bloc(p) : ''}
     <div class="row2">
       <div class="field">
         <label>Téléphone <span class="req">*</span></label>
@@ -712,8 +720,8 @@ function bindAll() {
     const update = () => {
       const f = el.dataset.f;
       let v = el.value;
-      if (['NOMU','NOM','LVNARU','ADR4'].includes(f)) { v = v.toUpperCase(); el.value = v; }
-      if (['PRENOMU','AUTPREN'].includes(f)) {
+      if (['NOMU','NOM','LVNARU','ADR4','CPAYNA'].concat(window.Filiation ? Filiation.MAJUSCULES : []).includes(f)) { v = v.toUpperCase(); el.value = v; }
+      if (['PRENOMU','AUTPREN'].concat(window.Filiation ? Filiation.PRENOMS : []).includes(f)) {
         // Majuscule après début, espace, tiret, apostrophe — et après tout caractère non-lettre
         v = v.replace(/./gu, (c, idx, str) => {
           if (idx === 0) return c.toUpperCase();
@@ -727,6 +735,7 @@ function bindAll() {
       // Calculs dérivés
       if (f === 'ADR3') persons[i].DEPTDO = dept(v);
       if (f === 'CODERU') persons[i].DEPTNA = dept(v);
+      if ((f === 'CPAYNA' || f === 'NATION') && window.Filiation) Filiation.maj(sec, persons[i]);
       if (f === 'PRENOMU' || f === 'AUTPREN') {
         const pu = persons[i].PRENOMU || '';
         const au = persons[i].AUTPREN || '';
@@ -789,6 +798,11 @@ function removeConjoint() {
 // ── XML ───────────────────────────────────────────────────
 function vr(key, val) {
   return `    <Var key="${key}" name="${key}"><Value>${x(val||'')}</Value></Var>`;
+}
+
+// Naissance hors de France : ni code postal ni département.
+function nesEtranger(p) {
+  return window.Filiation ? !Filiation.estFrance(p.CPAYNA) : false;
 }
 
 function buildXml() {
@@ -882,7 +896,7 @@ ${vr('PRENOMU', (p.PRENOMU||'').trim())}
 ${vr('PRENOM', prenomComplet)}
 ${vr('PROF', p.PROF)}
 ${vr('DATNA', toInotDate(p.DATNA))}
-${vr('DEPTNA', p.DEPTNA || dept(p.CODERU))}
+${vr('DEPTNA', nesEtranger(p) ? '' : (p.DEPTNA || dept(p.CODERU)))}
 ${vr('CPAYNA', p.CPAYNA || 'FRANCE')}
 ${vr('DEPMOR', '')}
 ${vr('NATION', p.NATION)}
@@ -895,7 +909,7 @@ ${vr('ADR1IMP', p.ADR1IMP)}
 ${vr('ADR2IMP', '')}
 ${vr('CPIMP', p.CPIMP)}
 ${vr('VILLEIMP', p.VILLEIMP)}
-${vr('CODERU', p.CODERU)}
+${vr('CODERU', nesEtranger(p) ? '' : p.CODERU)}
 ${vr('LVNARU', p.LVNARU)}
 ${vr('NOM', p.NOM)}
 ${vr('REGIME', showM && isMain ? (p.REGIME||'4') : '')}
@@ -1032,8 +1046,11 @@ document.getElementById('btnSubmit').onclick = async () => {
       if (!p.PRENOMU) return showErr(`${n} : prénom usuel obligatoire.`, i);
       if (!p.DATNA)   return showErr(`${n} : date de naissance obligatoire.`, i);
       if (!p.LVNARU)  return showErr(`${n} : lieu de naissance obligatoire.`, i);
-      if (!p.CODERU)  return showErr(`${n} : CP de naissance obligatoire.`, i);
+      if (!p.CPAYNA)  return showErr(`${n} : pays de naissance obligatoire.`, i);
+      if (!p.CODERU && !nesEtranger(p)) return showErr(`${n} : CP de naissance obligatoire.`, i);
       if (!p.PROF)    return showErr(`${n} : profession obligatoire.`, i);
+      const errFil = window.Filiation ? Filiation.verifier(p, n) : '';
+      if (errFil) return showErr(errFil, i);
     }
     if (p._role !== 'conjoint') {
       if (!p.ADR1 || !p.ADR4) return showErr(`Adresse incomplète.`, i);
@@ -1046,6 +1063,7 @@ document.getElementById('btnSubmit').onclick = async () => {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Envoi en cours…';
   try {
+    if (window.Filiation) persons.forEach(Filiation.nettoyer);
     const xml = buildXml();
     const r = await fetch('/api/soumettre', {
       method:'POST',

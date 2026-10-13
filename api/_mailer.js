@@ -28,6 +28,18 @@ function row(label, value) {
     <td style="padding:5px 0;font-size:13px;color:#111;vertical-align:top;">${value}</td>
   </tr>`;
 }
+function estFrance(pays) {
+  const n = String(pays || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return n === "" || n === "fr" || n === "france";
+}
+// « DUPONT Jean Pierre, né le 01/02/1950 à ALGER (ALGÉRIE FRANÇAISE) »
+function parent(p, k) {
+  const nom = [p[k + "_NOM"], p[k + "_PRENOMS"]].filter(Boolean).join(" ");
+  if (!nom) return "";
+  const lieu = [p[k + "_LIEUNA"], p[k + "_PAYSNA"] ? `(${p[k + "_PAYSNA"]})` : ""].filter(Boolean).join(" ");
+  const ne = k === "MERE" ? "née" : "né";
+  return [nom, p[k + "_DATNA"] ? `${ne} le ${fmtDate(p[k + "_DATNA"])}` : "", lieu ? `à ${lieu}` : ""].filter(Boolean).join(", ");
+}
 function sec(title) {
   return `<tr><td colspan="2" style="padding:16px 0 5px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bbb;font-weight:bold;border-top:1px solid #eee;">${title}</td></tr>`;
 }
@@ -45,9 +57,15 @@ async function sendAll(personnes, xml, type) {
     rows += row("Nom d'usage", p.NOMU || p.NOM);
     if (p.NOM && p.NOM !== p.NOMU) rows += row("Nom de naissance", p.NOM);
     rows += row("Prénoms", p.PRENOM || p.PRENOMU);
-    rows += row("Naissance", [fmtDate(p.DATNA), p.LVNARU, p.CODERU ? `(${p.CODERU})` : ""].filter(Boolean).join(" — "));
+    const neEtranger = !estFrance(p.CPAYNA);
+    rows += row("Naissance", [fmtDate(p.DATNA), p.LVNARU, !neEtranger && p.CODERU ? `(${p.CODERU})` : "", neEtranger ? p.CPAYNA : ""].filter(Boolean).join(" — "));
     rows += row("Profession", p.PROF);
     rows += row("Nationalité", p.NATION);
+    if (p.PERE_NOM || p.MERE_NOM) {
+      rows += sec("Filiation — Français né à l'étranger");
+      rows += row("Père", parent(p, "PERE"));
+      rows += row("Mère", parent(p, "MERE"));
+    }
     rows += sec("Adresse et contact");
     rows += row("Adresse", [p.ADR1, p.ADR2, [p.ADR3, p.ADR4].filter(Boolean).join(" "), p.CPAYDO && p.CPAYDO !== "FRANCE" ? p.CPAYDO : ""].filter(Boolean).join(", "));
     if (p.ADR1IMP || p.CPIMP || p.VILLEIMP) {

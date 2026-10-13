@@ -9,6 +9,11 @@
  *   - Base Adresse Nationale  https://api-adresse.data.gouv.fr  (adresses)
  *   - API Découpage administratif  https://geo.api.gouv.fr      (communes)
  *
+ * Les pays sont proposés à partir d'une liste embarquée : les États actuels
+ * pour une adresse, auxquels s'ajoutent, pour un lieu de naissance, les États
+ * et territoires disparus (URSS, Yougoslavie, Algérie française, Dahomey…),
+ * l'acte de naissance portant le nom du pays à la date de la naissance.
+ *
  * Les champs sont reconnus à la volée (nom de l'attribut data-*, id, classe et
  * libellé), puis un menu de suggestions est attaché au focus. Le remplissage
  * d'un champ passe par des événements `input` / `change` synthétiques, ce qui
@@ -90,7 +95,7 @@
 
   /**
    * 'street' | 'city' | 'postcode' | 'placeCity' | 'placePostcode'
-   * | 'cityPostcode' | 'country' | null
+   * | 'cityPostcode' | 'country' | 'placeCountry' | null
    */
   function detectRole(el) {
     if (!el || el.tagName !== 'INPUT') return null;
@@ -102,10 +107,10 @@
     if (!k) return null;
     if (/mail|courriel|iban|bic|swift|siren|siret|complement/.test(k)) return null;
 
-    if (/pays|country/.test(k)) return 'country';
+    var place = IS_PLACE.test(k);
+    if (/pays|country/.test(k)) return place ? 'placeCountry' : 'country';
     if (/cpvil|(cp|code postal)[^a-z]{0,6}(\+|et)[^a-z]{0,3}commune/.test(k)) return 'cityPostcode';
 
-    var place = IS_PLACE.test(k);
     if (IS_POSTCODE.test(k)) return place ? 'placePostcode' : 'postcode';
     if (IS_CITY.test(k)) return place ? 'placeCity' : 'city';
     if (/adresse|address|(^| )voie($| )|adr1/.test(k)) return 'street';
@@ -255,6 +260,173 @@
         postcode: cps.length === 1 && !MULTI_CP[c.code] ? cps[0] : '',
         codesPostaux: cps
       };
+    });
+  }
+
+  // ── Pays ──────────────────────────────────────────────────────────────────
+
+  // États actuels et territoires usuels. Après la barre : autres noms sous
+  // lesquels on les cherche, séparés par des points-virgules.
+  var PAYS_ACTUELS = [
+    'Afghanistan', 'Afrique du Sud', 'Albanie', 'Algérie', 'Allemagne', 'Andorre',
+    'Angola', 'Antigua-et-Barbuda', 'Arabie saoudite', 'Argentine', 'Arménie',
+    'Australie', 'Autriche', 'Azerbaïdjan', 'Bahamas', 'Bahreïn', 'Bangladesh',
+    'Barbade', 'Belgique', 'Belize', 'Bénin', 'Bhoutan', 'Biélorussie|Bélarus',
+    'Birmanie|Myanmar', 'Bolivie', 'Bosnie-Herzégovine', 'Botswana', 'Brésil',
+    'Brunei', 'Bulgarie', 'Burkina Faso', 'Burundi', 'Cambodge', 'Cameroun',
+    'Canada', 'Cap-Vert', 'Centrafrique|République centrafricaine', 'Chili',
+    'Chine', 'Chypre', 'Colombie', 'Comores',
+    'Congo|République du Congo;Congo-Brazzaville',
+    'République démocratique du Congo|RDC;Congo-Kinshasa',
+    'Corée du Nord', 'Corée du Sud', 'Costa Rica', "Côte d'Ivoire", 'Croatie',
+    'Cuba', 'Danemark', 'Djibouti', 'Dominique', 'Égypte', 'Émirats arabes unis',
+    'Équateur', 'Érythrée', 'Espagne', 'Estonie', 'Eswatini|Swaziland',
+    'États-Unis|USA;Amérique', 'Éthiopie', 'Fidji', 'Finlande', 'France', 'Gabon',
+    'Gambie', 'Géorgie', 'Ghana', 'Grèce', 'Grenade', 'Guatemala', 'Guinée',
+    'Guinée-Bissau', 'Guinée équatoriale', 'Guyana', 'Haïti', 'Honduras',
+    'Hongrie', 'Inde', 'Indonésie', 'Irak', 'Iran', 'Irlande', 'Islande', 'Israël',
+    'Italie', 'Jamaïque', 'Japon', 'Jordanie', 'Kazakhstan', 'Kenya',
+    'Kirghizistan', 'Kiribati', 'Kosovo', 'Koweït', 'Laos', 'Lesotho', 'Lettonie',
+    'Liban', 'Liberia', 'Libye', 'Liechtenstein', 'Lituanie', 'Luxembourg',
+    'Macédoine du Nord|Macédoine', 'Madagascar', 'Malaisie', 'Malawi', 'Maldives',
+    'Mali', 'Malte', 'Maroc', 'Îles Marshall|Marshall', 'Maurice|Île Maurice',
+    'Mauritanie', 'Mexique', 'Micronésie', 'Moldavie', 'Monaco', 'Mongolie',
+    'Monténégro', 'Mozambique', 'Namibie', 'Nauru', 'Népal', 'Nicaragua', 'Niger',
+    'Nigeria', 'Norvège', 'Nouvelle-Zélande', 'Oman', 'Ouganda', 'Ouzbékistan',
+    'Pakistan', 'Palaos', 'Palestine', 'Panama', 'Papouasie-Nouvelle-Guinée',
+    'Paraguay', 'Pays-Bas|Hollande', 'Pérou', 'Philippines', 'Pologne', 'Portugal',
+    'Qatar', 'République dominicaine', 'Tchéquie|République tchèque', 'Roumanie',
+    "Royaume-Uni|Angleterre;Grande-Bretagne;Écosse;Pays de Galles;Irlande du Nord",
+    'Russie', 'Rwanda', 'Saint-Christophe-et-Niévès', 'Sainte-Lucie',
+    'Saint-Marin', 'Saint-Vincent-et-les-Grenadines', 'Îles Salomon|Salomon',
+    'Salvador', 'Samoa', 'Sao Tomé-et-Principe', 'Sénégal', 'Serbie',
+    'Seychelles', 'Sierra Leone', 'Singapour', 'Slovaquie', 'Slovénie', 'Somalie',
+    'Soudan', 'Soudan du Sud', 'Sri Lanka', 'Suède', 'Suisse', 'Suriname', 'Syrie',
+    'Tadjikistan', 'Tanzanie', 'Tchad', 'Thaïlande', 'Timor oriental',
+    'Togo', 'Tonga', 'Trinité-et-Tobago', 'Tunisie', 'Turkménistan', 'Turquie',
+    'Tuvalu', 'Ukraine', 'Uruguay', 'Vanuatu', 'Vatican|Saint-Siège', 'Venezuela',
+    'Viêt Nam|Vietnam', 'Yémen', 'Zambie', 'Zimbabwe',
+    // Territoires
+    'Hong Kong', 'Macao', 'Taïwan', 'Porto Rico', 'Groenland', 'Îles Féroé',
+    'Gibraltar', 'Bermudes', 'Îles Caïmans', 'Curaçao', 'Aruba', 'Jersey',
+    'Guernesey', 'Île de Man', 'Sahara occidental'
+  ];
+
+  // États et territoires disparus, pour les lieux de naissance seulement.
+  // Nom | autres noms | période et pays d'aujourd'hui.
+  var PAYS_ANCIENS = [
+    'URSS|Union soviétique;Union des républiques socialistes soviétiques|1922-1991 · auj. Russie, Ukraine, Biélorussie, pays baltes, Caucase, Asie centrale',
+    "Empire russe|Russie impériale|jusqu'en 1917",
+    'Tchécoslovaquie||1918-1992 · auj. Tchéquie, Slovaquie',
+    'Protectorat de Bohême-Moravie|Bohême;Moravie|1939-1945 · auj. Tchéquie',
+    'Yougoslavie|Royaume des Serbes, Croates et Slovènes|1918-1992 · auj. Serbie, Croatie, Slovénie, Bosnie-Herzégovine, Monténégro, Macédoine du Nord, Kosovo',
+    'Serbie-et-Monténégro|République fédérale de Yougoslavie|1992-2006 · auj. Serbie, Monténégro, Kosovo',
+    "Allemagne de l'Est|RDA;République démocratique allemande|1949-1990 · auj. Allemagne",
+    "Allemagne de l'Ouest|RFA;République fédérale d'Allemagne|1949-1990 · auj. Allemagne",
+    "Reich allemand|Empire allemand;Troisième Reich|jusqu'en 1945 · auj. Allemagne, Pologne, Russie",
+    "Prusse|Royaume de Prusse|jusqu'en 1947 · auj. Allemagne, Pologne, Russie",
+    'Sarre|Protectorat de la Sarre|1947-1956 · auj. Allemagne',
+    'Ville libre de Dantzig|Dantzig|1920-1939 · auj. Pologne',
+    'Autriche-Hongrie|Empire austro-hongrois|1867-1918',
+    "Empire ottoman|Turquie ottomane|jusqu'en 1922",
+    "État libre d'Irlande||1922-1937 · auj. Irlande",
+    "Terre-Neuve|Dominion de Terre-Neuve|jusqu'en 1949 · auj. Canada",
+    "Algérie française|Algérie (départements français)|jusqu'en 1962 · auj. Algérie",
+    'Maroc (protectorat français)|Protectorat français du Maroc;Maroc espagnol|1912-1956 · auj. Maroc',
+    'Tunisie (protectorat français)|Protectorat français de Tunisie|1881-1956 · auj. Tunisie',
+    "Libye italienne|Tripolitaine;Cyrénaïque|1912-1947 · auj. Libye",
+    "Indochine française|Indochine;Tonkin;Annam;Cochinchine|jusqu'en 1954 · auj. Viêt Nam, Laos, Cambodge",
+    'Nord-Viêt Nam|Vietnam du Nord;République démocratique du Viêt Nam|1945-1976 · auj. Viêt Nam',
+    'Sud-Viêt Nam|Vietnam du Sud;République du Viêt Nam|1955-1976 · auj. Viêt Nam',
+    'Kampuchéa démocratique|Kampuchéa;République khmère|1970-1989 · auj. Cambodge',
+    "Afrique-Occidentale française|AOF|1895-1958 · auj. Sénégal, Mali, Guinée, Côte d'Ivoire, Burkina Faso, Bénin, Niger, Mauritanie",
+    'Afrique-Équatoriale française|AEF|1910-1958 · auj. Gabon, Congo, Centrafrique, Tchad',
+    "Soudan français||jusqu'en 1960 · auj. Mali",
+    "Dahomey||jusqu'en 1975 · auj. Bénin",
+    "Haute-Volta||jusqu'en 1984 · auj. Burkina Faso",
+    "Oubangui-Chari||jusqu'en 1960 · auj. Centrafrique",
+    'Empire centrafricain||1976-1979 · auj. Centrafrique',
+    "Moyen-Congo||jusqu'en 1960 · auj. Congo",
+    "Congo belge||jusqu'en 1960 · auj. République démocratique du Congo",
+    'Zaïre||1971-1997 · auj. République démocratique du Congo',
+    "Ruanda-Urundi||jusqu'en 1962 · auj. Rwanda, Burundi",
+    'Cameroun français|Cameroun sous tutelle|1919-1960 · auj. Cameroun',
+    'Togo français|Togo sous tutelle|1919-1960 · auj. Togo',
+    "Côte française des Somalis|Territoire français des Afars et des Issas;TFAI|jusqu'en 1977 · auj. Djibouti",
+    "Nouvelles-Hébrides||jusqu'en 1980 · auj. Vanuatu",
+    "Établissements français de l'Inde|Pondichéry;Chandernagor;Karikal;Mahé;Yanaon|jusqu'en 1962 · auj. Inde",
+    "Inde britannique|Empire des Indes;Raj britannique|jusqu'en 1947 · auj. Inde, Pakistan, Bangladesh, Birmanie",
+    'Pakistan oriental||1947-1971 · auj. Bangladesh',
+    "Ceylan||jusqu'en 1972 · auj. Sri Lanka",
+    "Siam||jusqu'en 1939 · auj. Thaïlande",
+    "Perse||jusqu'en 1935 · auj. Iran",
+    'Palestine mandataire|Palestine (mandat britannique)|1920-1948 · auj. Israël, Palestine',
+    'Transjordanie||1921-1949 · auj. Jordanie',
+    'Levant (mandat français)|Syrie (mandat français);Liban (mandat français);États du Levant|1920-1946 · auj. Syrie, Liban',
+    'République arabe unie|RAU|1958-1971 · auj. Égypte, Syrie',
+    'Yémen du Nord|République arabe du Yémen|1962-1990 · auj. Yémen',
+    'Yémen du Sud|Aden;République démocratique populaire du Yémen|1967-1990 · auj. Yémen',
+    'Abyssinie||auj. Éthiopie',
+    "Rhodésie|Rhodésie du Sud|jusqu'en 1980 · auj. Zimbabwe",
+    "Rhodésie du Nord||jusqu'en 1964 · auj. Zambie",
+    "Nyassaland||jusqu'en 1964 · auj. Malawi",
+    "Bechuanaland||jusqu'en 1966 · auj. Botswana",
+    "Basutoland||jusqu'en 1966 · auj. Lesotho",
+    "Tanganyika||jusqu'en 1964 · auj. Tanzanie",
+    "Zanzibar||jusqu'en 1964 · auj. Tanzanie",
+    "Gold Coast|Côte-de-l'Or|jusqu'en 1957 · auj. Ghana",
+    "Sud-Ouest africain|Afrique du Sud-Ouest|jusqu'en 1990 · auj. Namibie",
+    "Guinée portugaise||jusqu'en 1974 · auj. Guinée-Bissau",
+    "Guinée espagnole||jusqu'en 1968 · auj. Guinée équatoriale",
+    "Sahara espagnol||jusqu'en 1976 · auj. Sahara occidental",
+    "Somaliland britannique|Somalie italienne|jusqu'en 1960 · auj. Somalie",
+    "Formose||auj. Taïwan",
+    'Mandchoukouo||1932-1945 · auj. Chine',
+    "Indes néerlandaises|Indes orientales néerlandaises|jusqu'en 1949 · auj. Indonésie",
+    'Malaya|Fédération de Malaya|1948-1963 · auj. Malaisie',
+    "Sikkim||jusqu'en 1975 · auj. Inde",
+    "Hong Kong britannique||jusqu'en 1997 · auj. Chine",
+    "Macao portugais||jusqu'en 1999 · auj. Chine",
+    "Antilles néerlandaises||jusqu'en 2010 · auj. Curaçao, Sint Maarten, Pays-Bas caribéens"
+  ];
+
+  function paysListe(src, ancien) {
+    return src.map(function (ligne) {
+      var t = ligne.split('|');
+      var noms = [t[0]].concat(t[1] ? t[1].split(';') : []);
+      return {
+        nom: t[0],
+        sub: ancien ? 'Ancien État · ' + (t[2] || '').replace(/(\d{4})-(\d{4})/, '$1–$2') : '',
+        cles: noms.map(norm),
+        ancien: ancien
+      };
+    });
+  }
+
+  var PAYS = null;   // construit à la première recherche
+
+  /**
+   * Pays dont un nom commence par la saisie (rang 0) ou dont un mot du nom
+   * commence par elle (rang 1) : « congo » trouve aussi « République
+   * démocratique du Congo ». Les États actuels passent avant les anciens.
+   */
+  function searchCountries(q, avecAnciens) {
+    if (!PAYS) PAYS = paysListe(PAYS_ACTUELS, false).concat(paysListe(PAYS_ANCIENS, true));
+    var n = norm(q).trim();
+    if (!n) return [];
+    var found = [];
+    PAYS.forEach(function (p) {
+      if (p.ancien && !avecAnciens) return;
+      var rang = -1;
+      p.cles.forEach(function (c) {
+        if (c.indexOf(n) === 0) rang = 0;
+        else if (rang < 0 && (' ' + c.replace(/[-'(]/g, ' ')).indexOf(' ' + n) >= 0) rang = 1;
+      });
+      if (rang >= 0) found.push({ p: p, r: rang * 2 + (p.ancien ? 1 : 0) });
+    });
+    found.sort(function (a, b) { return a.r - b.r || a.p.nom.localeCompare(b.p.nom, 'fr'); });
+    return found.slice(0, 12).map(function (f) {
+      return { kind: 'country', main: f.p.nom, sub: f.p.sub, value: f.p.nom.toUpperCase() };
     });
   }
 
@@ -483,6 +655,8 @@
 
     } else if (role === 'cityPostcode') {
       setVal(el, it.value || it.city);
+    } else if (role === 'country' || role === 'placeCountry') {
+      setVal(el, it.value);
     }
 
     el.focus();
@@ -495,7 +669,24 @@
 
   function suggest(el) {
     var role = roleOf(el);
-    if (!role || role === 'country') { close(); return; }
+    if (!role) { close(); return; }
+
+    // Pays : liste embarquée, aucun appel réseau. Les États disparus ne sont
+    // proposés que pour un lieu de naissance.
+    if (role === 'country' || role === 'placeCountry') {
+      if (el.value.trim().length < 2) { close(); return; }
+      var pays = searchCountries(el.value, role === 'placeCountry');
+      // Valeur déjà choisie (l'insertion relance la saisie) : rien à proposer.
+      if (pays.length && pays[0].value === el.value.trim().toUpperCase()) { close(); return; }
+      open(el, role, pays);
+      return;
+    }
+
+    // Naissance à l'étranger : les communes françaises ne servent à rien.
+    if (role === 'placeCity' || role === 'placePostcode') {
+      var paysNa = findRelated(el, 'placeCountry');
+      if (paysNa && !isFrance(paysNa.value)) { close(); return; }
+    }
 
     // Adresse à l'étranger : les référentiels français ne servent à rien.
     // (Un lieu de naissance ne dépend pas du pays de domicile : on ne teste
