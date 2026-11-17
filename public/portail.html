@@ -44,6 +44,7 @@
     td.actions .btn-ghost { margin-left: 4px; }
     .etat { display: inline-block; font-size: 11px; border-radius: 10px; padding: 2px 9px; white-space: nowrap; }
     .etat.ouverte, .etat.repondue { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .etat.a-supprimer { background: #fbeeee; color: #9a3030; border: 1px solid #ecc8c8; }
     .etat.a-valider, .etat.en-attente { background: #f6f6f4; color: #666; border: 1px solid #e2e2df; }
     .etat.a-revalider, .etat.nouveau { background: #fff8e6; color: #8a6200; border: 1px solid #f0d58a; }
     .gris { color: #999; font-size: 12px; }
@@ -53,7 +54,7 @@
     .bandeau { background: #fff8e6; border: 1px solid #f0d58a; border-radius: 4px; padding: 10px 14px; font-size: 13px; color: #6b5200; margin-bottom: 14px; }
     .apercu { width: 100%; height: 560px; border: 1px solid #e5e5e5; border-radius: 4px; background: #fafafa; margin-top: 14px; }
     .fond { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10; }
-    .fenetre { background: #fff; border-radius: 6px; padding: 28px; width: 100%; max-width: 480px; }
+    .fenetre { background: #fff; border-radius: 6px; padding: 28px; width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto; }
     .fenetre h3 { font-size: 17px; font-weight: 500; margin-bottom: 10px; }
     .fenetre p { color: #555; font-size: 13px; margin-bottom: 18px; }
     .fenetre .pied { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; }
@@ -131,6 +132,7 @@
       <div class="barre">
         <div class="fg"><input type="search" id="filtre" placeholder="Rechercher un client…" aria-label="Rechercher un client"></div>
         <label class="case" style="margin:0;"><input type="checkbox" id="seulAValider"><span>À valider seulement</span></label>
+        <label class="case" style="margin:0;"><input type="checkbox" id="voirEcartees"><span>Afficher les fiches supprimées</span></label>
         <button type="button" class="btn" id="btnAjouterClient">Ajouter un client</button>
       </div>
       <table><thead><tr><th>Client</th><th>Mobile</th><th>Email</th><th>Espace client</th><th></th></tr></thead><tbody id="tClients"></tbody></table>
@@ -248,24 +250,29 @@ async function charger() {
 }
 
 /* ── Clients ── */
-const ETATS = { ouverte: 'Ouvert', 'a-valider': 'À valider', 'a-revalider': 'À revalider' };
+const ETATS = { ouverte: 'Ouvert', 'a-valider': 'À valider', 'a-revalider': 'À revalider', 'a-supprimer': 'Supprimée' };
 function afficherClients() {
   const q = $('filtre').value.trim().toLowerCase();
   const seul = $('seulAValider').checked;
   const lignes = donnees.fiches
     .filter(f => !q || `${f.nom} ${f.prenom} ${f.nomNaissance || ''} ${f.email} ${f.telephone}`.toLowerCase().includes(q))
     .filter(f => !seul || f.etat !== 'ouverte')
+    .filter(f => $('voirEcartees').checked ? f.etat === 'a-supprimer' : f.etat !== 'a-supprimer')
     .map(f => {
       const actions = el('td', { className: 'actions' });
-      if (f.etat === 'ouverte') {
+      const bouton = (t, fn) => el('button', { type: 'button', className: 'btn-ghost', textContent: t, onclick: fn });
+      if (f.etat === 'a-supprimer') {
+        actions.append(bouton('Restaurer', () => fenetreRestaurer(f)));
+      } else if (f.etat === 'ouverte') {
         actions.append(
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Origine des fonds', onclick: () => fenetreDemande(f) }),
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Retirer', onclick: () => fenetreRetirer(f) }));
       } else {
         actions.append(el('button', { type: 'button', className: 'btn-ghost', textContent: 'Valider', onclick: () => fenetreValider(f) }));
       }
+      if (f.etat !== 'a-supprimer') actions.append(bouton('Modifier', () => fenetreFiche(f)), bouton('Supprimer', () => fenetreEcarter(f)));
       const tel = el('td', {}, fmtTel(f.telephone) || '—');
-      if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'pas un mobile exploitable : à corriger dans Outlook' }));
+      if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'pas un mobile exploitable : à corriger (Modifier)' }));
       const etat = el('td', {}, el('span', { className: 'etat ' + f.etat, textContent: ETATS[f.etat] }));
       if (f.valideeLe) etat.append(el('div', { className: 'gris', textContent: 'validée le ' + date(f.valideeLe) }));
       if (f.etat === 'a-revalider') etat.append(el('div', { className: 'gris', textContent: 'mobile ou email modifié, ou validation hors portail' }));
@@ -276,32 +283,39 @@ function afficherClients() {
 }
 $('filtre').addEventListener('input', afficherClients);
 $('seulAValider').addEventListener('change', afficherClients);
+$('voirEcartees').addEventListener('change', afficherClients);
 
-$('btnAjouterClient').addEventListener('click', fenetreAjouter);
+$('btnAjouterClient').addEventListener('click', () => fenetreFiche(null));
 
-function fenetreAjouter() {
+/** Fiche client : création (f absent) ou modification (f fourni). */
+function fenetreFiche(f) {
+  const v = f || {};
   const champ = (id, libelle, type, attrs = {}) => {
-    const i = el('input', { id, type: type || 'text', ...attrs });
+    const { valeur, ...autres } = attrs;
+    const i = el('input', { id, type: type || 'text', ...autres });
+    i.value = valeur || '';
     return [i, el('div', { className: 'fg' }, el('label', { htmlFor: id, textContent: libelle }), i)];
   };
   const civ = el('select', { id: 'aCiv' }, new Option('—', ''), new Option('Madame', 'F'), new Option('Monsieur', 'M'));
+  civ.value = v.accord || '';
   const fCiv = el('div', { className: 'fg' }, el('label', { htmlFor: 'aCiv', textContent: 'Civilité' }), civ);
-  const [nom, fNom] = champ('aNom', 'Nom d\'usage *', 'text', { autocomplete: 'off' });
-  const [naiss, fNaiss] = champ('aNaiss', 'Nom de naissance (s\'il diffère)', 'text', { autocomplete: 'off' });
-  const [prenom, fPrenom] = champ('aPrenom', 'Prénom *', 'text', { autocomplete: 'off' });
-  const [email, fEmail] = champ('aEmail', 'Email *', 'email', { autocomplete: 'off' });
-  const [tel, fTel] = champ('aTel', 'Mobile *', 'tel', { autocomplete: 'off', placeholder: '06 12 34 56 78' });
-  const [adr, fAdr] = champ('aAdr', 'Adresse', 'text', { autocomplete: 'off' });
-  const [cp, fCp] = champ('aCp', 'Code postal', 'text', { autocomplete: 'off', inputMode: 'numeric' });
-  const [ville, fVille] = champ('aVille', 'Ville', 'text', { autocomplete: 'off' });
-  fenetre('Ajouter un client',
-    'La fiche est créée dans le dossier « Clients » de votre carnet Outlook. Elle reste à valider avant d\'ouvrir l\'espace client.',
+  const [nom, fNom] = champ('aNom', 'Nom d\'usage *', 'text', { autocomplete: 'off', valeur: v.nom });
+  const [naiss, fNaiss] = champ('aNaiss', 'Nom de naissance (s\'il diffère)', 'text', { autocomplete: 'off', valeur: v.nomNaissance });
+  const [prenom, fPrenom] = champ('aPrenom', 'Prénom *', 'text', { autocomplete: 'off', valeur: v.prenom });
+  const [email, fEmail] = champ('aEmail', 'Email *', 'email', { autocomplete: 'off', valeur: v.email });
+  const [tel, fTel] = champ('aTel', 'Mobile *', 'tel', { autocomplete: 'off', placeholder: '06 12 34 56 78', valeur: f ? fmtTel(f.telephone) : '' });
+  const [adr, fAdr] = champ('aAdr', 'Adresse', 'text', { autocomplete: 'off', valeur: v.adresse });
+  const [cp, fCp] = champ('aCp', 'Code postal', 'text', { autocomplete: 'off', inputMode: 'numeric', valeur: v.codePostal });
+  const [ville, fVille] = champ('aVille', 'Ville', 'text', { autocomplete: 'off', valeur: v.ville });
+  fenetre(f ? `Modifier la fiche de ${f.prenom} ${f.nom}` : 'Ajouter un client',
+    f ? 'La fiche est modifiée dans votre carnet Outlook.' + (f.etat === 'ouverte' ? ' Si vous changez le mobile ou l\'email, la validation tombe : l\'espace client du client se ferme jusqu\'à ce que vous validiez de nouveau la fiche.' : '')
+      : 'La fiche est créée dans le dossier « Clients » de votre carnet Outlook. Elle reste à valider avant d\'ouvrir l\'espace client.',
     [fCiv, fNom, fNaiss, fPrenom, fEmail, fTel, fAdr, fCp, fVille], 'Enregistrer',
     async () => {
       if (!nom.value.trim() || !prenom.value.trim()) throw new Error('Le nom et le prénom sont obligatoires.');
       if (!email.value.trim()) throw new Error('L\'email est obligatoire.');
       if (!tel.value.trim()) throw new Error('Le mobile est obligatoire.');
-      await api('fiche-creer', { nom: nom.value, nomNaissance: naiss.value, accord: civ.value, prenom: prenom.value, email: email.value, telephone: tel.value,
+      await api(f ? 'fiche-modifier' : 'fiche-creer', { id: v.id, nom: nom.value, nomNaissance: naiss.value, accord: civ.value, prenom: prenom.value, email: email.value, telephone: tel.value,
         adresse: adr.value, codePostal: cp.value, ville: ville.value });
     });
   nom.focus();
@@ -326,6 +340,16 @@ function fenetreValider(f) {
   fenetre(`Valider la fiche de ${f.prenom} ${f.nom}`,
     `Vous attestez avoir vérifié que ${f.email || '(aucune adresse)'} et le ${fmtTel(f.telephone) || '(aucun numéro)'} sont bien l'adresse email et le mobile de ce client. Ils lui permettront de consulter le RIB de l'étude et de déposer ses pièces.`,
     [], 'Valider', () => api('valider', { id: f.id }));
+}
+function fenetreEcarter(f) {
+  fenetre(`Supprimer la fiche de ${f.prenom} ${f.nom}`,
+    'La fiche disparaît du portail et l\'espace client du client se ferme. Votre carnet Outlook n\'est pas modifié : la fiche y reste telle quelle. Vous pourrez la restaurer ici (« Afficher les fiches supprimées »).',
+    [], 'Supprimer', () => api('fiche-ecarter', { id: f.id }));
+}
+function fenetreRestaurer(f) {
+  fenetre(`Restaurer la fiche de ${f.prenom} ${f.nom}`,
+    'La fiche revient dans le portail, à valider de nouveau avant d\'ouvrir l\'espace client.',
+    [], 'Restaurer', () => api('fiche-restaurer', { id: f.id }));
 }
 function fenetreRetirer(f) {
   fenetre(`Retirer la validation de ${f.prenom} ${f.nom}`,

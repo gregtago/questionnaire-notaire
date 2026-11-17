@@ -27,6 +27,14 @@ const { telephoneE164, estMobile } = require('./_securite');
 const { nomAffiche, nomNaissanceDe } = require('./_contacts');
 
 const VERIFIEE = 'Coord-verifiees';
+// « Supprimer » une fiche dans le portail ne touche pas Outlook : la fiche est
+// seulement retirée du portail (liste tenue dans le coffre), ce qui ferme
+// aussi l'espace client. Elle reste intacte dans le carnet et peut être
+// restaurée.
+const MASQUEES = 'annuaire/fiches-supprimees-du-portail.json';
+async function lireMasquees() {
+  return new Set(((await coffre.lireJson(MASQUEES).catch(() => null)) || {}).ids || []);
+}
 const DECLAREE = 'Coord-declarees';
 
 function modeEssai() {
@@ -44,6 +52,10 @@ function fiche(c) {
     nom: c.surname || '',
     prenom: c.givenName || '',
     nomNaissance: nomNaissanceDe(c.displayName),
+    accord: /\(née /.test(c.displayName || '') ? 'F' : /\(né /.test(c.displayName || '') ? 'M' : '',
+    adresse: (c.homeAddress || {}).street || '',
+    codePostal: (c.homeAddress || {}).postalCode || '',
+    ville: (c.homeAddress || {}).city || '',
     email: ((c.emailAddresses || [])[0] || {}).address || '',
     telephone: telephoneE164(c.mobilePhone),
     telephoneBrut: c.mobilePhone || '',
@@ -64,7 +76,7 @@ async function lireContacts() {
   const { graph, getFolderId, MAILBOX } = require('./_contacts');
   const folderId = await getFolderId();
   let chemin = `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}/contacts` +
-    '?$select=id,givenName,surname,displayName,mobilePhone,emailAddresses,categories&$top=200';
+    '?$select=id,givenName,surname,displayName,mobilePhone,emailAddresses,homeAddress,categories&$top=200';
   const out = [];
   for (let page = 0; chemin && page < 50; page++) {
     const r = await graph('GET', chemin);
@@ -75,12 +87,12 @@ async function lireContacts() {
   return out;
 }
 
-async function ecrireCategories(id, categories) {
+async function ecrireContact(id, champs) {
   if (modeEssai()) {
     const tous = (await coffre.lireJson(ESSAI)) || [];
     const c = tous.find(x => x.id === id);
     if (!c) throw new Error('Fiche introuvable');
-    c.categories = categories;
+    Object.assign(c, champs);
     await coffre.ecrireJson(ESSAI, tous);
     return;
   }
@@ -88,7 +100,14 @@ async function ecrireCategories(id, categories) {
   const folderId = await getFolderId();
   await graph('PATCH',
     `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}/contacts/${encodeURIComponent(id)}`,
-    { categories });
+    champs);
+}
+
+const ecrireCategories = (id, categories) => ecrireContact(id, { categories });
+
+/** Neutralise l'empreinte de validation (le coffre ne supprime rien). */
+async function neutraliserValidation(id, motif) {
+  await coffre.ecrireJson(cheminValidation(id), { telephone: null, email: null, [motif]: new Date().toISOString() });
 }
 
 /* ------------------------------------------------------------------ */
@@ -97,7 +116,8 @@ async function ecrireCategories(id, categories) {
 
 /** Toutes les fiches, avec leur état d'ouverture de l'espace client. */
 async function listerFiches() {
-  const contacts = await lireContacts();
+  const [contacts, masquees] = await Promise.all([lireContacts(), lireMasquees()]);
+  contacts.forEach(c => { c.aSupprimer = masquees.has(c.id); });
   const validations = new Map();
   await Promise.all(contacts.filter(c => c.verifiee).map(async c => {
     validations.set(c.id, await coffre.lireJson(cheminValidation(c.id)).catch(() => null));
@@ -105,6 +125,7 @@ async function listerFiches() {
   return contacts.map(c => {
     const v = validations.get(c.id);
     let etat = 'a-valider';
+    if (c.aSupprimer) return { ...c, etat: 'a-supprimer', valideeLe: null };
     const memeEmail = !!c.email && !!v && !!v.email && v.email.toLowerCase() === c.email.toLowerCase();
     if (c.verifiee && v && c.telephone && v.telephone === c.telephone && memeEmail) etat = 'ouverte';
     else if (c.verifiee) etat = 'a-revalider'; // catégorie posée hors portail, ou numéro changé depuis
@@ -132,6 +153,7 @@ async function ficheOuverte(id) {
 async function valider(id) {
   const c = (await lireContacts()).find(x => x.id === id);
   if (!c) throw Object.assign(new Error('Fiche introuvable'), { client: true });
+  if ((await lireMasquees()).has(id)) throw Object.assign(new Error('Cette fiche est supprimée du portail : restaurez-la avant de la valider'), { client: true });
   if (!c.telephone) {
     throw Object.assign(new Error('Cette fiche n\'a pas de numéro de mobile exploitable : complétez-la dans Outlook avant de la valider'), { client: true });
   }
@@ -156,16 +178,7 @@ async function valider(id) {
  * email, nom et prénom, elle est mise à jour au lieu d'être dédoublée.
  */
 async function creerFiche(p) {
-  const t = (v, n) => String(v || '').trim().slice(0, n);
-  const f = {
-    nom: t(p.nom, 80), prenom: t(p.prenom, 80), email: t(p.email, 200).toLowerCase(),
-    nomNaissance: t(p.nomNaissance, 80), accord: ['F', 'M'].includes(p.accord) ? p.accord : '',
-    telephone: t(p.telephone, 30), adresse: t(p.adresse, 200), codePostal: t(p.codePostal, 10), ville: t(p.ville, 80)
-  };
-  const refus = (m) => Object.assign(new Error(m), { client: true });
-  if (!f.nom || !f.prenom) throw refus('Le nom et le prénom sont obligatoires');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) throw refus('Adresse email invalide');
-  if (!f.telephone) throw refus('Le téléphone est obligatoire');
+  const f = champsSaisis(p);
 
   if (modeEssai()) {
     const tous = (await coffre.lireJson(ESSAI)) || [];
@@ -195,16 +208,81 @@ async function creerFiche(p) {
   return { action: r.action, ...f };
 }
 
+const refus = (m) => Object.assign(new Error(m), { client: true });
+
+function champsSaisis(p) {
+  const t = (v, n) => String(v || '').trim().slice(0, n);
+  const f = {
+    nom: t(p.nom, 80), prenom: t(p.prenom, 80), email: t(p.email, 200).toLowerCase(),
+    nomNaissance: t(p.nomNaissance, 80), accord: ['F', 'M'].includes(p.accord) ? p.accord : '',
+    telephone: t(p.telephone, 30), adresse: t(p.adresse, 200), codePostal: t(p.codePostal, 10), ville: t(p.ville, 80)
+  };
+  if (!f.nom || !f.prenom) throw refus('Le nom et le prénom sont obligatoires');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) throw refus('Adresse email invalide');
+  if (!f.telephone) throw refus('Le téléphone est obligatoire');
+  return f;
+}
+
+/**
+ * Modification d'une fiche depuis le portail. Si le mobile ou l'email change,
+ * la validation tombe : la fiche repasse « à valider » et l'espace client se
+ * ferme jusqu'à nouvelle validation.
+ */
+async function modifierFiche(id, p) {
+  const avant = (await lireContacts()).find(x => x.id === id);
+  if (!avant) throw refus('Fiche introuvable');
+  const f = champsSaisis(p);
+  const { toE164 } = require('./_contacts');
+  const tel = toE164(f.telephone);
+  const coordChangees = (telephoneE164(tel) || tel) !== (avant.telephone || avant.telephoneBrut) ||
+    f.email !== avant.email.toLowerCase();
+
+  const champs = {
+    givenName: f.prenom,
+    surname: f.nom.toUpperCase(),
+    displayName: nomAffiche(f.nom, f.prenom, f.nomNaissance, f.accord),
+    mobilePhone: tel,
+    emailAddresses: [{ address: f.email, name: nomAffiche(f.nom, f.prenom, f.nomNaissance, f.accord) }],
+    homeAddress: { street: f.adresse, postalCode: f.codePostal, city: f.ville, countryOrRegion: 'France' }
+  };
+  if (coordChangees) {
+    champs.categories = avant.categories.filter(x => x !== VERIFIEE && x !== DECLAREE).concat(DECLAREE);
+  }
+  await ecrireContact(id, champs);
+  if (coordChangees && avant.verifiee) await neutraliserValidation(id, 'modifieeLe');
+  return { ...f, coordChangees, etaitValidee: avant.verifiee };
+}
+
+/**
+ * « Supprimer » depuis le portail : la fiche n'apparaît plus dans le portail
+ * et l'espace client se ferme. Outlook n'est pas touché. Une validation
+ * éventuelle est neutralisée : restaurée, la fiche sera à revalider.
+ */
+async function ecarterFiche(id) {
+  const c = (await lireContacts()).find(x => x.id === id);
+  if (!c) throw refus('Fiche introuvable');
+  const ids = await lireMasquees(); ids.add(id);
+  await coffre.ecrireJson(MASQUEES, { ids: [...ids] });
+  if (c.verifiee) await neutraliserValidation(id, 'supprimeeDuPortailLe');
+  return c;
+}
+
+async function restaurerFiche(id) {
+  const c = (await lireContacts()).find(x => x.id === id);
+  if (!c) throw refus('Fiche introuvable');
+  const ids = await lireMasquees(); ids.delete(id);
+  await coffre.ecrireJson(MASQUEES, { ids: [...ids] });
+  return c;
+}
+
 async function retirer(id) {
   const c = (await lireContacts()).find(x => x.id === id);
   if (!c) throw Object.assign(new Error('Fiche introuvable'), { client: true });
   const categories = c.categories.filter(x => x !== DECLAREE && x !== VERIFIEE).concat(DECLAREE);
   await ecrireCategories(id, categories);
   // L'empreinte de validation est neutralisée, pas effacée : le coffre ne supprime rien.
-  await coffre.ecrireJson(cheminValidation(id), {
-    telephone: null, email: null, retireeLe: new Date().toISOString()
-  });
+  await neutraliserValidation(id, 'retireeLe');
   return c;
 }
 
-module.exports = { listerFiches, creerFiche, fichesOuvertesPourTelephone, fichesOuvertesPourEmail, ficheOuverte, valider, retirer, modeEssai };
+module.exports = { listerFiches, creerFiche, modifierFiche, ecarterFiche, restaurerFiche, fichesOuvertesPourTelephone, fichesOuvertesPourEmail, ficheOuverte, valider, retirer, modeEssai };

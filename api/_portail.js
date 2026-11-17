@@ -131,7 +131,8 @@ async function tableau(req, res) {
   res.json({
     ok: true,
     fiches: fiches.map(f => ({
-      id: f.id, nom: f.nom, prenom: f.prenom, nomNaissance: f.nomNaissance, email: f.email,
+      id: f.id, nom: f.nom, prenom: f.prenom, nomNaissance: f.nomNaissance, accord: f.accord, email: f.email,
+      adresse: f.adresse, codePostal: f.codePostal, ville: f.ville,
       telephone: f.telephone || f.telephoneBrut, telephoneExploitable: !!f.telephone && sec.estMobile(f.telephone),
       etat: f.etat, valideeLe: f.valideeLe
     })),
@@ -158,6 +159,28 @@ async function ficheCreer(req, res) {
   });
   await coffre.journaliser({ acteur: 'notaire', action: c.action === 'created' ? 'fiche-saisie' : 'fiche-saisie-maj', nom: `${c.nom.toUpperCase()} ${c.prenom}`.trim(), ip: sec.ipDe(req) });
   res.json({ ok: true, action: c.action });
+}
+
+async function ficheModifier(req, res) {
+  const b = req.body;
+  const c = await annuaire.modifierFiche(String(b.id || ''), {
+    nom: b.nom, prenom: b.prenom, nomNaissance: b.nomNaissance, accord: b.accord, email: b.email, telephone: b.telephone,
+    adresse: b.adresse, codePostal: b.codePostal, ville: b.ville
+  });
+  await coffre.journaliser({ acteur: 'notaire', action: 'fiche-modifiee', nom: `${c.nom.toUpperCase()} ${c.prenom}`.trim(), coordonnees: c.coordChangees ? 'modifiees' : 'inchangees', ip: sec.ipDe(req) });
+  res.json({ ok: true, validationRetiree: c.coordChangees && c.etaitValidee });
+}
+
+async function ficheEcarter(req, res) {
+  const c = await annuaire.ecarterFiche(String(req.body.id || ''));
+  await coffre.journaliser({ acteur: 'notaire', action: 'fiche-mise-de-cote', nom: `${c.nom} ${c.prenom}`.trim(), ip: sec.ipDe(req) });
+  res.json({ ok: true });
+}
+
+async function ficheRestaurer(req, res) {
+  const c = await annuaire.restaurerFiche(String(req.body.id || ''));
+  await coffre.journaliser({ acteur: 'notaire', action: 'fiche-restauree', nom: `${c.nom} ${c.prenom}`.trim(), ip: sec.ipDe(req) });
+  res.json({ ok: true });
 }
 
 async function retirer(req, res) {
@@ -261,7 +284,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
+const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');

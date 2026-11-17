@@ -423,6 +423,35 @@ test('saisie manuelle d\'un client depuis le portail', async () => {
   assert.ok(j.d.lignes.some(l => l.action === 'fiche-saisie'));
 });
 
+test('modifier une fiche : coordonnées changées, la validation tombe', async () => {
+  const lucie = () => portail('tableau').then(t => t.d.fiches.find(f => f.nom === 'MARTIN' && f.prenom === 'Lucie'));
+  const avant = await lucie();
+  assert.equal((await portail('valider', { id: avant.id })).r.status, 200);
+  assert.equal((await lucie()).etat, 'ouverte');
+  // Adresse seule : la validation tient.
+  const m1 = await portail('fiche-modifier', { id: avant.id, nom: 'Martin', prenom: 'Lucie', nomNaissance: 'Dupont', accord: 'F', email: 'lucie@example.org', telephone: '06 11 22 33 44', adresse: '2 rue Dante', codePostal: '75005', ville: 'Paris' });
+  assert.equal(m1.r.status, 200); assert.equal(m1.d.validationRetiree, false);
+  let f = await lucie();
+  assert.equal(f.etat, 'ouverte'); assert.equal(f.ville, 'Paris'); assert.equal(f.nomNaissance, 'DUPONT');
+  // Mobile changé : la fiche repasse à valider.
+  const m2 = await portail('fiche-modifier', { id: avant.id, nom: 'Martin', prenom: 'Lucie', nomNaissance: 'Dupont', accord: 'F', email: 'lucie@example.org', telephone: '06 99 88 77 66' });
+  assert.equal(m2.d.validationRetiree, true);
+  f = await lucie();
+  assert.notEqual(f.etat, 'ouverte'); assert.equal(f.telephone, '+33699887766');
+  assert.equal((await portail('fiche-modifier', { id: avant.id, nom: 'Martin', prenom: 'Lucie', email: 'x', telephone: '06' })).r.status, 400);
+});
+
+test('supprimer une fiche du portail : Outlook intact, restauration possible', async () => {
+  const carnetAvant = JSON.stringify(await coffre.lireJson('essai-annuaire/contacts.json'));
+  const paul = (await portail('tableau')).d.fiches.find(f => f.prenom === 'Paul' && f.nom === 'MARTIN');
+  assert.equal((await portail('fiche-ecarter', { id: paul.id })).r.status, 200);
+  assert.equal(JSON.stringify(await coffre.lireJson('essai-annuaire/contacts.json')), carnetAvant, 'le carnet n\'est pas modifié');
+  assert.equal((await portail('tableau')).d.fiches.find(f => f.id === paul.id).etat, 'a-supprimer');
+  assert.equal((await portail('valider', { id: paul.id })).r.status, 400);
+  await portail('fiche-restaurer', { id: paul.id });
+  assert.equal((await portail('tableau')).d.fiches.find(f => f.id === paul.id).etat, 'a-valider');
+});
+
 test('déconnexion du portail', async () => {
   await portail('deconnexion');
   assert.equal((await portail('tableau')).r.status, 401);
