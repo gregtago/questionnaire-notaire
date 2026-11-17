@@ -25,7 +25,7 @@ const {
   MOTIFS, SOURCES, erreurClient, ribEtudeInfo, ribEtudeContenu, ribEtudeDeposer,
   envoyerEmail, adresseDuSite, enveloppe, euros
 } = require('./_metier');
-const { filigraner, filigranerPiece } = require('./_filigrane');
+const { filigraner, filigranerPiece, nouvelleReference } = require('./_filigrane');
 
 const DUREE_SESSION = 12 * 60 * 60 * 1000;
 const TOTP = 'portail/totp.json';
@@ -213,12 +213,12 @@ async function demandeCreer(req, res) {
   if (!(montant > 0) || montant > 1e9) throw erreurClient('Montant à justifier invalide');
 
   const demande = {
-    id: coffre.identifiant(), statut: 'en-attente', contactId: f.id,
+    id: coffre.identifiant(), reference: nouvelleReference('DEM'), statut: 'en-attente', contactId: f.id,
     nomClient: `${f.nom} ${f.prenom}`.trim(), motif: req.body.motif, montant,
     justificatifs: req.body.justificatifs !== false, creeLe: new Date().toISOString()
   };
   await coffre.ecrireJson(`demandes/${demande.id}.json`, demande);
-  await coffre.journaliser({ acteur: 'notaire', action: 'demande-origine-fonds', nom: demande.nomClient, montant, ip: sec.ipDe(req) });
+  await coffre.journaliser({ acteur: 'notaire', action: 'demande-origine-fonds', nom: demande.nomClient, demande: demande.reference, montant, ip: sec.ipDe(req) });
 
   let prevenu = false;
   if (req.body.prevenir === true && f.email) {
@@ -231,6 +231,7 @@ async function demandeCreer(req, res) {
       corpsHtml:
         `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` +
         `<p style="margin:0 0 14px;">Dans le cadre de votre dossier, je vous remercie de bien vouloir me justifier l'origine des fonds à hauteur de <strong>${euros(montant)}</strong>.</p>` +
+        `<p style="margin:0 0 14px;">Référence de ma demande : <strong>${demande.reference}</strong>.</p>` +
         `<p style="margin:0 0 14px;">Vous pouvez le faire en ligne, depuis l'espace client de l'office : ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>, puis identifiez-vous avec votre numéro de mobile. Un code vous sera adressé par SMS.</p>` +
         '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable. Je ne vous demanderai jamais de mot de passe ni de coordonnées bancaires par email.</p>' +
         '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
@@ -279,10 +280,12 @@ async function gesteRib(nature, req, res) {
   }
 
   const nomClient = `${f.nom} ${f.prenom}`.trim();
-  const deja = (await coffre.listerJson('demandes/'))
-    .some(d => d.nature === nature && d.statut === 'en-attente' && d.contactId === f.id);
-  if (!deja) {
-    const demande = { id: coffre.identifiant(), nature, statut: 'en-attente', contactId: f.id, nomClient, creeLe: new Date().toISOString() };
+  // Une demande déjà en attente est relancée, sous sa référence d'origine.
+  let demande = (await coffre.listerJson('demandes/'))
+    .find(d => d.nature === nature && d.statut === 'en-attente' && d.contactId === f.id);
+  const deja = !!demande;
+  if (!demande || !demande.reference) {
+    demande = { id: coffre.identifiant(), ...demande, reference: nouvelleReference('DEM'), nature, statut: 'en-attente', contactId: f.id, nomClient, creeLe: (demande && demande.creeLe) || new Date().toISOString() };
     await coffre.ecrireJson(`demandes/${demande.id}.json`, demande);
   }
 
@@ -291,18 +294,19 @@ async function gesteRib(nature, req, res) {
     a: f.email, sujet: g.sujet, titre: g.titre, sousTitre: 'Espace client de l\'office',
     corpsHtml:
       `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` + g.texte +
+      `<p style="margin:0 0 14px;">Référence de ma demande : <strong>${demande.reference}</strong>. Elle figurera sur ${nature === 'rib' ? 'votre RIB une fois reçu par l\'office' : 'le RIB qui vous sera remis'}.</p>` +
       `<p style="margin:0 0 14px;">Ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>. Indiquez votre adresse email : vous recevrez un premier code par email, puis un second par SMS sur votre téléphone mobile.</p>` +
       '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable ni aucune pièce jointe. Je ne vous demanderai jamais de mot de passe, ni de me communiquer un code reçu par SMS.</p>' +
       '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
   });
   await coffre.journaliser({
-    acteur: 'notaire', action: g.journal, nom: nomClient, destinataire: f.email,
+    acteur: 'notaire', action: g.journal, nom: nomClient, demande: demande.reference, destinataire: f.email, ...(deja ? { relance: true } : {}),
     ...(envoye ? {} : { email: 'non-parti' }), ip: sec.ipDe(req)
   });
   if (!envoye) {
     throw erreurClient(`La demande est enregistrée dans l'espace client, mais l'email à ${f.email} n'a pas pu partir. Réessayez dans quelques minutes.`, 502);
   }
-  res.json({ ok: true, email: f.email, dejaEnCours: deja });
+  res.json({ ok: true, email: f.email, dejaEnCours: deja, demande: demande.reference });
 }
 
 const demandeRib = (req, res) => gesteRib('rib', req, res);
@@ -352,11 +356,12 @@ async function telechargement(req, res) {
     // Copie filigranée : l'original reste intact dans le coffre. Un PDF qui ne
     // se laisse pas marquer (protégé, endommagé) est remis tel quel, et le
     // journal le dit.
-    const marque = await filigranerPiece({ buf, type: piece.type }, { client: depot.nomClient, recuLe: depot.closLe || depot.ouvertLe })
+    const marque = await filigranerPiece({ buf, type: piece.type }, { client: depot.nomClient, recuLe: depot.closLe || depot.ouvertLe, demande: (depot.demandes || []).join(', ') })
       .catch(() => null);
     await coffre.journaliser({
       acteur: 'notaire', action: marque ? 'piece-consultee' : 'piece-consultee-sans-filigrane',
-      nom: depot.nomClient, depot: depot.id, fichier: piece.nom, ip: sec.ipDe(req)
+      nom: depot.nomClient, depot: depot.id, fichier: piece.nom,
+      ...(depot.demandes && depot.demandes.length ? { demande: depot.demandes.join(', ') } : {}), ip: sec.ipDe(req)
     });
     if (!marque) return envoyerFichier(res, { buf, type: piece.type, nom: piece.nom }, q.telecharger === '1');
     return envoyerFichier(res, { buf: marque, type: 'application/pdf', nom: piece.nom.replace(/\.(pdf|jpe?g|png)$/i, '') + '.pdf' }, q.telecharger === '1');

@@ -383,7 +383,7 @@ function fenetreDemanderRib(f) {
   fenetre(`Demander le RIB de ${f.prenom} ${f.nom}`,
     `${AIDE_RIB} Il y dépose son RIB ; vous le retrouvez dans « Pièces reçues », sous filigrane. Email : ${f.email}.`,
     [], 'Demander le RIB',
-    async () => { const r = await api('demande-rib', { contactId: f.id }); alerteEnvoi = `Demande de RIB envoyée à ${r.email}.`; });
+    async () => { const r = await api('demande-rib', { contactId: f.id }); alerteEnvoi = `Demande de RIB ${r.demande} envoyée à ${r.email}${r.dejaEnCours ? ' (relance)' : ''}.`; });
 }
 function fenetreEnvoyerRib(f) {
   if (!donnees.rib.courant) {
@@ -393,7 +393,7 @@ function fenetreEnvoyerRib(f) {
   fenetre(`Communiquer le RIB de l'office à ${f.prenom} ${f.nom}`,
     `${AIDE_RIB} Il y consulte le RIB, sous filigrane à son nom, daté et sous une référence unique consignée au journal. Email : ${f.email}.`,
     [], 'Envoyer l\'email',
-    async () => { const r = await api('rib-communiquer', { contactId: f.id }); alerteEnvoi = `Email envoyé à ${r.email} : le RIB de l'office l'attend dans son espace client.`; });
+    async () => { const r = await api('rib-communiquer', { contactId: f.id }); alerteEnvoi = `Email envoyé à ${r.email} (demande ${r.demande}${r.dejaEnCours ? ', relance' : ''}) : le RIB de l'office l'attend dans son espace client.`; });
 }
 let alerteEnvoi = '';
 
@@ -410,6 +410,7 @@ function afficherPieces() {
       objet.append(el('strong', { textContent: 'Origine des fonds' }), el('div', { className: 'gris', textContent: 'Total déclaré : ' + euros(d.total) }));
       (d.sources || []).forEach(s => objet.append(el('div', { className: 'gris', textContent: `${s.libelle} — ${euros(s.montant)}${s.precision ? ' — ' + s.precision : ''}` })));
     }
+    if (d.demandes && d.demandes.length) objet.append(el('div', { className: 'gris', textContent: 'En réponse à la demande ' + d.demandes.join(', ') }));
     const pieces = el('ul', { className: 'pieces' }, ...d.pieces.map(p => {
       const url = `/api/espace?zone=portail&action=piece&depot=${d.id}&piece=${p.id}`;
       return el('li', {},
@@ -431,9 +432,9 @@ async function marquerVu(d) {
 
 /* ── Demandes ── */
 function afficherDemandes() {
-  const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe)), el('td', {}, el('strong', { textContent: d.nomClient })),
+  const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe), ...(d.reference ? [el('div', { className: 'gris', textContent: d.reference })] : [])), el('td', {}, el('strong', { textContent: d.nomClient })),
     el('td', {}, d.nature === 'origine' ? 'Origine des fonds — ' + d.motifLibelle : d.motifLibelle), el('td', {}, d.nature === 'origine' ? euros(d.montant) : '—'),
-    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? (d.nature === 'rib-etude' ? `Consulté le ${date(d.reponduLe)} (${d.reference})` : 'Répondue le ' + date(d.reponduLe)) : (d.nature === 'rib-etude' ? 'Pas encore consulté' : 'En attente du client') }))));
+    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? (d.nature === 'rib-etude' ? `Consulté le ${date(d.reponduLe)} — exemplaire ${d.exemplaire}` : 'Répondue le ' + date(d.reponduLe)) : (d.nature === 'rib-etude' ? 'Pas encore consulté' : 'En attente du client') }))));
   $('tDemandes').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune demande.' }))]));
 }
 
@@ -478,7 +479,7 @@ async function chargerJournal() {
     const { lignes } = await api('journal');
     $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.reference, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }

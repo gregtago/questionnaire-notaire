@@ -349,12 +349,16 @@ test('demande de RIB : email au client, dépôt après double vérification, dem
   // Sans email possible, le notaire est averti (et la demande reste enregistrée).
   assert.equal((await portail('demande-rib', { contactId: 'c-diai' })).r.status, 502);
 
+  let ref;
   await avecEmails(async () => {
     assert.equal((await portail('demande-rib', { contactId: 'c-sans' })).r.status, 400, 'fiche non validée');
     const a = await portail('demande-rib', { contactId: 'c-diai' });
     assert.equal(a.r.status, 200);
     assert.equal(a.d.dejaEnCours, true, 'pas de doublon de demande');
+    ref = a.d.demande;
+    assert.match(ref, /^DEM-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/);
     assert.equal(emails.length, 1);
+    assert.ok(emails[0].html.includes(ref), 'la référence de la demande figure dans l\'email');
     assert.equal(emails[0].to, 'samuel@example.org');
     assert.ok(!emails[0].attachments, 'aucune pièce jointe');
     assert.ok(!/href=/.test(emails[0].html), 'aucun lien');
@@ -376,13 +380,26 @@ test('demande de RIB : email au client, dépôt après double vérification, dem
   const d = t.d.demandes.find(x => x.nature === 'rib');
   assert.equal(d.statut, 'repondue');
   assert.equal(d.depotId, o.d.depot);
+  assert.equal(d.reference, ref);
+
+  // Le RIB reçu porte, dans son filigrane, la référence de la demande, comme le journal.
+  const depot = t.d.depots.find(x => x.id === o.d.depot);
+  assert.deepEqual(depot.demandes, [ref]);
+  const piece = await fetch(`${BASE}/api/espace?zone=portail&action=piece&depot=${depot.id}&piece=${depot.pieces[0].id}`, { headers: { cookie } });
+  assert.ok((await PDFDocument.load(Buffer.from(await piece.arrayBuffer()))).getSubject().includes(ref));
+  const j = (await portail('journal')).d.lignes;
+  for (const action of ['demande-rib', 'rib-client-depose', 'piece-consultee']) {
+    assert.ok(j.some(l => l.action === action && l.demande === ref), `journal : ${action} porte ${ref}`);
+  }
 });
 
 test('RIB de l\'étude communiqué : email sans pièce jointe, remis dans l\'espace après double vérification', async () => {
+  let ref;
   await avecEmails(async () => {
     assert.equal((await portail('rib-communiquer', { contactId: 'c-sans' })).r.status, 400);
     const a = await portail('rib-communiquer', { contactId: 'c-diai' });
     assert.equal(a.r.status, 200);
+    ref = a.d.demande;
     assert.equal(emails.length, 1);
     assert.ok(!emails[0].attachments, 'le RIB ne part pas par email');
     assert.ok(!/href=/.test(emails[0].html));
@@ -396,13 +413,17 @@ test('RIB de l\'étude communiqué : email sans pièce jointe, remis dans l\'esp
   const r = await espace('rib-etude', { session });
   assert.equal(r.r.status, 200);
   const reference = /RIB-[A-Z2-9]{4}-[A-Z2-9]{4}/.exec(r.r.headers.get('content-disposition'))[0];
+  const remis = await PDFDocument.load(Buffer.from(await r.r.arrayBuffer()));
+  assert.ok(remis.getSubject().includes(ref), 'le RIB remis porte la référence de la demande');
   assert.equal((await espace('etat', { session })).d.ribEtudeCommunique, false);
   t = await portail('tableau');
   const d = t.d.demandes.find(x => x.nature === 'rib-etude');
   assert.equal(d.statut, 'repondue');
-  assert.equal(d.reference, reference, 'le portail montre quel exemplaire a été remis');
+  assert.equal(d.reference, ref);
+  assert.equal(d.exemplaire, reference, 'le portail montre quel exemplaire a été remis');
   const j = (await portail('journal')).d.lignes;
-  assert.ok(j.some(l => l.action === 'rib-etude-communique' && l.destinataire === 'samuel@example.org'));
+  assert.ok(j.some(l => l.action === 'rib-etude-communique' && l.demande === ref && l.destinataire === 'samuel@example.org'));
+  assert.ok(j.some(l => l.action === 'rib-etude-consulte' && l.demande === ref && l.reference === reference));
 });
 
 test('un client ne peut pas agir sur le dépôt d\'un autre', async () => {

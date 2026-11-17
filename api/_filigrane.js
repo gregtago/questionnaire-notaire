@@ -25,12 +25,15 @@ const { PDFDocument, StandardFonts, rgb, degrees } = require('pdf-lib');
 
 const URL_VERIFICATION = () => process.env.RIB_QR_URL || 'https://www.tagot.notaires.fr/rib';
 
-/** Référence lisible à voix haute : pas de 0/O ni de 1/I. */
-function nouvelleReference() {
+/**
+ * Référence lisible à voix haute : pas de 0/O ni de 1/I.
+ * « RIB-… » pour un exemplaire remis, « DEM-… » pour une demande du notaire.
+ */
+function nouvelleReference(prefixe = 'RIB') {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let r = '';
   for (const o of crypto.randomBytes(8)) r += alphabet[o % alphabet.length];
-  return `RIB-${r.slice(0, 4)}-${r.slice(4)}`;
+  return `${prefixe}-${r.slice(0, 4)}-${r.slice(4)}`;
 }
 
 function dateParis(d) {
@@ -84,18 +87,19 @@ function poserFiligrane(doc, police, lignes) {
 /**
  * RIB de l'étude remis à un client.
  * @param {{buf:Buffer,type:string}} rib      le RIB tel que déposé
- * @param {{beneficiaire:string,reference:string,quand?:Date}} remise
+ * @param {{beneficiaire:string,reference:string,demande?:string,quand?:Date}} remise
+ *        demande : référence de la demande du notaire à laquelle répond la remise
  * @returns {Promise<Buffer>} un PDF marqué
  */
-async function filigraner(rib, { beneficiaire, reference, quand = new Date() }) {
+async function filigraner(rib, { beneficiaire, reference, demande, quand = new Date() }) {
   const doc = await ouvrir(rib);
   const gras = await doc.embedFont(StandardFonts.HelveticaBold);
   poserFiligrane(doc, gras, [
     latin(`Grégoire TAGOT  |  notaire — RIB authentique — ${reference}`),
-    latin(`Remis à ${beneficiaire} le ${dateParis(quand)}`)
+    latin(`Remis à ${beneficiaire} le ${dateParis(quand)}${demande ? ` — demande ${demande}` : ''}`)
   ]);
   doc.setTitle(latin(`RIB de l'office — ${reference}`));
-  doc.setSubject(latin(`Remis à ${beneficiaire} le ${dateParis(quand)} — vérification : ${URL_VERIFICATION().replace(/^https?:\/\//, '')}`));
+  doc.setSubject(latin(`Remis à ${beneficiaire} le ${dateParis(quand)}${demande ? ` — demande ${demande}` : ''} — vérification : ${URL_VERIFICATION().replace(/^https?:\/\//, '')}`));
   doc.setProducer('form.tagot.notaires.fr');
   return Buffer.from(await doc.save());
 }
@@ -105,17 +109,17 @@ async function filigraner(rib, { beneficiaire, reference, quand = new Date() }) 
  * l'office la consulte : la copie porte l'origine et l'usage de la pièce.
  * L'original reste intact dans le coffre.
  * @param {{buf:Buffer,type:string}} piece
- * @param {{client:string,recuLe:string|Date}} origine
+ * @param {{client:string,recuLe:string|Date,demande?:string}} origine
  */
-async function filigranerPiece(piece, { client, recuLe }) {
+async function filigranerPiece(piece, { client, recuLe, demande }) {
   const doc = await ouvrir(piece);
   const gras = await doc.embedFont(StandardFonts.HelveticaBold);
   const quand = dateParis(new Date(recuLe));
   poserFiligrane(doc, gras, [
     latin(`Reçu par l'office Grégoire TAGOT  |  notaire — usage exclusif du dossier`),
-    latin(`Déposé par ${client} le ${quand} — espace client`)
+    latin(`Déposé par ${client} le ${quand} — ${demande ? `demande ${demande}` : 'espace client'}`)
   ]);
-  doc.setSubject(latin(`Pièce déposée par ${client} le ${quand}`));
+  doc.setSubject(latin(`Pièce déposée par ${client} le ${quand}${demande ? ` — demande ${demande}` : ''}`));
   doc.setProducer('form.tagot.notaires.fr');
   return Buffer.from(await doc.save());
 }
