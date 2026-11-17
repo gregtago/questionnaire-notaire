@@ -26,11 +26,14 @@ delete process.env.SMTP_USER; // aucun email pendant les essais
 const coffre = require('../api/_coffre');
 const sec = require('../api/_securite');
 const serveur = require('../scripts/dev.js');
+const { PDFDocument } = require('pdf-lib');
+const QRCode = require('qrcode');
 
 let BASE, cookie = '';
 const PDF = Buffer.concat([Buffer.from('%PDF-1.4\n% RIB fictif de l\'étude\n'), crypto.randomBytes(200)]);
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), crypto.randomBytes(300)]);
 const IBAN = 'FR7630006000011234567890189';
+let RIB_PDF, RIB_PNG; // RIB de l'étude : de vrais fichiers, car ils reçoivent le filigrane
 
 const CONTACTS = [
   { id: 'c-diai', surname: 'DIAI', givenName: 'Samuel', mobilePhone: '+33612345678', emailAddresses: [{ address: 'samuel@example.org' }], categories: ['Coord-declarees', 'Vente'] },
@@ -79,6 +82,11 @@ test.before(async () => {
   await new Promise(ok => (serveur.listening ? ok() : serveur.once('listening', ok)));
   BASE = `http://127.0.0.1:${serveur.address().port}`;
   await coffre.ecrireJson('essai-annuaire/contacts.json', CONTACTS);
+  const doc = await PDFDocument.create();
+  doc.addPage([595, 842]).drawText('RIB fictif de l\'office', { x: 50, y: 780, size: 14 });
+  doc.addPage([595, 842]);
+  RIB_PDF = Buffer.from(await doc.save());
+  RIB_PNG = await QRCode.toBuffer('RIB fictif en image', { width: 300 });
 });
 test.after(() => { serveur.close(); fs.rmSync(DIR, { recursive: true, force: true }); });
 test.beforeEach(oublierLimites);
@@ -249,20 +257,42 @@ test('RIB de l\'étude : indisponible, puis déposé par le notaire et remis au 
   assert.equal((await espace('rib-etude', { session })).r.status, 404);
 
   assert.equal((await portail('rib-deposer', { fichier: b64(Buffer.from('pas un RIB'), 'rib.pdf') })).r.status, 400);
-  assert.equal((await portail('rib-deposer', { fichier: b64(PDF, 'RIB CLIENTS.pdf') })).r.status, 200);
+  assert.match((await portail('rib-deposer', { fichier: b64(PDF, 'rib-abime.pdf') })).d.error, /filigrane/, 'un PDF illisible est refusé dès le dépôt');
+  assert.equal((await portail('rib-deposer', { fichier: b64(RIB_PDF, 'RIB CLIENTS.pdf') })).r.status, 200);
 
+  // L'exemplaire remis au client est un PDF marqué, pas le fichier d'origine.
   const r = await espace('rib-etude', { session });
   assert.equal(r.r.status, 200);
   assert.equal(r.r.headers.get('content-type'), 'application/pdf');
-  assert.ok(Buffer.from(await r.r.arrayBuffer()).equals(PDF));
+  const remis = Buffer.from(await r.r.arrayBuffer());
+  assert.ok(!remis.equals(RIB_PDF) && remis.length > RIB_PDF.length);
+  const lu = await PDFDocument.load(remis);
+  assert.equal(lu.getPageCount(), 2, 'toutes les pages sont conservées');
+  const reference = /RIB-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}/.exec(lu.getTitle())[0];
+  assert.match(lu.getSubject(), /Samuel DIAI/);
+  assert.ok(r.r.headers.get('content-disposition').includes(reference));
+
+  // La référence est au journal ; un second exemplaire en porte une autre.
+  const j1 = (await portail('journal')).d.lignes.filter(l => l.action === 'rib-etude-consulte');
+  assert.equal(j1[0].reference, reference);
+  const r2 = await PDFDocument.load(Buffer.from(await (await espace('rib-etude', { session })).r.arrayBuffer()));
+  assert.notEqual(r2.getTitle(), lu.getTitle());
+
+  // Le notaire, lui, retrouve le fichier d'origine, intact.
+  const origine = await fetch(`${BASE}/api/espace?zone=portail&action=rib-etude`, { headers: { cookie } });
+  assert.ok(Buffer.from(await origine.arrayBuffer()).equals(RIB_PDF));
+
   assert.equal((await espace('rib-etude', { session: 'x.y' })).r.status, 401);
   assert.equal((await espace('rib-etude', {})).r.status, 401);
 
-  // Nouveau dépôt : l'ancien est conservé dans l'historique.
-  await portail('rib-deposer', { fichier: b64(PNG, 'rib-2.png') });
+  // Nouveau dépôt, en image : l'ancien est conservé, et l'image est remise en PDF marqué.
+  await portail('rib-deposer', { fichier: b64(RIB_PNG, 'rib-2.png') });
   const t = await portail('tableau');
   assert.equal(t.d.rib.courant.nom, 'rib-2.png');
   assert.equal(t.d.rib.anciens.length, 1);
+  const r3 = await espace('rib-etude', { session });
+  assert.equal(r3.r.headers.get('content-type'), 'application/pdf');
+  assert.equal((await PDFDocument.load(Buffer.from(await r3.r.arrayBuffer()))).getPageCount(), 1);
 });
 
 let depotRib;

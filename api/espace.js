@@ -28,6 +28,7 @@ const coffre = require('./_coffre');
 const sms = require('./_sms');
 const annuaire = require('./_annuaire');
 const sec = require('./_securite');
+const { filigraner, nouvelleReference } = require('./_filigrane');
 const {
   MOTIFS, SOURCES, erreurClient, ribEtudeInfo, ribEtudeContenu,
   avisAuNotaire, envoyerEmail, enveloppe, euros
@@ -144,7 +145,7 @@ async function verifierEmail(req, res) {
     const c = codeAleatoire();
     envois.push({ t: tel, c: ids, h: sec.hmac(`sms|${ticket}|${tel}|${c}`) });
     const envoi = await sms.envoyerSms(tel,
-      `Grégoire TAGOT notaire : votre code est ${c}, valable 10 minutes. Ne le communiquez à personne.`)
+      `Grégoire TAGOT  |  notaire : votre code est ${c}, valable 10 minutes. Ne le communiquez à personne.`)
       .catch(async (e) => {
         console.error('[espace] SMS non envoyé :', e.message);
         await coffre.journaliser({ acteur: 'client', action: 'code-non-envoye-echec-sms', telephone: sec.masquerTelephone(tel), ip: sec.ipDe(req) });
@@ -233,14 +234,20 @@ async function ribEtude(req, res) {
   const rib = await ribEtudeContenu();
   if (!rib) throw erreurClient('Le RIB de l\'étude n\'est pas encore disponible en ligne. Merci de contacter l\'étude.', 404);
 
+  // Chaque exemplaire remis est marqué : filigrane, bénéficiaire, date et
+  // référence. Sans marquage possible, rien n'est remis.
+  const reference = nouvelleReference();
+  const beneficiaire = session.fiches.map(f => `${f.prenom} ${f.nom}`.trim()).join(' et ');
+  const pdf = await filigraner(rib, { beneficiaire, reference });
+
   await coffre.journaliser({
     acteur: 'client', action: 'rib-etude-consulte',
-    nom: session.fiches.map(nomDe).join(' / '),
+    nom: session.fiches.map(nomDe).join(' / '), reference,
     telephone: sec.masquerTelephone(session.tel), ip: sec.ipDe(req), rib: rib.id
   });
-  res.setHeader('Content-Type', rib.type);
-  res.setHeader('Content-Disposition', 'inline; filename="RIB-etude-TAGOT' + (rib.type === 'application/pdf' ? '.pdf' : '') + '"');
-  res.status(200).send(rib.buf);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="RIB-office-TAGOT-${reference}.pdf"`);
+  res.status(200).send(pdf);
 }
 
 /* ------------------------------------------------------------------ */
