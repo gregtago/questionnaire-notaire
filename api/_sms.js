@@ -88,15 +88,18 @@ async function envoyerSms(numeroE164, message) {
     throw e;
   }
 
-  const r = await ovh('POST', `/sms/${encodeURIComponent(process.env.OVH_SMS_SERVICE)}/jobs`, {
-    message,
-    receivers: [numeroE164],
-    noStopClause: true,           // message de service, pas de prospection
-    priority: 'high',
-    ...(process.env.OVH_SMS_SENDER
-      ? { sender: process.env.OVH_SMS_SENDER }
-      : { senderForResponse: true })
-  });
+  const chemin = `/sms/${encodeURIComponent(process.env.OVH_SMS_SERVICE)}/jobs`;
+  const corps = { message, receivers: [numeroE164], noStopClause: true, priority: 'high' }; // message de service, pas de prospection
+  const expediteur = process.env.OVH_SMS_SENDER;
+
+  let r = await ovh('POST', chemin, expediteur ? { ...corps, sender: expediteur } : { ...corps, senderForResponse: true });
+
+  // Un expéditeur nominatif encore « en cours de validation » chez OVHcloud est
+  // refusé. Le code doit partir quand même : second essai par numéro court.
+  if (!r.ok && expediteur && [400, 403, 404].includes(r.status)) {
+    console.error(`[sms] expéditeur nominatif refusé (${await motif(r)}) : envoi par numéro court`);
+    r = await ovh('POST', chemin, { ...corps, senderForResponse: true });
+  }
 
   if (!r.ok) throw new Error(await motif(r));
   const d = await r.json().catch(() => ({}));
