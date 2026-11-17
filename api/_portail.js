@@ -132,7 +132,7 @@ async function tableau(req, res) {
     ok: true,
     fiches: fiches.map(f => ({
       id: f.id, nom: f.nom, prenom: f.prenom, email: f.email,
-      telephone: f.telephone || f.telephoneBrut, telephoneExploitable: !!f.telephone,
+      telephone: f.telephone || f.telephoneBrut, telephoneExploitable: !!f.telephone && sec.estMobile(f.telephone),
       etat: f.etat, valideeLe: f.valideeLe
     })),
     demandes: demandes.sort((a, b) => recent(a, b, 'creeLe')).map(d => ({ ...d, motifLibelle: MOTIFS[d.motif] || d.motif })),

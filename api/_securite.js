@@ -129,6 +129,12 @@ function telephoneE164(tel) {
   return null;
 }
 
+/** Un numéro français ne reçoit de SMS que s'il commence par 06 ou 07. */
+function estMobile(e164) {
+  const t = String(e164 || '');
+  return t.startsWith('+33') ? /^\+33[67]\d{8}$/.test(t) : /^\+\d{8,15}$/.test(t);
+}
+
 function masquerTelephone(e164) {
   const t = String(e164 || '');
   return t.length > 6 ? `${t.slice(0, 4)}••••${t.slice(-2)}` : '••••';
@@ -182,6 +188,6 @@ function echapper(s) {
 module.exports = {
   hmac, egal, signerJeton, lireJeton, sousLimite, ipDe,
   totp, totpValide, nouveauSecretTotp,
-  telephoneE164, masquerTelephone, ibanValide,
+  telephoneE164, estMobile, masquerTelephone, ibanValide,
   fichierRecu, typeDeFichier, TAILLE_MAX, echapper
 };

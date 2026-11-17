@@ -263,7 +263,7 @@ function afficherClients() {
         actions.append(el('button', { type: 'button', className: 'btn-ghost', textContent: 'Valider', onclick: () => fenetreValider(f) }));
       }
       const tel = el('td', {}, fmtTel(f.telephone) || '—');
-      if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'numéro à corriger dans Outlook' }));
+      if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'pas un mobile exploitable : à corriger dans Outlook' }));
       const etat = el('td', {}, el('span', { className: 'etat ' + f.etat, textContent: ETATS[f.etat] }));
       if (f.valideeLe) etat.append(el('div', { className: 'gris', textContent: 'validée le ' + date(f.valideeLe) }));
       if (f.etat === 'a-revalider') etat.append(el('div', { className: 'gris', textContent: 'numéro modifié ou validation hors portail' }));

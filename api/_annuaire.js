@@ -22,7 +22,7 @@
 
 const crypto = require('crypto');
 const coffre = require('./_coffre');
-const { telephoneE164 } = require('./_securite');
+const { telephoneE164, estMobile } = require('./_securite');
 
 const VERIFIEE = 'Coord-verifiees';
 const DECLAREE = 'Coord-declarees';
@@ -123,6 +123,9 @@ async function valider(id) {
   if (!c) throw Object.assign(new Error('Fiche introuvable'), { client: true });
   if (!c.telephone) {
     throw Object.assign(new Error('Cette fiche n\'a pas de numéro de mobile exploitable : complétez-la dans Outlook avant de la valider'), { client: true });
+  }
+  if (!estMobile(c.telephone)) {
+    throw Object.assign(new Error('Ce numéro est une ligne fixe : il ne peut pas recevoir de SMS. Indiquez un mobile dans Outlook avant de valider la fiche'), { client: true });
   }
   const categories = c.categories.filter(x => x !== DECLAREE && x !== VERIFIEE).concat(VERIFIEE);
   await ecrireCategories(id, categories);

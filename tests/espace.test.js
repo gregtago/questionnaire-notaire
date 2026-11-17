@@ -36,7 +36,8 @@ const CONTACTS = [
   { id: 'c-diai', surname: 'DIAI', givenName: 'Samuel', mobilePhone: '+33612345678', emailAddresses: [{ address: 'samuel@example.org' }], categories: ['Coord-declarees', 'Vente'] },
   { id: 'c-vial-1', surname: 'VIAL', givenName: 'Anne', mobilePhone: '06 98 76 54 32', emailAddresses: [{ address: 'vial@example.org' }], categories: ['Coord-declarees'] },
   { id: 'c-vial-2', surname: 'VIAL', givenName: 'Marc', mobilePhone: '0698765432', emailAddresses: [{ address: 'vial@example.org' }], categories: ['Coord-declarees'] },
-  { id: 'c-sans', surname: 'SANSTEL', givenName: 'Luc', mobilePhone: 'voir fixe', emailAddresses: [], categories: [] }
+  { id: 'c-sans', surname: 'SANSTEL', givenName: 'Luc', mobilePhone: 'voir fixe', emailAddresses: [], categories: [] },
+  { id: 'c-fixe', surname: 'FIXE', givenName: 'Paul', mobilePhone: '01 44 00 00 00', emailAddresses: [], categories: [] }
 ];
 
 const oublierLimites = () => fs.rmSync(path.join(DIR, 'limites'), { recursive: true, force: true });
@@ -90,6 +91,18 @@ test('téléphones, IBAN et types de fichiers', () => {
   assert.equal(sec.telephoneE164('+33 (0)6.12.34.56.78'), '+33612345678');
   assert.equal(sec.telephoneE164('0033612345678'), '+33612345678');
   assert.equal(sec.telephoneE164('voir fixe'), null);
+  // Toutes les façons d'écrire un même mobile doivent se rejoindre : c'est ce
+  // qui fait concorder la saisie du client avec la fiche du carnet.
+  for (const ecrit of ['0612345678', '06 12 34 56 78', '06.12.34.56.78', '06-12-34-56-78', '06\u00a012\u00a034\u00a056\u00a078',
+    ' 06 12 34 56 78 ', '+33612345678', '+33 6 12 34 56 78', '+33 (0)6 12 34 56 78', '+330612345678', '0033612345678',
+    '00 33 6 12 34 56 78', '06_12_34_56_78']) {
+    assert.equal(sec.telephoneE164(ecrit), '+33612345678', ecrit);
+  }
+  assert.equal(sec.telephoneE164('+44 7700 900123'), '+447700900123');
+  assert.equal(sec.telephoneE164('06 12 34 56 78 ou 01 44 00 00 00'), null);
+  assert.equal(sec.telephoneE164('061234567'), null);
+  assert.ok(sec.estMobile('+33612345678') && sec.estMobile('+33712345678') && sec.estMobile('+447700900123'));
+  assert.ok(!sec.estMobile('+33144000000'));
   assert.equal(sec.ibanValide('FR76 3000 6000 0112 3456 7890 189'), IBAN);
   assert.equal(sec.ibanValide('FR7630006000011234567890188'), null);
   assert.equal(sec.typeDeFichier(PDF), 'application/pdf');
@@ -133,7 +146,7 @@ test('portail : connexion par code d\'accès et code à six chiffres', async () 
   assert.equal((await portail('connexion', { code: 'faux-code-d-acces', totp: sec.totp(secretTotp) })).r.status, 401);
   assert.equal((await portail('connexion', { code: process.env.PORTAIL_CODE, totp: sec.totp(secretTotp) })).r.status, 200);
   const t = await portail('tableau');
-  assert.equal(t.d.fiches.length, 4);
+  assert.equal(t.d.fiches.length, 5);
   assert.ok(t.d.fiches.every(f => f.etat === 'a-valider'));
 });
 
@@ -159,6 +172,7 @@ test('numéro inconnu ou fiche non validée : même réponse, aucun code', async
 
 test('validation des fiches, y compris refus d\'une fiche sans mobile', async () => {
   assert.equal((await portail('valider', { id: 'c-sans' })).r.status, 400);
+  assert.match((await portail('valider', { id: 'c-fixe' })).d.error, /ligne fixe/);
   for (const id of ['c-diai', 'c-vial-1', 'c-vial-2']) assert.equal((await portail('valider', { id })).r.status, 200);
   const t = await portail('tableau');
   assert.equal(t.d.fiches.filter(f => f.etat === 'ouverte').length, 3);
