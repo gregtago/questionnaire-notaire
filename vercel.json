@@ -8,9 +8,21 @@
     { "source": "/etatcivil",         "destination": "/etatcivil.html" },
     { "source": "/etat-civil",        "destination": "/etat-civil.html" },
     { "source": "/lcbft",             "destination": "/lcbft.html" },
-    { "source": "/admin",             "destination": "/admin.html" }
+    { "source": "/admin",             "destination": "/admin.html" },
+    { "source": "/espace",            "destination": "/espace.html" },
+    { "source": "/portail",           "destination": "/portail.html" }
   ],
   "headers": [
+    {
+      "source": "/(espace|portail)(\\.html)?",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; frame-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" }
+      ]
+    },
     {
       "source": "/(.*).html",
       "headers": [

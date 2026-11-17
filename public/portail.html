@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Portail clients — Grégoire TAGOT | notaire</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 14px; line-height: 1.5; min-height: 100vh; }
+    .header { background: #111; color: #fff; }
+    .header .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .header .cabinet { font-size: 13px; letter-spacing: .04em; color: rgba(255,255,255,.55); }
+    .header .lien-haut { font-size: 11px; color: rgba(255,255,255,.45); background: none; border: none; cursor: pointer; letter-spacing: .04em; font-family: inherit; }
+    .header .lien-haut:hover { color: #fff; }
+    .header .title-bar { padding: 14px 28px 18px; background: #1a1a1a; }
+    .header h1 { font-size: 22px; font-weight: 300; }
+    .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+    .etroit { max-width: 480px; margin: 28px auto; padding: 0 20px; }
+    .large { max-width: 1080px; margin: 24px auto 80px; padding: 0 20px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 32px; margin-bottom: 14px; }
+    .card h2 { font-size: 19px; font-weight: 400; margin-bottom: 8px; }
+    .card p.intro { color: #777; font-size: 13px; margin-bottom: 22px; }
+    .fg { margin-bottom: 16px; }
+    .fg label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input[type=text], .fg input[type=password], .fg input[type=number], .fg input[type=file], .fg input[type=search], .fg select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; outline: none; background: #fff; font-family: inherit; }
+    .fg input:focus, .fg select:focus { border-color: #111; }
+    .btn { padding: 11px 20px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+    .btn.plein { width: 100%; }
+    .btn:hover { background: #333; } .btn:disabled { background: #999; cursor: not-allowed; }
+    .btn-ghost { background: #fff; border: 1px solid #ddd; color: #555; font-size: 11px; padding: 6px 12px; border-radius: 4px; cursor: pointer; letter-spacing: .05em; text-transform: uppercase; font-family: inherit; text-decoration: none; display: inline-block; white-space: nowrap; }
+    .btn-ghost:hover { border-color: #111; color: #111; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .hidden { display: none !important; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab { padding: 7px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: #fff; color: #555; font-family: inherit; }
+    .tab.active { background: #111; color: #fff; border-color: #111; }
+    .tab .n { display: inline-block; margin-left: 6px; font-size: 11px; background: #c0392b; color: #fff; border-radius: 9px; padding: 0 6px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #aaa; padding: 8px 10px; border-bottom: 1px solid #eee; }
+    td { padding: 10px; border-bottom: 1px solid #f3f3f1; vertical-align: top; font-size: 13px; }
+    td.actions { text-align: right; white-space: nowrap; }
+    td.actions .btn-ghost { margin-left: 4px; }
+    .etat { display: inline-block; font-size: 11px; border-radius: 10px; padding: 2px 9px; white-space: nowrap; }
+    .etat.ouverte, .etat.repondue { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .etat.a-valider, .etat.en-attente { background: #f6f6f4; color: #666; border: 1px solid #e2e2df; }
+    .etat.a-revalider, .etat.nouveau { background: #fff8e6; color: #8a6200; border: 1px solid #f0d58a; }
+    .gris { color: #999; font-size: 12px; }
+    .vide { color: #999; text-align: center; padding: 34px 0; }
+    .barre { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .barre .fg { margin: 0; flex: 1; min-width: 200px; }
+    .bandeau { background: #fff8e6; border: 1px solid #f0d58a; border-radius: 4px; padding: 10px 14px; font-size: 13px; color: #6b5200; margin-bottom: 14px; }
+    .apercu { width: 100%; height: 560px; border: 1px solid #e5e5e5; border-radius: 4px; background: #fafafa; margin-top: 14px; }
+    .fond { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 10; }
+    .fenetre { background: #fff; border-radius: 6px; padding: 28px; width: 100%; max-width: 480px; }
+    .fenetre h3 { font-size: 17px; font-weight: 500; margin-bottom: 10px; }
+    .fenetre p { color: #555; font-size: 13px; margin-bottom: 18px; }
+    .fenetre .pied { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; }
+    .case { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: #555; margin-bottom: 10px; }
+    .case input { margin-top: 3px; }
+    .qr { text-align: center; margin: 14px 0; } .qr img { border: 1px solid #eee; border-radius: 4px; }
+    .secret { font-family: ui-monospace, Menlo, monospace; font-size: 13px; word-break: break-all; background: #f6f6f4; padding: 8px 10px; border-radius: 4px; text-align: center; }
+    ul.pieces { list-style: none; } ul.pieces li { margin-bottom: 4px; }
+    @media (max-width: 720px) { .card { padding: 20px 14px; } th:nth-child(3), td:nth-child(3) { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="top-bar">
+      <div class="cabinet">Grégoire TAGOT&nbsp;|&nbsp;notaire</div>
+      <button type="button" class="lien-haut hidden" id="btnDeco">Se déconnecter</button>
+    </div>
+    <div class="title-bar">
+      <h1>Portail clients</h1>
+      <div class="subtitle">Interface interne — validation des fiches, RIB, origine des fonds</div>
+    </div>
+  </div>
+
+  <!-- CONNEXION -->
+  <div class="etroit hidden" id="p-connexion">
+    <div class="card">
+      <h2>Authentification</h2>
+      <p class="intro">Code d'accès, puis code à six chiffres affiché par l'application d'authentification de votre téléphone.</p>
+      <form id="formConnexion">
+        <div class="fg"><label for="cCode">Code d'accès</label><input type="password" id="cCode" autocomplete="current-password" required></div>
+        <div class="fg"><label for="cTotp">Code à six chiffres</label><input type="text" id="cTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>
+        <button type="submit" class="btn plein" id="btnConnexion">Entrer</button>
+        <div class="err" id="errConnexion"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ENRÔLEMENT -->
+  <div class="etroit hidden" id="p-enrolement">
+    <div class="card">
+      <h2>Premier accès : enrôler votre téléphone</h2>
+      <p class="intro">Saisissez le code d'accès, puis scannez le QR code avec une application d'authentification (Microsoft Authenticator, Google Authenticator…).</p>
+      <form id="formEnrol1">
+        <div class="fg"><label for="eCode">Code d'accès</label><input type="password" id="eCode" autocomplete="current-password" required></div>
+        <button type="submit" class="btn plein" id="btnEnrol1">Afficher le QR code</button>
+      </form>
+      <form id="formEnrol2" class="hidden">
+        <div class="qr"><img id="qr" alt="QR code d'enrôlement" width="220" height="220"></div>
+        <p class="gris" style="text-align:center;margin-bottom:6px;">ou saisissez cette clé à la main :</p>
+        <div class="secret" id="secret"></div>
+        <div class="fg" style="margin-top:18px;"><label for="eTotp">Code à six chiffres affiché par l'application</label><input type="text" id="eTotp" inputmode="numeric" maxlength="6" required></div>
+        <button type="submit" class="btn plein" id="btnEnrol2">Terminer l'enrôlement</button>
+      </form>
+      <div class="err" id="errEnrol"></div>
+    </div>
+  </div>
+
+  <!-- INDISPONIBLE -->
+  <div class="etroit hidden" id="p-indispo">
+    <div class="card"><h2>Portail indisponible</h2><p class="intro" id="txtIndispo"></p></div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="large hidden" id="p-tableau">
+    <div class="bandeau hidden" id="bandeauEssai">Version d'essai : le carnet d'adresses affiché est fictif, aucune fiche réelle n'est touchée.</div>
+    <div class="tabs" id="tabs">
+      <button type="button" class="tab active" data-onglet="clients">Clients</button>
+      <button type="button" class="tab" data-onglet="pieces">Pièces reçues <span class="n hidden" id="nPieces"></span></button>
+      <button type="button" class="tab" data-onglet="demandes">Origine des fonds</button>
+      <button type="button" class="tab" data-onglet="rib">RIB de l'étude</button>
+      <button type="button" class="tab" data-onglet="journal">Journal</button>
+    </div>
+
+    <div class="card" id="o-clients">
+      <div class="barre">
+        <div class="fg"><input type="search" id="filtre" placeholder="Rechercher un client…" aria-label="Rechercher un client"></div>
+        <label class="case" style="margin:0;"><input type="checkbox" id="seulAValider"><span>À valider seulement</span></label>
+      </div>
+      <table><thead><tr><th>Client</th><th>Mobile</th><th>Email</th><th>Espace client</th><th></th></tr></thead><tbody id="tClients"></tbody></table>
+      <p class="gris" style="margin-top:14px;">Les fiches proviennent du dossier « Clients » de votre carnet d'adresses Outlook. Valider une fiche, c'est attester que son numéro de mobile est bien celui du client : ce numéro lui ouvre l'espace client.</p>
+    </div>
+
+    <div class="card hidden" id="o-pieces">
+      <table><thead><tr><th>Reçu le</th><th>Client</th><th>Objet</th><th>Pièces</th><th></th></tr></thead><tbody id="tPieces"></tbody></table>
+    </div>
+
+    <div class="card hidden" id="o-demandes">
+      <p class="intro">Pour adresser une demande, ouvrez l'onglet « Clients » et choisissez « Origine des fonds » sur une fiche validée.</p>
+      <table><thead><tr><th>Demandé le</th><th>Client</th><th>Motif</th><th>Montant</th><th>État</th></tr></thead><tbody id="tDemandes"></tbody></table>
+    </div>
+
+    <div class="card hidden" id="o-rib">
+      <h2>RIB de l'étude</h2>
+      <p class="intro" id="ribInfo"></p>
+      <form id="formRib">
+        <div class="barre">
+          <div class="fg"><input type="file" id="ribFichier" accept="application/pdf,image/jpeg,image/png" required aria-label="Fichier du RIB"></div>
+          <button type="submit" class="btn" id="btnRib">Déposer ce RIB</button>
+        </div>
+        <div class="err" id="errRib"></div>
+      </form>
+      <p class="gris">PDF, JPEG ou PNG, 3 Mo maximum. Le RIB précédent est conservé dans l'historique ; seul le dernier déposé est remis aux clients.</p>
+      <div id="ribApercu"></div>
+    </div>
+
+    <div class="card hidden" id="o-journal">
+      <table><thead><tr><th>Date</th><th>Qui</th><th>Événement</th><th>Détail</th></tr></thead><tbody id="tJournal"></tbody></table>
+    </div>
+  </div>
+
+  <!-- FENÊTRE -->
+  <div class="fond hidden" id="fond"><div class="fenetre" id="fenetre" role="dialog" aria-modal="true"></div></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PAGES = ['p-connexion', 'p-enrolement', 'p-indispo', 'p-tableau'];
+const montrer = (id) => { PAGES.forEach(p => $(p).classList.toggle('hidden', p !== id)); $('btnDeco').classList.toggle('hidden', id !== 'p-tableau'); };
+const el = (tag, props = {}, ...enfants) => { const e = Object.assign(document.createElement(tag), props); e.append(...enfants); return e; };
+const date = (iso) => iso ? new Date(iso).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+const fmtTel = (t) => /^\+33\d{9}$/.test(t || '') ? ('0' + t.slice(3)).replace(/(\d{2})(?=\d)/g, '$1 ') : (t || '');
+const euros = (n) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+let donnees = null;
+
+async function api(action, corps) {
+  const r = await fetch('/api/portail', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Portail': '1' },
+    body: JSON.stringify({ action, ...corps })
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(d.error || 'Une erreur est survenue.'); e.statut = r.status;
+    if (r.status === 401 && donnees) { donnees = null; demarrer(); }
+    throw e;
+  }
+  return d;
+}
+function occupe(b, t) { b.disabled = true; b.dataset.t = b.textContent; b.textContent = t; }
+function libre(b) { b.disabled = false; b.textContent = b.dataset.t || b.textContent; }
+function lireFichier(f) {
+  return new Promise((ok, ko) => {
+    if (f.size > 3 * 1024 * 1024) return ko(new Error('Le fichier dépasse 3 Mo.'));
+    const l = new FileReader();
+    l.onload = () => ok({ nom: f.name, contenu: String(l.result).split(',')[1] || '' });
+    l.onerror = () => ko(new Error('Lecture du fichier impossible.'));
+    l.readAsDataURL(f);
+  });
+}
+
+/* ── Accès ── */
+async function demarrer() {
+  try {
+    const e = await api('etat');
+    if (e.connecte) return charger();
+    montrer(e.enrole ? 'p-connexion' : 'p-enrolement');
+  } catch (err) { $('txtIndispo').textContent = err.message; montrer('p-indispo'); }
+}
+$('formConnexion').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('errConnexion').textContent = ''; occupe($('btnConnexion'), 'Vérification…');
+  try { await api('connexion', { code: $('cCode').value, totp: $('cTotp').value }); $('formConnexion').reset(); await charger(); }
+  catch (err) { $('errConnexion').textContent = err.message; } finally { libre($('btnConnexion')); }
+});
+$('formEnrol1').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('errEnrol').textContent = ''; occupe($('btnEnrol1'), 'Préparation…');
+  try {
+    const d = await api('enroler-debut', { code: $('eCode').value });
+    $('qr').src = d.qr; $('secret').textContent = d.secret.replace(/(.{4})/g, '$1 ').trim();
+    $('formEnrol1').classList.add('hidden'); $('formEnrol2').classList.remove('hidden'); $('eTotp').focus();
+  } catch (err) { $('errEnrol').textContent = err.message; } finally { libre($('btnEnrol1')); }
+});
+$('formEnrol2').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('errEnrol').textContent = ''; occupe($('btnEnrol2'), 'Vérification…');
+  try { await api('enroler-fin', { code: $('eCode').value, totp: $('eTotp').value }); await charger(); }
+  catch (err) { $('errEnrol').textContent = err.message; } finally { libre($('btnEnrol2')); }
+});
+$('btnDeco').addEventListener('click', async () => { await api('deconnexion').catch(() => {}); donnees = null; demarrer(); });
+
+/* ── Onglets ── */
+$('tabs').addEventListener('click', (e) => {
+  const b = e.target.closest('.tab'); if (!b) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === b));
+  ['clients', 'pieces', 'demandes', 'rib', 'journal'].forEach(o => $('o-' + o).classList.toggle('hidden', o !== b.dataset.onglet));
+  if (b.dataset.onglet === 'journal') chargerJournal();
+});
+
+async function charger() {
+  donnees = await api('tableau');
+  $('bandeauEssai').classList.toggle('hidden', !donnees.essai);
+  afficherClients(); afficherPieces(); afficherDemandes(); afficherRib();
+  montrer('p-tableau');
+}
+
+/* ── Clients ── */
+const ETATS = { ouverte: 'Ouvert', 'a-valider': 'À valider', 'a-revalider': 'À revalider' };
+function afficherClients() {
+  const q = $('filtre').value.trim().toLowerCase();
+  const seul = $('seulAValider').checked;
+  const lignes = donnees.fiches
+    .filter(f => !q || `${f.nom} ${f.prenom} ${f.email} ${f.telephone}`.toLowerCase().includes(q))
+    .filter(f => !seul || f.etat !== 'ouverte')
+    .map(f => {
+      const actions = el('td', { className: 'actions' });
+      if (f.etat === 'ouverte') {
+        actions.append(
+          el('button', { type: 'button', className: 'btn-ghost', textContent: 'Origine des fonds', onclick: () => fenetreDemande(f) }),
+          el('button', { type: 'button', className: 'btn-ghost', textContent: 'Retirer', onclick: () => fenetreRetirer(f) }));
+      } else {
+        actions.append(el('button', { type: 'button', className: 'btn-ghost', textContent: 'Valider', onclick: () => fenetreValider(f) }));
+      }
+      const tel = el('td', {}, fmtTel(f.telephone) || '—');
+      if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'numéro à corriger dans Outlook' }));
+      const etat = el('td', {}, el('span', { className: 'etat ' + f.etat, textContent: ETATS[f.etat] }));
+      if (f.valideeLe) etat.append(el('div', { className: 'gris', textContent: 'validée le ' + date(f.valideeLe) }));
+      if (f.etat === 'a-revalider') etat.append(el('div', { className: 'gris', textContent: 'numéro modifié ou validation hors portail' }));
+      return el('tr', {}, el('td', {}, el('strong', { textContent: f.nom }), ' ' + f.prenom), tel, el('td', {}, f.email || '—'), etat, actions);
+    });
+  $('tClients').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune fiche.' }))]));
+}
+$('filtre').addEventListener('input', afficherClients);
+$('seulAValider').addEventListener('change', afficherClients);
+
+/* ── Fenêtres de confirmation (pas de boîte de dialogue du navigateur) ── */
+function fenetre(titre, texte, corps, libelle, action) {
+  const err = el('div', { className: 'err' });
+  const ok = el('button', { type: 'button', className: 'btn', textContent: libelle });
+  ok.onclick = async () => {
+    err.textContent = ''; occupe(ok, 'En cours…');
+    try { await action(); fermer(); await charger(); } catch (e) { err.textContent = e.message; libre(ok); }
+  };
+  $('fenetre').replaceChildren(el('h3', { textContent: titre }), el('p', { textContent: texte }), ...corps, err,
+    el('div', { className: 'pied' }, el('button', { type: 'button', className: 'btn-ghost', textContent: 'Annuler', onclick: fermer }), ok));
+  $('fond').classList.remove('hidden');
+}
+function fermer() { $('fond').classList.add('hidden'); }
+$('fond').addEventListener('click', (e) => { if (e.target === $('fond')) fermer(); });
+
+function fenetreValider(f) {
+  fenetre(`Valider la fiche de ${f.prenom} ${f.nom}`,
+    `Vous attestez avoir vérifié que le ${fmtTel(f.telephone) || '(aucun numéro)'} est bien le mobile de ce client. Ce numéro lui permettra de consulter le RIB de l'étude et de déposer ses pièces.`,
+    [], 'Valider', () => api('valider', { id: f.id }));
+}
+function fenetreRetirer(f) {
+  fenetre(`Retirer la validation de ${f.prenom} ${f.nom}`,
+    'Le client ne pourra plus accéder à l\'espace client tant que sa fiche n\'aura pas été validée de nouveau. Ses dépôts antérieurs sont conservés.',
+    [], 'Retirer', () => api('retirer', { id: f.id }));
+}
+function fenetreDemande(f) {
+  const motif = el('select', { id: 'dMotif' }, new Option('— Choisir —', ''), ...Object.entries(donnees.motifs).map(([k, v]) => new Option(v, k)));
+  const montant = el('input', { id: 'dMontant', type: 'number', min: '0', step: '0.01', placeholder: '0,00' });
+  const justif = el('input', { type: 'checkbox', checked: true });
+  const prevenir = el('input', { type: 'checkbox', checked: !!f.email, disabled: !f.email });
+  fenetre(`Origine des fonds — ${f.prenom} ${f.nom}`,
+    'Le client verra cette demande dans son espace, déclarera la provenance des fonds et joindra ses justificatifs.',
+    [el('div', { className: 'fg' }, el('label', { htmlFor: 'dMotif', textContent: 'Motif' }), motif),
+     el('div', { className: 'fg' }, el('label', { htmlFor: 'dMontant', textContent: 'Montant à justifier (€)' }), montant),
+     el('label', { className: 'case' }, justif, el('span', { textContent: 'Demander des documents justificatifs' })),
+     el('label', { className: 'case' }, prevenir, el('span', { textContent: f.email ? `Prévenir le client par email (${f.email})` : 'Pas d\'email sur la fiche : le client ne sera pas prévenu' }))],
+    'Créer la demande',
+    () => api('demande-creer', { contactId: f.id, motif: motif.value, montant: Number(montant.value), justificatifs: justif.checked, prevenir: prevenir.checked }));
+}
+
+/* ── Pièces reçues ── */
+function afficherPieces() {
+  const nouveaux = donnees.depots.filter(d => !d.vuLe).length;
+  $('nPieces').textContent = nouveaux; $('nPieces').classList.toggle('hidden', !nouveaux);
+  const lignes = donnees.depots.map(d => {
+    const objet = el('td', {});
+    if (d.nature === 'rib') {
+      objet.append(el('strong', { textContent: 'RIB du client' }), el('div', { className: 'gris', textContent: 'Titulaire : ' + d.titulaire }));
+      if (d.iban) objet.append(el('div', { className: 'gris', textContent: 'IBAN : ' + d.iban.replace(/(.{4})/g, '$1 ').trim() }));
+    } else {
+      objet.append(el('strong', { textContent: 'Origine des fonds' }), el('div', { className: 'gris', textContent: 'Total déclaré : ' + euros(d.total) }));
+      (d.sources || []).forEach(s => objet.append(el('div', { className: 'gris', textContent: `${s.libelle} — ${euros(s.montant)}${s.precision ? ' — ' + s.precision : ''}` })));
+    }
+    const pieces = el('ul', { className: 'pieces' }, ...d.pieces.map(p => {
+      const url = `/api/portail?action=piece&depot=${d.id}&piece=${p.id}`;
+      return el('li', {},
+        el('a', { href: url, target: '_blank', rel: 'noopener', textContent: p.nom, onclick: () => marquerVu(d) }), ' ',
+        el('a', { href: url + '&telecharger=1', className: 'gris', textContent: '(télécharger)', onclick: () => marquerVu(d) }));
+    }));
+    if (!d.pieces.length) pieces.append(el('li', { className: 'gris', textContent: 'Aucune pièce jointe' }));
+    return el('tr', {}, el('td', {}, date(d.closLe)), el('td', {}, el('strong', { textContent: d.nomClient }), el('div', { className: 'gris', textContent: d.telephone })),
+      objet, el('td', {}, pieces), el('td', {}, d.vuLe ? '' : el('span', { className: 'etat nouveau', textContent: 'Nouveau' })));
+  });
+  $('tPieces').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune pièce reçue pour le moment.' }))]));
+}
+async function marquerVu(d) {
+  if (d.vuLe) return;
+  d.vuLe = new Date().toISOString();
+  await api('depot-vu', { id: d.id }).catch(() => {});
+  afficherPieces();
+}
+
+/* ── Demandes ── */
+function afficherDemandes() {
+  const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe)), el('td', {}, el('strong', { textContent: d.nomClient })),
+    el('td', {}, d.motifLibelle), el('td', {}, euros(d.montant)),
+    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? 'Répondue le ' + date(d.reponduLe) : 'En attente du client' }))));
+  $('tDemandes').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune demande.' }))]));
+}
+
+/* ── RIB de l'étude ── */
+function afficherRib() {
+  const c = donnees.rib.courant;
+  $('ribInfo').textContent = c
+    ? `RIB en ligne : ${c.nom}, déposé le ${date(c.deposeLe)}.` + (donnees.rib.anciens.length ? ` ${donnees.rib.anciens.length} version(s) antérieure(s) conservée(s).` : '')
+    : 'Aucun RIB déposé : les clients ne peuvent pas encore le consulter.';
+  $('ribApercu').replaceChildren();
+  if (c) {
+    const src = '/api/portail?action=rib-etude&v=' + c.id;
+    $('ribApercu').append(c.type === 'application/pdf'
+      ? el('iframe', { className: 'apercu', src, title: 'RIB de l\'étude' })
+      : el('img', { className: 'apercu', src, alt: 'RIB de l\'étude', style: 'height:auto' }));
+  }
+}
+$('formRib').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('errRib').textContent = ''; occupe($('btnRib'), 'Dépôt…');
+  try { await api('rib-deposer', { fichier: await lireFichier($('ribFichier').files[0]) }); $('formRib').reset(); await charger(); }
+  catch (err) { $('errRib').textContent = err.message; } finally { libre($('btnRib')); }
+});
+
+/* ── Journal ── */
+const ACTIONS = {
+  'code-envoye': 'Code SMS envoyé', 'code-non-envoye-echec-sms': 'Code SMS non parti (échec d\'envoi)',
+  'code-refuse-numero-non-valide': 'Numéro non reconnu : aucun code envoyé', connexion: 'Connexion à l\'espace client',
+  'rib-etude-consulte': 'RIB de l\'étude consulté', 'rib-client-depose': 'RIB du client déposé',
+  'origine-fonds-deposee': 'Origine des fonds déposée', 'portail-connexion': 'Connexion au portail',
+  'portail-refus': 'Connexion au portail refusée', 'portail-telephone-enrole': 'Téléphone enrôlé',
+  'fiche-validee': 'Fiche validée', 'validation-retiree': 'Validation retirée', 'rib-etude-depose': 'RIB de l\'étude déposé',
+  'demande-origine-fonds': 'Demande d\'origine des fonds', 'piece-consultee': 'Pièce consultée'
+};
+const ACTEURS = { client: 'Client', notaire: 'Notaire', inconnu: 'Inconnu' };
+async function chargerJournal() {
+  $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Chargement…' })));
+  try {
+    const { lignes } = await api('journal');
+    $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
+      el('td', {}, ACTIONS[l.action] || l.action),
+      el('td', { className: 'gris', textContent: [l.nom, l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
+  } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
+}
+
+demarrer();
+</script>
+</body>
+</html>

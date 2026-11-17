@@ -2,10 +2,15 @@
   "name": "questionnaire-notaire",
   "version": "1.0.0",
   "main": "server.js",
-  "scripts": {},
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "test": "node --test tests/espace.test.js tests/contacts.test.js"
+  },
   "dependencies": {
+    "@vercel/blob": "^2.9.0",
+    "express": "^4.18.2",
     "nodemailer": "^6.9.13",
-    "express": "^4.18.2"
+    "qrcode": "^1.5.4"
   },
   "engines": {
     "node": ">=18"
