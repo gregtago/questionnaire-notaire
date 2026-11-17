@@ -27,6 +27,58 @@ function configure() {
     process.env.OVH_CONSUMER_KEY && process.env.OVH_SMS_SERVICE);
 }
 
+/** Appel signé à l'API OVHcloud. */
+async function ovh(methode, chemin, corps) {
+  const url = API + chemin;
+  const texte = corps ? JSON.stringify(corps) : '';
+  const ts = Math.floor(Date.now() / 1000);
+  const signature = '$1$' + crypto.createHash('sha1').update([
+    process.env.OVH_APP_SECRET, process.env.OVH_CONSUMER_KEY, methode, url, texte, ts
+  ].join('+')).digest('hex');
+  return fetch(url, {
+    method: methode,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Ovh-Application': process.env.OVH_APP_KEY,
+      'X-Ovh-Consumer': process.env.OVH_CONSUMER_KEY,
+      'X-Ovh-Timestamp': String(ts),
+      'X-Ovh-Signature': signature
+    },
+    body: texte || undefined
+  });
+}
+
+/**
+ * Motif d'un refus d'OVHcloud. Seul le code d'erreur (énuméré : INVALID_KEY,
+ * NOT_GRANTED_CALL, INVALID_SIGNATURE…) est conservé, jamais le message, qui
+ * peut citer un numéro.
+ */
+async function motif(r) {
+  let code = '';
+  try { code = String((await r.json()).errorCode || '').replace(/[^A-Z_]/g, '').slice(0, 40); } catch { /* corps non JSON */ }
+  return `OVH → ${r.status}${code ? ` (${code})` : ''}`;
+}
+
+/**
+ * Contrôle de la liaison, pour le portail : les clés sont-elles acceptées, et
+ * le compte configuré fait-il partie des comptes SMS visibles avec ces clés ?
+ * Ne renvoie que des noms de comptes, aucun secret.
+ */
+async function diagnostic() {
+  const nom = process.env.OVH_SMS_SERVICE || '';
+  const manquantes = ['OVH_APP_KEY', 'OVH_APP_SECRET', 'OVH_CONSUMER_KEY', 'OVH_SMS_SERVICE'].filter(k => !process.env[k]);
+  if (manquantes.length) return { ok: false, etape: 'configuration', manquantes };
+  const r = await ovh('GET', '/sms/');
+  if (!r.ok) return { ok: false, etape: 'cles', motif: await motif(r) };
+  const comptes = (await r.json().catch(() => [])).filter(c => typeof c === 'string');
+  const detail = { ok: comptes.includes(nom), etape: 'compte', configure: nom, comptes };
+  if (detail.ok) {
+    const c = await ovh('GET', `/sms/${encodeURIComponent(nom)}`);
+    if (c.ok) { const d = await c.json().catch(() => ({})); detail.credits = d.creditsLeft; detail.statut = d.status; }
+  }
+  return detail;
+}
+
 async function envoyerSms(numeroE164, message) {
   if (modeEssai()) return { essai: true };
 
@@ -36,8 +88,7 @@ async function envoyerSms(numeroE164, message) {
     throw e;
   }
 
-  const url = `${API}/sms/${encodeURIComponent(process.env.OVH_SMS_SERVICE)}/jobs`;
-  const corps = JSON.stringify({
+  const r = await ovh('POST', `/sms/${encodeURIComponent(process.env.OVH_SMS_SERVICE)}/jobs`, {
     message,
     receivers: [numeroE164],
     noStopClause: true,           // message de service, pas de prospection
@@ -46,27 +97,8 @@ async function envoyerSms(numeroE164, message) {
       ? { sender: process.env.OVH_SMS_SENDER }
       : { senderForResponse: true })
   });
-  const ts = Math.floor(Date.now() / 1000);
-  const signature = '$1$' + crypto.createHash('sha1').update([
-    process.env.OVH_APP_SECRET, process.env.OVH_CONSUMER_KEY, 'POST', url, corps, ts
-  ].join('+')).digest('hex');
 
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Ovh-Application': process.env.OVH_APP_KEY,
-      'X-Ovh-Consumer': process.env.OVH_CONSUMER_KEY,
-      'X-Ovh-Timestamp': String(ts),
-      'X-Ovh-Signature': signature
-    },
-    body: corps
-  });
-
-  if (!r.ok) {
-    // Le corps d'erreur d'OVH peut citer le numéro : on ne garde que le statut.
-    throw new Error(`OVH SMS → ${r.status}`);
-  }
+  if (!r.ok) throw new Error(await motif(r));
   const d = await r.json().catch(() => ({}));
   if (Array.isArray(d.invalidReceivers) && d.invalidReceivers.length) {
     throw new Error('OVH SMS → destinataire refusé');
@@ -74,4 +106,4 @@ async function envoyerSms(numeroE164, message) {
   return { essai: false };
 }
 
-module.exports = { envoyerSms, configure, modeEssai };
+module.exports = { envoyerSms, configure, modeEssai, diagnostic };
