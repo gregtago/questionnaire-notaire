@@ -253,7 +253,7 @@ function afficherClients() {
   const q = $('filtre').value.trim().toLowerCase();
   const seul = $('seulAValider').checked;
   const lignes = donnees.fiches
-    .filter(f => !q || `${f.nom} ${f.prenom} ${f.email} ${f.telephone}`.toLowerCase().includes(q))
+    .filter(f => !q || `${f.nom} ${f.prenom} ${f.nomNaissance || ''} ${f.email} ${f.telephone}`.toLowerCase().includes(q))
     .filter(f => !seul || f.etat !== 'ouverte')
     .map(f => {
       const actions = el('td', { className: 'actions' });
@@ -269,7 +269,8 @@ function afficherClients() {
       const etat = el('td', {}, el('span', { className: 'etat ' + f.etat, textContent: ETATS[f.etat] }));
       if (f.valideeLe) etat.append(el('div', { className: 'gris', textContent: 'validée le ' + date(f.valideeLe) }));
       if (f.etat === 'a-revalider') etat.append(el('div', { className: 'gris', textContent: 'mobile ou email modifié, ou validation hors portail' }));
-      return el('tr', {}, el('td', {}, el('strong', { textContent: f.nom }), ' ' + f.prenom), tel, el('td', {}, f.email || '—'), etat, actions);
+      return el('tr', {}, el('td', {}, el('strong', { textContent: f.nom }), ' ' + f.prenom,
+        ...(f.nomNaissance ? [el('div', { className: 'gris', textContent: 'naissance : ' + f.nomNaissance })] : [])), tel, el('td', {}, f.email || '—'), etat, actions);
     });
   $('tClients').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune fiche.' }))]));
 }
@@ -283,7 +284,10 @@ function fenetreAjouter() {
     const i = el('input', { id, type: type || 'text', ...attrs });
     return [i, el('div', { className: 'fg' }, el('label', { htmlFor: id, textContent: libelle }), i)];
   };
-  const [nom, fNom] = champ('aNom', 'Nom *', 'text', { autocomplete: 'off' });
+  const civ = el('select', { id: 'aCiv' }, new Option('—', ''), new Option('Madame', 'F'), new Option('Monsieur', 'M'));
+  const fCiv = el('div', { className: 'fg' }, el('label', { htmlFor: 'aCiv', textContent: 'Civilité' }), civ);
+  const [nom, fNom] = champ('aNom', 'Nom d\'usage *', 'text', { autocomplete: 'off' });
+  const [naiss, fNaiss] = champ('aNaiss', 'Nom de naissance (s\'il diffère)', 'text', { autocomplete: 'off' });
   const [prenom, fPrenom] = champ('aPrenom', 'Prénom *', 'text', { autocomplete: 'off' });
   const [email, fEmail] = champ('aEmail', 'Email *', 'email', { autocomplete: 'off' });
   const [tel, fTel] = champ('aTel', 'Mobile *', 'tel', { autocomplete: 'off', placeholder: '06 12 34 56 78' });
@@ -292,12 +296,12 @@ function fenetreAjouter() {
   const [ville, fVille] = champ('aVille', 'Ville', 'text', { autocomplete: 'off' });
   fenetre('Ajouter un client',
     'La fiche est créée dans le dossier « Clients » de votre carnet Outlook. Elle reste à valider avant d\'ouvrir l\'espace client.',
-    [fNom, fPrenom, fEmail, fTel, fAdr, fCp, fVille], 'Enregistrer',
+    [fCiv, fNom, fNaiss, fPrenom, fEmail, fTel, fAdr, fCp, fVille], 'Enregistrer',
     async () => {
       if (!nom.value.trim() || !prenom.value.trim()) throw new Error('Le nom et le prénom sont obligatoires.');
       if (!email.value.trim()) throw new Error('L\'email est obligatoire.');
       if (!tel.value.trim()) throw new Error('Le mobile est obligatoire.');
-      await api('fiche-creer', { nom: nom.value, prenom: prenom.value, email: email.value, telephone: tel.value,
+      await api('fiche-creer', { nom: nom.value, nomNaissance: naiss.value, accord: civ.value, prenom: prenom.value, email: email.value, telephone: tel.value,
         adresse: adr.value, codePostal: cp.value, ville: ville.value });
     });
   nom.focus();

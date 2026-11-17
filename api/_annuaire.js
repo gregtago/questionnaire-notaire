@@ -24,6 +24,8 @@ const crypto = require('crypto');
 const coffre = require('./_coffre');
 const { telephoneE164, estMobile } = require('./_securite');
 
+const { nomAffiche, nomNaissanceDe } = require('./_contacts');
+
 const VERIFIEE = 'Coord-verifiees';
 const DECLAREE = 'Coord-declarees';
 
@@ -41,6 +43,7 @@ function fiche(c) {
     id: c.id,
     nom: c.surname || '',
     prenom: c.givenName || '',
+    nomNaissance: nomNaissanceDe(c.displayName),
     email: ((c.emailAddresses || [])[0] || {}).address || '',
     telephone: telephoneE164(c.mobilePhone),
     telephoneBrut: c.mobilePhone || '',
@@ -61,7 +64,7 @@ async function lireContacts() {
   const { graph, getFolderId, MAILBOX } = require('./_contacts');
   const folderId = await getFolderId();
   let chemin = `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}/contacts` +
-    '?$select=id,givenName,surname,mobilePhone,emailAddresses,categories&$top=200';
+    '?$select=id,givenName,surname,displayName,mobilePhone,emailAddresses,categories&$top=200';
   const out = [];
   for (let page = 0; chemin && page < 50; page++) {
     const r = await graph('GET', chemin);
@@ -156,6 +159,7 @@ async function creerFiche(p) {
   const t = (v, n) => String(v || '').trim().slice(0, n);
   const f = {
     nom: t(p.nom, 80), prenom: t(p.prenom, 80), email: t(p.email, 200).toLowerCase(),
+    nomNaissance: t(p.nomNaissance, 80), accord: ['F', 'M'].includes(p.accord) ? p.accord : '',
     telephone: t(p.telephone, 30), adresse: t(p.adresse, 200), codePostal: t(p.codePostal, 10), ville: t(p.ville, 80)
   };
   const refus = (m) => Object.assign(new Error(m), { client: true });
@@ -169,7 +173,9 @@ async function creerFiche(p) {
     const tel = telephoneE164(f.telephone) || f.telephone;
     const existant = tous.find(c => n(c.surname) === n(f.nom) && n(c.givenName) === n(f.prenom) &&
       (c.emailAddresses || []).some(a => (a.address || '').toLowerCase() === f.email));
-    const champs = { givenName: f.prenom, surname: f.nom.toUpperCase(), mobilePhone: tel, emailAddresses: [{ address: f.email }] };
+    const garde = !f.nomNaissance && existant ? nomNaissanceDe(existant.displayName) : '';
+    const displayName = garde ? existant.displayName : nomAffiche(f.nom, f.prenom, f.nomNaissance, f.accord);
+    const champs = { givenName: f.prenom, surname: f.nom.toUpperCase(), displayName, mobilePhone: tel, emailAddresses: [{ address: f.email }] };
     if (existant) {
       const inchange = existant.mobilePhone === tel;
       Object.assign(existant, champs);

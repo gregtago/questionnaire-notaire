@@ -173,6 +173,26 @@ async function findExisting(folderId, email, nom, prenom) {
   return hit ? hit.id : null;
 }
 
+/**
+ * Nom affiché : « MARTIN Lucie (née DUPONT) ». Outlook n'a pas de champ pour
+ * le nom de naissance ; le nom affiché le montre dans la liste du carnet et le
+ * rend trouvable par la recherche, sans toucher au nom (surname) qui sert à
+ * reconnaître la fiche.
+ */
+function nomAffiche(nom, prenom, nomNaissance, accord) {
+  const base = `${String(nom || '').toUpperCase()} ${prenom || ''}`.trim();
+  const naiss = String(nomNaissance || '').trim().toUpperCase();
+  if (!naiss || norm(naiss) === norm(nom)) return base;
+  const ne = accord === 'F' ? 'née' : accord === 'M' ? 'né' : 'né(e)';
+  return `${base} (${ne} ${naiss})`;
+}
+
+/** Retrouve le nom de naissance inscrit dans un nom affiché. */
+function nomNaissanceDe(displayName) {
+  const m = String(displayName || '').match(/\((?:née|né|né\(e\)) ([^()]+)\)\s*$/);
+  return m ? m[1].trim() : '';
+}
+
 /** Normalise pour comparaison : sans accents, sans casse, sans ponctuation. */
 function norm(s) {
   return String(s || '')
@@ -226,6 +246,8 @@ function toE164(tel) {
  * @param {string} p.nom
  * @param {string} p.prenom
  * @param {string} p.email
+ * @param {string} [p.nomNaissance] nom de naissance, s'il diffère du nom d'usage
+ * @param {string} [p.accord]       'F' ou 'M' (pour « née » / « né »)
  * @param {string} [p.telephone]
  * @param {string} [p.adresse]        ligne de voie
  * @param {string} [p.codePostal]
@@ -251,7 +273,7 @@ async function upsertContact(p) {
   const contact = {
     givenName:   prenom,
     surname:     nom.toUpperCase(),
-    displayName: `${nom.toUpperCase()} ${prenom}`.trim(),
+    displayName: nomAffiche(nom, prenom, p.nomNaissance, p.accord),
     categories,
     personalNotes: p.notes || `Questionnaire reçu le ${new Date().toLocaleDateString('fr-FR')}`
   };
@@ -286,7 +308,14 @@ async function upsertContact(p) {
     // n'apporte AUCUN changement de téléphone ni d'email ; sinon elle retombe
     // en « Coord-declarees » jusqu'à nouvelle validation.
     try {
-      const avant = await graph('GET', `${base}/${existingId}?$select=mobilePhone,emailAddresses,categories`);
+      const avant = await graph('GET', `${base}/${existingId}?$select=mobilePhone,emailAddresses,categories,displayName`);
+      // Sans nom de naissance transmis, on garde celui déjà inscrit sur la fiche
+      // (il a pu être ajouté à la main dans Outlook).
+      const garde = nomNaissanceDe(avant.displayName);
+      if (!String(p.nomNaissance || '').trim() && garde) {
+        contact.displayName = `${contact.displayName} ${avant.displayName.slice(avant.displayName.lastIndexOf('('))}`;
+        if (contact.emailAddresses) contact.emailAddresses[0].name = contact.displayName;
+      }
       const memeTel   = !tel || toE164(avant.mobilePhone) === tel;
       const memeEmail = !p.email || (avant.emailAddresses || [])
         .some(a => (a.address || '').toLowerCase() === String(p.email).trim().toLowerCase());
@@ -326,5 +355,5 @@ async function upsertContactSafe(p) {
 module.exports = {
   upsertContact, upsertContactSafe,
   // Réutilisés par _annuaire.js (lecture et validation des fiches).
-  graph, getFolderId, toE164, MAILBOX
+  graph, getFolderId, toE164, MAILBOX, nomAffiche, nomNaissanceDe
 };

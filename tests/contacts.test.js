@@ -59,3 +59,17 @@ test('même nom, même prénom : la fiche existante est mise à jour', async () 
   fiche = { surname: 'DIAI', givenName: 'Samuel', mobilePhone: '+33612345678', emailAddresses: [{ address: 'samuel@example.org' }], categories: ['Coord-declarees'] };
   assert.equal((await upsertContact(base)).action, 'updated');
 });
+
+test('nom de naissance : inscrit dans le nom affiché, « née » ou « né »', async () => {
+  fiche = { surname: 'AUTRE', givenName: 'X', emailAddresses: [], categories: [] };
+  await upsertContact({ ...base, nom: 'Martin', prenom: 'Lucie', nomNaissance: 'Dupont', accord: 'F' });
+  assert.equal(dernierPost.displayName, 'MARTIN Lucie (née DUPONT)');
+  await upsertContact({ ...base, nom: 'Martin', prenom: 'Paul', nomNaissance: 'Martin', accord: 'M' });
+  assert.equal(dernierPost.displayName, 'MARTIN Paul', 'pas de mention quand les deux noms sont les mêmes');
+});
+
+test('mise à jour sans nom de naissance : celui de la fiche est conservé', async () => {
+  fiche = { surname: 'DIAI', givenName: 'Samuel', displayName: 'DIAI Samuel (né KANE)', mobilePhone: '+33612345678', emailAddresses: [{ address: 'samuel@example.org' }], categories: [] };
+  await upsertContact(base);
+  assert.equal(dernierPatch.displayName, 'DIAI Samuel (né KANE)');
+});

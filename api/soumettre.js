@@ -20,6 +20,8 @@ module.exports = async (req, res) => {
     await upsertContactSafe({
       nom: p.NOMU || p.NOM,
       prenom: p.PRENOMU || p.PRENOM,
+      nomNaissance: p.NOM,
+      accord: p.ACCORD,
       email: p.EMAIL || emailFoyer,
       telephone: p.TEL,
       adresse: [p.ADR1, p.ADR2].filter(Boolean).join(' '),

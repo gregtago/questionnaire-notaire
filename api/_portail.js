@@ -131,7 +131,7 @@ async function tableau(req, res) {
   res.json({
     ok: true,
     fiches: fiches.map(f => ({
-      id: f.id, nom: f.nom, prenom: f.prenom, email: f.email,
+      id: f.id, nom: f.nom, prenom: f.prenom, nomNaissance: f.nomNaissance, email: f.email,
       telephone: f.telephone || f.telephoneBrut, telephoneExploitable: !!f.telephone && sec.estMobile(f.telephone),
       etat: f.etat, valideeLe: f.valideeLe
     })),
@@ -153,7 +153,7 @@ async function valider(req, res) {
 async function ficheCreer(req, res) {
   const b = req.body;
   const c = await annuaire.creerFiche({
-    nom: b.nom, prenom: b.prenom, email: b.email, telephone: b.telephone,
+    nom: b.nom, prenom: b.prenom, nomNaissance: b.nomNaissance, accord: b.accord, email: b.email, telephone: b.telephone,
     adresse: b.adresse, codePostal: b.codePostal, ville: b.ville
   });
   await coffre.journaliser({ acteur: 'notaire', action: c.action === 'created' ? 'fiche-saisie' : 'fiche-saisie-maj', nom: `${c.nom.toUpperCase()} ${c.prenom}`.trim(), ip: sec.ipDe(req) });
