@@ -12,9 +12,9 @@
  *
  * Une fiche n'ouvre l'espace client que si deux conditions sont réunies :
  *   1. elle porte la catégorie « Coord-verifiees » ;
- *   2. son téléphone est celui que le notaire a validé (empreinte conservée
- *      dans le coffre au moment de la validation).
- * Si le numéro change dans Outlook après coup, la fiche se referme d'elle-même.
+ *   2. son téléphone et son email sont ceux que le notaire a validés
+ *      (empreinte conservée dans le coffre au moment de la validation).
+ * Si l'un des deux change dans Outlook après coup, la fiche se referme d'elle-même.
  *
  * ANNUAIRE_MODE=essai (hors production) : carnet fictif tenu dans le coffre,
  * pour tester sans toucher aux fiches réelles.
@@ -102,7 +102,8 @@ async function listerFiches() {
   return contacts.map(c => {
     const v = validations.get(c.id);
     let etat = 'a-valider';
-    if (c.verifiee && v && c.telephone && v.telephone === c.telephone) etat = 'ouverte';
+    const memeEmail = !!c.email && !!v && !!v.email && v.email.toLowerCase() === c.email.toLowerCase();
+    if (c.verifiee && v && c.telephone && v.telephone === c.telephone && memeEmail) etat = 'ouverte';
     else if (c.verifiee) etat = 'a-revalider'; // catégorie posée hors portail, ou numéro changé depuis
     return { ...c, etat, valideeLe: etat === 'ouverte' ? v.valideeLe : null };
   }).sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
@@ -114,6 +115,13 @@ async function fichesOuvertesPourTelephone(e164) {
   return (await listerFiches()).filter(f => f.etat === 'ouverte' && f.telephone === e164);
 }
 
+/** Fiches ouvertes portant cette adresse (un couple peut partager une boîte). */
+async function fichesOuvertesPourEmail(email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return [];
+  return (await listerFiches()).filter(f => f.etat === 'ouverte' && f.email.toLowerCase() === e);
+}
+
 async function ficheOuverte(id) {
   return (await listerFiches()).find(f => f.id === id && f.etat === 'ouverte') || null;
 }
@@ -123,6 +131,9 @@ async function valider(id) {
   if (!c) throw Object.assign(new Error('Fiche introuvable'), { client: true });
   if (!c.telephone) {
     throw Object.assign(new Error('Cette fiche n\'a pas de numéro de mobile exploitable : complétez-la dans Outlook avant de la valider'), { client: true });
+  }
+  if (!c.email) {
+    throw Object.assign(new Error('Cette fiche n\'a pas d\'adresse email : le client ne pourrait pas s\'identifier. Complétez-la dans Outlook avant de la valider'), { client: true });
   }
   if (!estMobile(c.telephone)) {
     throw Object.assign(new Error('Ce numéro est une ligne fixe : il ne peut pas recevoir de SMS. Indiquez un mobile dans Outlook avant de valider la fiche'), { client: true });
@@ -147,4 +158,4 @@ async function retirer(id) {
   return c;
 }
 
-module.exports = { listerFiches, fichesOuvertesPourTelephone, ficheOuverte, valider, retirer, modeEssai };
+module.exports = { listerFiches, fichesOuvertesPourTelephone, fichesOuvertesPourEmail, ficheOuverte, valider, retirer, modeEssai };
