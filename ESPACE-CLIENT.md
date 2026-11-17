@@ -5,7 +5,7 @@ Deux pages ajoutées au site des questionnaires :
 | Adresse    | Pour qui   | Ce qu'on y fait |
 |------------|------------|-----------------|
 | `/espace`  | le client  | consulter le RIB de l'étude, déposer son RIB, justifier l'origine des fonds |
-| `/portail` | le notaire | valider les fiches, déposer le RIB de l'étude et l'envoyer à un client, demander son RIB ou l'origine des fonds à un client, relever les pièces (sous filigrane), lire le journal |
+| `/portail` | le notaire | valider les fiches, déposer le RIB de l'étude et le communiquer à un client, demander son RIB ou l'origine des fonds à un client, relever les pièces (sous filigrane), lire le journal |
 
 ## Principe
 
@@ -22,12 +22,12 @@ Deux pages ajoutées au site des questionnaires :
 - Pièces et journal chiffrés (AES-256-GCM) avant écriture ; stockage Vercel Blob privé.
 - Seuls PDF, JPEG et PNG sont acceptés (contrôle sur le contenu), 3 Mo par fichier.
 - Le RIB de l'étude n'est jamais remis tel quel : chaque exemplaire est un PDF portant, en filigrane semi-transparent, l'office, le nom du client, la date et une référence unique (consignée au journal). Aucun bandeau ni QR code n'est ajouté : rien ne masque le RIB déposé, qui porte déjà le QR code de l'office. L'adresse de vérification (`RIB_QR_URL`, défaut `https://www.tagot.notaires.fr/rib`) figure dans les propriétés du PDF et dans l'email d'envoi.
-- Le notaire peut envoyer le RIB de l'étude à un client depuis le portail : exemplaire filigrané au nom du client, en pièce jointe, à l'adresse d'une fiche validée seulement ; la référence est consignée au journal.
-- Le notaire peut demander son RIB à un client : la demande apparaît dans l'espace client et se clôt d'elle-même quand le client dépose son RIB.
+- Parcours RIB : le client remplit un questionnaire (état civil…), le notaire valide sa fiche, puis, depuis le portail, lui **communique le RIB de l'étude** ou lui **demande son RIB**. Dans les deux cas le client reçoit un email de l'étude, sans lien ni pièce jointe, qui l'invite à saisir lui-même l'adresse de l'espace client ; il n'y entre qu'après un code reçu par email puis un code reçu par SMS. Le RIB ne part jamais par email.
+- Ces demandes figurent dans l'onglet « Demandes » du portail : une demande de RIB se clôt quand le client dépose son RIB ; un RIB communiqué passe à « Consulté le … » avec la référence de l'exemplaire remis. Un email qui ne part pas est signalé au notaire et au journal.
 - Les pièces déposées par les clients sont consultées et téléchargées depuis le portail sous filigrane (« Reçu par l'office… — usage exclusif du dossier », nom du client, date du dépôt), en PDF ; l'original reste intact au coffre. Un PDF protégé qui refuse le filigrane est remis tel quel, et le journal le signale.
 - Rien n'est supprimé : un RIB remplacé reste dans l'historique, une validation retirée reste au journal.
 - Portail : code d'accès + code à six chiffres du téléphone (TOTP), session de 12 heures.
-- Les avis par email au notaire ne contiennent jamais de pièce jointe ; les emails au client ne contiennent aucun lien cliquable (seul l'envoi du RIB de l'étude porte une pièce jointe, filigranée).
+- Les avis par email au notaire ne contiennent jamais de pièce jointe ; les emails au client ne contiennent ni lien cliquable ni pièce jointe.
 
 ## Variables d'environnement (Vercel)
 

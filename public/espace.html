@@ -131,7 +131,7 @@
   <div class="screen hidden" id="e-menu">
     <div class="info" id="bonjour"></div>
     <button type="button" class="choix" id="mRibEtude">
-      <span><span class="t">Consulter le RIB de l'étude</span><br><span class="d">Pour effectuer un virement à l'office.</span></span><span class="fleche">→</span>
+      <span><span class="t">Consulter le RIB de l'étude <span class="pastille hidden" id="nbRibEtude">1</span></span><br><span class="d">Pour effectuer un virement à l'office.</span></span><span class="fleche">→</span>
     </button>
     <button type="button" class="choix" id="mRibClient">
       <span><span class="t">Déposer mon RIB <span class="pastille hidden" id="nbRib">1</span></span><br><span class="d" id="dRibClient">Pour recevoir des fonds de l'office.</span></span><span class="fleche">→</span>
@@ -298,6 +298,7 @@ async function ouvrirMenu() {
   const noms = etat.personnes.map(p => `${p.prenom} ${p.nom}`.trim()).join(' et ');
   $('bonjour').textContent = `Bonjour ${noms}. Que souhaitez-vous faire ?`;
   $('mRibEtude').disabled = !etat.ribEtudeDisponible;
+  $('nbRibEtude').classList.toggle('hidden', !(etat.ribEtudeCommunique && etat.ribEtudeDisponible));
   const n = etat.demandes.length;
   $('mOrigine').disabled = !n;
   $('nbDemandes').textContent = n; $('nbDemandes').classList.toggle('hidden', !n);

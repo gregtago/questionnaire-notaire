@@ -3,7 +3,7 @@
  * le projet est limité à 12 fonctions Vercel)
  *
  * Portail du notaire : validation des fiches clients, RIB de l'étude
- * (dépôt, envoi à un client), demandes de RIB et d'origine des fonds,
+ * (dépôt, communication à un client), demandes de RIB et d'origine des fonds,
  * pièces reçues (consultées sous filigrane), journal.
  *
  * Accès : code d'accès (PORTAIL_CODE) + code à six chiffres du téléphone
@@ -25,7 +25,7 @@ const {
   MOTIFS, SOURCES, erreurClient, ribEtudeInfo, ribEtudeContenu, ribEtudeDeposer,
   envoyerEmail, adresseDuSite, enveloppe, euros
 } = require('./_metier');
-const { filigraner, filigranerPiece, nouvelleReference } = require('./_filigrane');
+const { filigraner, filigranerPiece } = require('./_filigrane');
 
 const DUREE_SESSION = 12 * 60 * 60 * 1000;
 const TOTP = 'portail/totp.json';
@@ -139,7 +139,8 @@ async function tableau(req, res) {
       etat: f.etat, valideeLe: f.valideeLe
     })),
     demandes: demandes.sort((a, b) => recent(a, b, 'creeLe')).map(d => ({
-      ...d, nature: d.nature || 'origine', motifLibelle: d.nature === 'rib' ? 'RIB du client' : (MOTIFS[d.motif] || d.motif)
+      ...d, nature: d.nature || 'origine',
+      motifLibelle: d.nature === 'rib' ? 'RIB du client' : d.nature === 'rib-etude' ? 'RIB de l\'étude communiqué' : (MOTIFS[d.motif] || d.motif)
     })),
     depots: depots.filter(d => d.statut === 'clos').sort((a, b) => recent(a, b, 'closLe')).map(d => ({
       ...d, telephone: sec.masquerTelephone(d.telephone),
@@ -238,77 +239,74 @@ async function demandeCreer(req, res) {
   res.json({ ok: true, prevenu });
 }
 
-/** Demande au client de déposer son RIB dans l'espace client. */
-async function demandeRib(req, res) {
+/**
+ * Les deux gestes « RIB » du notaire envers un client : lui demander son RIB,
+ * ou lui communiquer celui de l'étude. Dans les deux cas :
+ *   - seule une fiche validée (email et mobile vérifiés par le notaire) est visée ;
+ *   - le client reçoit toujours un email de l'étude, sans lien ni pièce jointe ;
+ *   - il agit ensuite dans l'espace client, où il n'entre qu'après un code
+ *     reçu par email puis un code reçu par SMS.
+ * La demande reste ouverte jusqu'au dépôt du RIB du client, ou jusqu'à ce
+ * qu'il ait consulté celui de l'étude : le portail montre où il en est.
+ */
+const GESTES_RIB = {
+  rib: {
+    refus: 'Cette fiche n\'est pas validée : validez-la avant de lui demander son RIB',
+    journal: 'demande-rib',
+    sujet: 'Votre RIB — à me transmettre par l\'espace client',
+    titre: 'Votre relevé d\'identité bancaire',
+    texte: '<p style="margin:0 0 14px;">Dans le cadre de votre dossier, je vous remercie de bien vouloir me transmettre votre relevé d\'identité bancaire (RIB), à votre nom.</p>' +
+      '<p style="margin:0 0 14px;">Pour des raisons de sécurité, je vous remercie de ne pas me l\'adresser par email, mais de le déposer dans l\'espace client de l\'office.</p>'
+  },
+  'rib-etude': {
+    refus: 'Cette fiche n\'est pas validée : validez-la avant de lui communiquer le RIB de l\'étude',
+    journal: 'rib-etude-communique',
+    sujet: 'RIB de l\'office — à consulter dans votre espace client',
+    titre: 'RIB de l\'office',
+    texte: '<p style="margin:0 0 14px;">Dans le cadre de votre dossier, le relevé d\'identité bancaire de l\'office est à votre disposition, pour les virements que vous aurez à effectuer.</p>' +
+      '<p style="margin:0 0 14px;">Pour des raisons de sécurité, je ne vous l\'adresse pas par email : vous le trouverez dans l\'espace client de l\'office. L\'exemplaire qui vous y sera remis portera votre nom, la date et une référence unique.</p>' +
+      '<p style="margin:0 0 14px;"><strong>Je ne vous communiquerai jamais de RIB ni de changement de RIB par email ou par SMS.</strong> Si vous recevez un RIB se recommandant de l\'office par un autre moyen, ne faites aucun virement et contactez-moi à un numéro que vous connaissez déjà.</p>'
+  }
+};
+
+async function gesteRib(nature, req, res) {
+  const g = GESTES_RIB[nature];
   const f = await annuaire.ficheOuverte(String(req.body.contactId || ''));
-  if (!f) throw erreurClient('Cette fiche n\'est pas validée : validez-la avant de lui demander son RIB');
+  if (!f) throw erreurClient(g.refus);
+  if (!f.email) throw erreurClient('Aucune adresse email sur cette fiche : le client ne pourrait pas s\'identifier');
+  if (nature === 'rib-etude' && !(await ribEtudeInfo()).courant) {
+    throw erreurClient('Aucun RIB de l\'étude déposé : déposez-le d\'abord (onglet « RIB de l\'étude »)');
+  }
+
   const nomClient = `${f.nom} ${f.prenom}`.trim();
   const deja = (await coffre.listerJson('demandes/'))
-    .some(d => d.nature === 'rib' && d.statut === 'en-attente' && d.contactId === f.id);
+    .some(d => d.nature === nature && d.statut === 'en-attente' && d.contactId === f.id);
   if (!deja) {
-    const demande = { id: coffre.identifiant(), nature: 'rib', statut: 'en-attente', contactId: f.id, nomClient, creeLe: new Date().toISOString() };
+    const demande = { id: coffre.identifiant(), nature, statut: 'en-attente', contactId: f.id, nomClient, creeLe: new Date().toISOString() };
     await coffre.ecrireJson(`demandes/${demande.id}.json`, demande);
-    await coffre.journaliser({ acteur: 'notaire', action: 'demande-rib', nom: nomClient, ip: sec.ipDe(req) });
   }
 
-  let prevenu = false;
-  if (req.body.prevenir === true && f.email) {
-    const site = adresseDuSite(req).replace(/^https?:\/\//, '');
-    prevenu = await envoyerEmail({
-      a: f.email,
-      sujet: 'Votre RIB — à me transmettre par l\'espace client',
-      titre: 'Votre relevé d\'identité bancaire',
-      sousTitre: 'Espace client de l\'office',
-      corpsHtml:
-        `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` +
-        '<p style="margin:0 0 14px;">Dans le cadre de votre dossier, je vous remercie de bien vouloir me transmettre votre relevé d\'identité bancaire (RIB), à votre nom.</p>' +
-        `<p style="margin:0 0 14px;">Pour des raisons de sécurité, je vous invite à le déposer depuis l'espace client de l'office plutôt que par email : ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>, puis identifiez-vous. Un code vous sera adressé par email, puis un second par SMS.</p>` +
-        '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable. Je ne vous demanderai jamais de mot de passe ni de code reçu par SMS.</p>' +
-        '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
-    });
-  }
-  res.json({ ok: true, prevenu, dejaDemande: deja });
-}
-
-/**
- * Envoie au client, par email, un exemplaire filigrané du RIB de l'étude :
- * à son nom, daté, sous une référence unique consignée au journal. Seule une
- * fiche validée (email vérifié) peut le recevoir.
- */
-async function ribEnvoyer(req, res) {
-  const f = await annuaire.ficheOuverte(String(req.body.contactId || ''));
-  if (!f) throw erreurClient('Cette fiche n\'est pas validée : validez-la avant de lui envoyer le RIB de l\'étude');
-  if (!f.email) throw erreurClient('Aucune adresse email sur cette fiche');
-  const rib = await ribEtudeContenu();
-  if (!rib) throw erreurClient('Aucun RIB de l\'étude déposé : déposez-le d\'abord (onglet « RIB de l\'étude »)');
-
-  const reference = nouvelleReference();
-  const beneficiaire = `${f.prenom} ${f.nom}`.trim();
-  const pdf = await filigraner(rib, { beneficiaire, reference });
-  const verification = (process.env.RIB_QR_URL || 'https://www.tagot.notaires.fr/rib').replace(/^https?:\/\//, '');
-
+  const site = adresseDuSite(req).replace(/^https?:\/\//, '');
   const envoye = await envoyerEmail({
-    a: f.email,
-    sujet: 'RIB de l\'office Grégoire TAGOT | notaire',
-    titre: 'RIB de l\'office',
-    sousTitre: `Référence ${reference}`,
-    piecesJointes: [{ filename: `RIB-office-TAGOT-${reference}.pdf`, content: pdf, contentType: 'application/pdf' }],
+    a: f.email, sujet: g.sujet, titre: g.titre, sousTitre: 'Espace client de l\'office',
     corpsHtml:
-      `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` +
-      '<p style="margin:0 0 14px;">Comme convenu, vous trouverez ci-joint le relevé d\'identité bancaire de l\'office, pour les virements que vous aurez à effectuer dans le cadre de votre dossier.</p>' +
-      `<p style="margin:0 0 14px;">Cet exemplaire vous est personnellement destiné : il porte votre nom, la date de ce jour et la référence <strong>${reference}</strong>.</p>` +
-      `<p style="margin:0 0 14px;"><strong>Avant tout virement</strong>, je vous invite à vérifier ces coordonnées en scannant le QR code figurant sur le RIB ou en saisissant vous-même l'adresse <strong>${sec.echapper(verification)}</strong>, ou encore en appelant l'office à un numéro que vous connaissez déjà.</p>` +
-      '<p style="margin:0 0 14px;font-size:12px;color:#888;">Je ne vous communiquerai jamais de changement de RIB par email ni par SMS. Si vous recevez un autre RIB se recommandant de l\'office, ne faites aucun virement et contactez-moi.</p>' +
+      `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` + g.texte +
+      `<p style="margin:0 0 14px;">Ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>. Indiquez votre adresse email : vous recevrez un premier code par email, puis un second par SMS sur votre téléphone mobile.</p>` +
+      '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable ni aucune pièce jointe. Je ne vous demanderai jamais de mot de passe, ni de me communiquer un code reçu par SMS.</p>' +
       '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
   });
-  if (!envoye) throw erreurClient('L\'email n\'a pas pu partir. Merci de réessayer dans quelques minutes.', 502);
-
   await coffre.journaliser({
-    acteur: 'notaire', action: 'rib-etude-envoye', nom: `${f.nom} ${f.prenom}`.trim(), reference,
-    destinataire: f.email, rib: rib.id, ip: sec.ipDe(req)
+    acteur: 'notaire', action: g.journal, nom: nomClient, destinataire: f.email,
+    ...(envoye ? {} : { email: 'non-parti' }), ip: sec.ipDe(req)
   });
-  res.json({ ok: true, reference, email: f.email });
+  if (!envoye) {
+    throw erreurClient(`La demande est enregistrée dans l'espace client, mais l'email à ${f.email} n'a pas pu partir. Réessayez dans quelques minutes.`, 502);
+  }
+  res.json({ ok: true, email: f.email, dejaEnCours: deja });
 }
+
+const demandeRib = (req, res) => gesteRib('rib', req, res);
+const ribCommuniquer = (req, res) => gesteRib('rib-etude', req, res);
 
 async function depotVu(req, res) {
   const id = String(req.body.id || '');
@@ -369,7 +367,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-rib': demandeRib, 'rib-envoyer': ribEnvoyer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
+const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-rib': demandeRib, 'rib-communiquer': ribCommuniquer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');

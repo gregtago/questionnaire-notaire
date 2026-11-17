@@ -266,7 +266,7 @@ function afficherClients() {
         actions.append(bouton('Restaurer', () => fenetreRestaurer(f)));
       } else if (f.etat === 'ouverte') {
         actions.append(
-          bouton('Envoyer le RIB de l\'office', () => fenetreEnvoyerRib(f)),
+          bouton('Communiquer le RIB de l\'office', () => fenetreEnvoyerRib(f)),
           bouton('Demander le RIB', () => fenetreDemanderRib(f)),
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Origine des fonds', onclick: () => fenetreDemande(f) }),
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Retirer', onclick: () => fenetreRetirer(f) }));
@@ -378,23 +378,22 @@ function fenetreDemande(f) {
     () => api('demande-creer', { contactId: f.id, motif: motif.value, montant: Number(montant.value), justificatifs: justif.checked, prevenir: prevenir.checked }));
 }
 
+const AIDE_RIB = 'Le client reçoit un email de l\'étude (sans lien ni pièce jointe) l\'invitant à se rendre dans son espace client, où il s\'identifie par un code reçu par email puis un code reçu par SMS.';
 function fenetreDemanderRib(f) {
-  const prevenir = el('input', { type: 'checkbox', checked: !!f.email, disabled: !f.email });
   fenetre(`Demander le RIB de ${f.prenom} ${f.nom}`,
-    'Le client verra la demande dans son espace client et y déposera son RIB. Vous le retrouverez dans « Pièces reçues », sous filigrane.',
-    [el('label', { className: 'case' }, prevenir, el('span', { textContent: f.email ? `Prévenir le client par email (${f.email})` : 'Pas d\'email sur la fiche : le client ne sera pas prévenu' }))],
-    'Demander le RIB',
-    () => api('demande-rib', { contactId: f.id, prevenir: prevenir.checked }));
+    `${AIDE_RIB} Il y dépose son RIB ; vous le retrouvez dans « Pièces reçues », sous filigrane. Email : ${f.email}.`,
+    [], 'Demander le RIB',
+    async () => { const r = await api('demande-rib', { contactId: f.id }); alerteEnvoi = `Demande de RIB envoyée à ${r.email}.`; });
 }
 function fenetreEnvoyerRib(f) {
   if (!donnees.rib.courant) {
     fenetre('Aucun RIB de l\'étude déposé', 'Déposez d\'abord le RIB de l\'étude dans l\'onglet « RIB de l\'étude ».', [], 'Fermer', async () => {});
     return;
   }
-  fenetre(`Envoyer le RIB de l'office à ${f.prenom} ${f.nom}`,
-    `Un exemplaire filigrané du RIB, au nom de ${f.prenom} ${f.nom}, daté et portant une référence unique, part en pièce jointe à ${f.email}. La référence est consignée au journal.`,
-    [], 'Envoyer',
-    async () => { const r = await api('rib-envoyer', { contactId: f.id }); alerteEnvoi = `RIB envoyé à ${r.email} — référence ${r.reference}.`; });
+  fenetre(`Communiquer le RIB de l'office à ${f.prenom} ${f.nom}`,
+    `${AIDE_RIB} Il y consulte le RIB, sous filigrane à son nom, daté et sous une référence unique consignée au journal. Email : ${f.email}.`,
+    [], 'Envoyer l\'email',
+    async () => { const r = await api('rib-communiquer', { contactId: f.id }); alerteEnvoi = `Email envoyé à ${r.email} : le RIB de l'office l'attend dans son espace client.`; });
 }
 let alerteEnvoi = '';
 
@@ -433,8 +432,8 @@ async function marquerVu(d) {
 /* ── Demandes ── */
 function afficherDemandes() {
   const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe)), el('td', {}, el('strong', { textContent: d.nomClient })),
-    el('td', {}, d.nature === 'rib' ? 'RIB du client' : 'Origine des fonds — ' + d.motifLibelle), el('td', {}, d.nature === 'rib' ? '—' : euros(d.montant)),
-    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? 'Répondue le ' + date(d.reponduLe) : 'En attente du client' }))));
+    el('td', {}, d.nature === 'origine' ? 'Origine des fonds — ' + d.motifLibelle : d.motifLibelle), el('td', {}, d.nature === 'origine' ? euros(d.montant) : '—'),
+    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? (d.nature === 'rib-etude' ? `Consulté le ${date(d.reponduLe)} (${d.reference})` : 'Répondue le ' + date(d.reponduLe)) : (d.nature === 'rib-etude' ? 'Pas encore consulté' : 'En attente du client') }))));
   $('tDemandes').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune demande.' }))]));
 }
 
@@ -468,7 +467,7 @@ const ACTIONS = {
   'fiche-validee': 'Fiche validée', 'validation-retiree': 'Validation retirée', 'rib-etude-depose': 'RIB de l\'étude déposé',
   'demande-origine-fonds': 'Demande d\'origine des fonds', 'piece-consultee': 'Pièce consultée (filigranée)',
   'piece-consultee-sans-filigrane': 'Pièce consultée (PDF protégé : sans filigrane)',
-  'demande-rib': 'Demande de RIB au client', 'rib-etude-envoye': 'RIB de l\'étude envoyé par email',
+  'demande-rib': 'RIB demandé au client (email)', 'rib-etude-communique': 'RIB de l\'étude communiqué (email)',
   'fiche-saisie': 'Fiche saisie', 'fiche-saisie-maj': 'Fiche mise à jour', 'fiche-modifiee': 'Fiche modifiée',
   'fiche-mise-de-cote': 'Fiche supprimée du portail', 'fiche-restauree': 'Fiche restaurée'
 };
@@ -479,7 +478,7 @@ async function chargerJournal() {
     const { lignes } = await api('journal');
     $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.reference, l.destinataire, l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      el('td', { className: 'gris', textContent: [l.nom, l.reference, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }

@@ -210,7 +210,9 @@ async function demandesEnAttente(ids, nature = 'origine') {
 async function etat(req, res) {
   const session = await ouvrirSession(req);
   const ids = session.fiches.map(f => f.id);
-  const [rib, demandes, demandesRib] = await Promise.all([ribEtudeInfo(), demandesEnAttente(ids), demandesEnAttente(ids, 'rib')]);
+  const [rib, demandes, demandesRib, ribCommunique] = await Promise.all([
+    ribEtudeInfo(), demandesEnAttente(ids), demandesEnAttente(ids, 'rib'), demandesEnAttente(ids, 'rib-etude')
+  ]);
   res.json({
     ok: true,
     personnes: session.fiches.map((f, i) => ({ indice: i, nom: f.nom, prenom: f.prenom })),
@@ -221,6 +223,7 @@ async function etat(req, res) {
     })),
     // Personnes dont l'étude attend le RIB.
     ribDemande: [...new Set(demandesRib.map(d => ids.indexOf(d.contactId)))],
+    ribEtudeCommunique: ribCommunique.length > 0,
     sources: SOURCES
   });
 }
@@ -248,6 +251,10 @@ async function ribEtude(req, res) {
     nom: session.fiches.map(nomDe).join(' / '), reference,
     telephone: sec.masquerTelephone(session.tel), ip: sec.ipDe(req), rib: rib.id
   });
+  // Le RIB communiqué par le notaire est désormais consulté.
+  for (const d of await demandesEnAttente(session.fiches.map(f => f.id), 'rib-etude')) {
+    await coffre.ecrireJson(`demandes/${d.id}.json`, { ...d, statut: 'repondue', reference, reponduLe: new Date().toISOString() });
+  }
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="RIB-office-TAGOT-${reference}.pdf"`);
   res.status(200).send(pdf);

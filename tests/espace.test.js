@@ -334,19 +334,39 @@ test('dépôt du RIB du client : contrôles, puis réception par le notaire', as
   assert.ok(!fs.readFileSync(path.join(DIR, `depots/${d.id}.json`)).includes('FR76'));
 });
 
-test('demande de RIB : visible du client, close par son dépôt', async () => {
-  assert.equal((await portail('demande-rib', { contactId: 'c-sans' })).r.status, 400, 'fiche non validée');
-  const a = await portail('demande-rib', { contactId: 'c-diai', prevenir: true });
-  assert.equal(a.r.status, 200);
-  assert.equal(a.d.prevenu, false, 'aucun email pendant les essais');
-  assert.equal((await portail('demande-rib', { contactId: 'c-diai' })).d.dejaDemande, true, 'pas de doublon');
+/** Emails interceptés : aucun ne part réellement. */
+const nodemailer = require('nodemailer');
+let emails = [];
+async function avecEmails(fn) {
+  const origine = nodemailer.createTransport;
+  nodemailer.createTransport = () => ({ sendMail: async (m) => { emails.push(m); } });
+  process.env.SMTP_USER = 'office@example.org';
+  emails = [];
+  try { return await fn(); } finally { nodemailer.createTransport = origine; delete process.env.SMTP_USER; }
+}
+
+test('demande de RIB : email au client, dépôt après double vérification, demande close', async () => {
+  // Sans email possible, le notaire est averti (et la demande reste enregistrée).
+  assert.equal((await portail('demande-rib', { contactId: 'c-diai' })).r.status, 502);
+
+  await avecEmails(async () => {
+    assert.equal((await portail('demande-rib', { contactId: 'c-sans' })).r.status, 400, 'fiche non validée');
+    const a = await portail('demande-rib', { contactId: 'c-diai' });
+    assert.equal(a.r.status, 200);
+    assert.equal(a.d.dejaEnCours, true, 'pas de doublon de demande');
+    assert.equal(emails.length, 1);
+    assert.equal(emails[0].to, 'samuel@example.org');
+    assert.ok(!emails[0].attachments, 'aucune pièce jointe');
+    assert.ok(!/href=/.test(emails[0].html), 'aucun lien');
+    assert.match(emails[0].html, /\/espace/);
+  });
 
   const session = await connecterClient('samuel@example.org');
   const e = await espace('etat', { session });
   assert.deepEqual(e.d.ribDemande, [0]);
   assert.equal(e.d.demandes.length, 0, 'une demande de RIB n\'est pas une demande d\'origine des fonds');
   let t = await portail('tableau');
-  assert.equal(t.d.demandes.find(d => d.nature === 'rib').motifLibelle, 'RIB du client');
+  assert.equal(t.d.demandes.filter(d => d.nature === 'rib').length, 1);
 
   const o = await espace('depot-ouvrir', { session, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' });
   await espace('depot-piece', { session, depot: o.d.depot, fichier: b64(RIB_PNG, 'rib.png') });
@@ -358,12 +378,31 @@ test('demande de RIB : visible du client, close par son dépôt', async () => {
   assert.equal(d.depotId, o.d.depot);
 });
 
-test('envoi du RIB de l\'étude par email : fiche validée exigée', async () => {
-  assert.equal((await portail('rib-envoyer', { contactId: 'c-sans' })).r.status, 400);
-  // Sans serveur d'envoi (essais), l'email ne part pas et rien n'est consigné.
-  const r = await portail('rib-envoyer', { contactId: 'c-diai' });
-  assert.equal(r.r.status, 502);
-  assert.ok(!(await portail('journal')).d.lignes.some(l => l.action === 'rib-etude-envoye'));
+test('RIB de l\'étude communiqué : email sans pièce jointe, remis dans l\'espace après double vérification', async () => {
+  await avecEmails(async () => {
+    assert.equal((await portail('rib-communiquer', { contactId: 'c-sans' })).r.status, 400);
+    const a = await portail('rib-communiquer', { contactId: 'c-diai' });
+    assert.equal(a.r.status, 200);
+    assert.equal(emails.length, 1);
+    assert.ok(!emails[0].attachments, 'le RIB ne part pas par email');
+    assert.ok(!/href=/.test(emails[0].html));
+  });
+
+  const session = await connecterClient('samuel@example.org');
+  assert.equal((await espace('etat', { session })).d.ribEtudeCommunique, true);
+  let t = await portail('tableau');
+  assert.equal(t.d.demandes.find(d => d.nature === 'rib-etude').statut, 'en-attente');
+
+  const r = await espace('rib-etude', { session });
+  assert.equal(r.r.status, 200);
+  const reference = /RIB-[A-Z2-9]{4}-[A-Z2-9]{4}/.exec(r.r.headers.get('content-disposition'))[0];
+  assert.equal((await espace('etat', { session })).d.ribEtudeCommunique, false);
+  t = await portail('tableau');
+  const d = t.d.demandes.find(x => x.nature === 'rib-etude');
+  assert.equal(d.statut, 'repondue');
+  assert.equal(d.reference, reference, 'le portail montre quel exemplaire a été remis');
+  const j = (await portail('journal')).d.lignes;
+  assert.ok(j.some(l => l.action === 'rib-etude-communique' && l.destinataire === 'samuel@example.org'));
 });
 
 test('un client ne peut pas agir sur le dépôt d\'un autre', async () => {
