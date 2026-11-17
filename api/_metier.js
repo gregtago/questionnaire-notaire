@@ -59,7 +59,7 @@ async function ribEtudeDeposer({ buf, type, nom }, auteur) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Avis par email au notaire — jamais de pièce jointe                  */
+/* Emails — jamais de pièce jointe                                    */
 /* ------------------------------------------------------------------ */
 
 function transporter() {

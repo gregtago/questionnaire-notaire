@@ -119,11 +119,12 @@
 
   <!-- TABLEAU -->
   <div class="large hidden" id="p-tableau">
+    <div class="bandeau hidden" id="bandeauInfo" role="status"></div>
     <div class="bandeau hidden" id="bandeauEssai">Version d'essai : le carnet d'adresses affiché est fictif, aucune fiche réelle n'est touchée.</div>
     <div class="tabs" id="tabs">
       <button type="button" class="tab active" data-onglet="clients">Clients</button>
       <button type="button" class="tab" data-onglet="pieces">Pièces reçues <span class="n hidden" id="nPieces"></span></button>
-      <button type="button" class="tab" data-onglet="demandes">Origine des fonds</button>
+      <button type="button" class="tab" data-onglet="demandes">Demandes</button>
       <button type="button" class="tab" data-onglet="rib">RIB de l'étude</button>
       <button type="button" class="tab" data-onglet="journal">Journal</button>
     </div>
@@ -144,8 +145,8 @@
     </div>
 
     <div class="card hidden" id="o-demandes">
-      <p class="intro">Pour adresser une demande, ouvrez l'onglet « Clients » et choisissez « Origine des fonds » sur une fiche validée.</p>
-      <table><thead><tr><th>Demandé le</th><th>Client</th><th>Motif</th><th>Montant</th><th>État</th></tr></thead><tbody id="tDemandes"></tbody></table>
+      <p class="intro">Pour adresser une demande, ouvrez l'onglet « Clients » et choisissez « Demander le RIB » ou « Origine des fonds » sur une fiche validée.</p>
+      <table><thead><tr><th>Demandé le</th><th>Client</th><th>Objet</th><th>Montant</th><th>État</th></tr></thead><tbody id="tDemandes"></tbody></table>
     </div>
 
     <div class="card hidden" id="o-rib">
@@ -265,6 +266,8 @@ function afficherClients() {
         actions.append(bouton('Restaurer', () => fenetreRestaurer(f)));
       } else if (f.etat === 'ouverte') {
         actions.append(
+          bouton('Communiquer le RIB de l\'office', () => fenetreEnvoyerRib(f)),
+          bouton('Demander le RIB', () => fenetreDemanderRib(f)),
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Origine des fonds', onclick: () => fenetreDemande(f) }),
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Retirer', onclick: () => fenetreRetirer(f) }));
       } else {
@@ -327,8 +330,12 @@ function fenetre(titre, texte, corps, libelle, action) {
   const ok = el('button', { type: 'button', className: 'btn', textContent: libelle });
   ok.onclick = async () => {
     err.textContent = ''; occupe(ok, 'En cours…');
-    try { await action(); fermer(); await charger(); } catch (e) { err.textContent = e.message; libre(ok); }
+    try {
+      await action(); fermer(); await charger();
+      if (alerteEnvoi) { $('bandeauInfo').textContent = alerteEnvoi; $('bandeauInfo').classList.remove('hidden'); alerteEnvoi = ''; }
+    } catch (e) { err.textContent = e.message; libre(ok); }
   };
+  $('bandeauInfo').classList.add('hidden');
   $('fenetre').replaceChildren(el('h3', { textContent: titre }), el('p', { textContent: texte }), ...corps, err,
     el('div', { className: 'pied' }, el('button', { type: 'button', className: 'btn-ghost', textContent: 'Annuler', onclick: fermer }), ok));
   $('fond').classList.remove('hidden');
@@ -371,6 +378,25 @@ function fenetreDemande(f) {
     () => api('demande-creer', { contactId: f.id, motif: motif.value, montant: Number(montant.value), justificatifs: justif.checked, prevenir: prevenir.checked }));
 }
 
+const AIDE_RIB = 'Le client reçoit un email de l\'étude (sans lien ni pièce jointe) l\'invitant à se rendre dans son espace client, où il s\'identifie par un code reçu par email puis un code reçu par SMS.';
+function fenetreDemanderRib(f) {
+  fenetre(`Demander le RIB de ${f.prenom} ${f.nom}`,
+    `${AIDE_RIB} Il y dépose son RIB ; vous le retrouvez dans « Pièces reçues », sous filigrane. Email : ${f.email}.`,
+    [], 'Demander le RIB',
+    async () => { const r = await api('demande-rib', { contactId: f.id }); alerteEnvoi = `Demande de RIB ${r.demande} envoyée à ${r.email}${r.dejaEnCours ? ' (relance)' : ''}.`; });
+}
+function fenetreEnvoyerRib(f) {
+  if (!donnees.rib.courant) {
+    fenetre('Aucun RIB de l\'étude déposé', 'Déposez d\'abord le RIB de l\'étude dans l\'onglet « RIB de l\'étude ».', [], 'Fermer', async () => {});
+    return;
+  }
+  fenetre(`Communiquer le RIB de l'office à ${f.prenom} ${f.nom}`,
+    `${AIDE_RIB} Il y consulte le RIB, sous filigrane à son nom, daté et sous une référence unique consignée au journal. Email : ${f.email}.`,
+    [], 'Envoyer l\'email',
+    async () => { const r = await api('rib-communiquer', { contactId: f.id }); alerteEnvoi = `Email envoyé à ${r.email} (demande ${r.demande}${r.dejaEnCours ? ', relance' : ''}) : le RIB de l'office l'attend dans son espace client.`; });
+}
+let alerteEnvoi = '';
+
 /* ── Pièces reçues ── */
 function afficherPieces() {
   const nouveaux = donnees.depots.filter(d => !d.vuLe).length;
@@ -384,6 +410,7 @@ function afficherPieces() {
       objet.append(el('strong', { textContent: 'Origine des fonds' }), el('div', { className: 'gris', textContent: 'Total déclaré : ' + euros(d.total) }));
       (d.sources || []).forEach(s => objet.append(el('div', { className: 'gris', textContent: `${s.libelle} — ${euros(s.montant)}${s.precision ? ' — ' + s.precision : ''}` })));
     }
+    if (d.demandes && d.demandes.length) objet.append(el('div', { className: 'gris', textContent: 'En réponse à la demande ' + d.demandes.join(', ') }));
     const pieces = el('ul', { className: 'pieces' }, ...d.pieces.map(p => {
       const url = `/api/espace?zone=portail&action=piece&depot=${d.id}&piece=${p.id}`;
       return el('li', {},
@@ -405,9 +432,9 @@ async function marquerVu(d) {
 
 /* ── Demandes ── */
 function afficherDemandes() {
-  const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe)), el('td', {}, el('strong', { textContent: d.nomClient })),
-    el('td', {}, d.motifLibelle), el('td', {}, euros(d.montant)),
-    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? 'Répondue le ' + date(d.reponduLe) : 'En attente du client' }))));
+  const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe), ...(d.reference ? [el('div', { className: 'gris', textContent: d.reference })] : [])), el('td', {}, el('strong', { textContent: d.nomClient })),
+    el('td', {}, d.nature === 'origine' ? 'Origine des fonds — ' + d.motifLibelle : d.motifLibelle), el('td', {}, d.nature === 'origine' ? euros(d.montant) : '—'),
+    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? (d.nature === 'rib-etude' ? `Consulté le ${date(d.reponduLe)} — exemplaire ${d.exemplaire}` : 'Répondue le ' + date(d.reponduLe)) : (d.nature === 'rib-etude' ? 'Pas encore consulté' : 'En attente du client') }))));
   $('tDemandes').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune demande.' }))]));
 }
 
@@ -439,7 +466,11 @@ const ACTIONS = {
   'origine-fonds-deposee': 'Origine des fonds déposée', 'portail-connexion': 'Connexion au portail',
   'portail-refus': 'Connexion au portail refusée', 'portail-telephone-enrole': 'Téléphone enrôlé',
   'fiche-validee': 'Fiche validée', 'validation-retiree': 'Validation retirée', 'rib-etude-depose': 'RIB de l\'étude déposé',
-  'demande-origine-fonds': 'Demande d\'origine des fonds', 'piece-consultee': 'Pièce consultée'
+  'demande-origine-fonds': 'Demande d\'origine des fonds', 'piece-consultee': 'Pièce consultée (filigranée)',
+  'piece-consultee-sans-filigrane': 'Pièce consultée (PDF protégé : sans filigrane)',
+  'demande-rib': 'RIB demandé au client (email)', 'rib-etude-communique': 'RIB de l\'étude communiqué (email)',
+  'fiche-saisie': 'Fiche saisie', 'fiche-saisie-maj': 'Fiche mise à jour', 'fiche-modifiee': 'Fiche modifiée',
+  'fiche-mise-de-cote': 'Fiche supprimée du portail', 'fiche-restauree': 'Fiche restaurée'
 };
 const ACTEURS = { client: 'Client', notaire: 'Notaire', inconnu: 'Inconnu' };
 async function chargerJournal() {
@@ -448,7 +479,7 @@ async function chargerJournal() {
     const { lignes } = await api('journal');
     $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.reference, l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }

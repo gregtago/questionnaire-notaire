@@ -201,15 +201,18 @@ function personneChoisie(session, indice) {
 
 const nomDe = (f) => `${f.nom} ${f.prenom}`.trim();
 
-async function demandesEnAttente(ids) {
+/** Demandes du notaire en attente : origine des fonds (par défaut) ou RIB. */
+async function demandesEnAttente(ids, nature = 'origine') {
   return (await coffre.listerJson('demandes/'))
-    .filter(d => d.statut === 'en-attente' && ids.includes(d.contactId));
+    .filter(d => d.statut === 'en-attente' && ids.includes(d.contactId) && (d.nature || 'origine') === nature);
 }
 
 async function etat(req, res) {
   const session = await ouvrirSession(req);
   const ids = session.fiches.map(f => f.id);
-  const [rib, demandes] = await Promise.all([ribEtudeInfo(), demandesEnAttente(ids)]);
+  const [rib, demandes, demandesRib, ribCommunique] = await Promise.all([
+    ribEtudeInfo(), demandesEnAttente(ids), demandesEnAttente(ids, 'rib'), demandesEnAttente(ids, 'rib-etude')
+  ]);
   res.json({
     ok: true,
     personnes: session.fiches.map((f, i) => ({ indice: i, nom: f.nom, prenom: f.prenom })),
@@ -218,6 +221,9 @@ async function etat(req, res) {
       id: d.id, personne: ids.indexOf(d.contactId), motif: MOTIFS[d.motif] || d.motif,
       montant: d.montant, justificatifs: !!d.justificatifs, creeLe: d.creeLe
     })),
+    // Personnes dont l'étude attend le RIB.
+    ribDemande: [...new Set(demandesRib.map(d => ids.indexOf(d.contactId)))],
+    ribEtudeCommunique: ribCommunique.length > 0,
     sources: SOURCES
   });
 }
@@ -238,13 +244,20 @@ async function ribEtude(req, res) {
   // référence. Sans marquage possible, rien n'est remis.
   const reference = nouvelleReference();
   const beneficiaire = session.fiches.map(f => `${f.prenom} ${f.nom}`.trim()).join(' et ');
-  const pdf = await filigraner(rib, { beneficiaire, reference });
+  // Si le notaire a communiqué son RIB, l'exemplaire porte la référence de sa demande.
+  const communications = await demandesEnAttente(session.fiches.map(f => f.id), 'rib-etude');
+  const demande = communications.map(d => d.reference).filter(Boolean).join(', ') || undefined;
+  const pdf = await filigraner(rib, { beneficiaire, reference, demande });
 
   await coffre.journaliser({
     acteur: 'client', action: 'rib-etude-consulte',
-    nom: session.fiches.map(nomDe).join(' / '), reference,
+    nom: session.fiches.map(nomDe).join(' / '), reference, ...(demande ? { demande } : {}),
     telephone: sec.masquerTelephone(session.tel), ip: sec.ipDe(req), rib: rib.id
   });
+  // Le RIB communiqué par le notaire est désormais consulté.
+  for (const d of communications) {
+    await coffre.ecrireJson(`demandes/${d.id}.json`, { ...d, statut: 'repondue', exemplaire: reference, reponduLe: new Date().toISOString() });
+  }
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="RIB-office-TAGOT-${reference}.pdf"`);
   res.status(200).send(pdf);
@@ -334,19 +347,25 @@ async function depotClore(req, res) {
   depot.closLe = new Date().toISOString();
   await coffre.ecrireJson(`depots/${depot.id}.json`, depot);
 
-  if (depot.demandeId) {
-    const chemin = `demandes/${depot.demandeId}.json`;
-    const demande = await coffre.lireJson(chemin);
-    if (demande) {
-      await coffre.ecrireJson(chemin, { ...demande, statut: 'repondue', depotId: depot.id, reponduLe: depot.closLe });
-    }
+  // Demandes auxquelles ce dépôt répond : celle d'origine des fonds visée,
+  // ou toutes les demandes de RIB en attente pour cette personne.
+  const repondues = depot.demandeId
+    ? [await coffre.lireJson(`demandes/${depot.demandeId}.json`)]
+    : depot.nature === 'rib' ? await demandesEnAttente([depot.contactId], 'rib') : [];
+  for (const demande of repondues.filter(Boolean)) {
+    await coffre.ecrireJson(`demandes/${demande.id}.json`, { ...demande, statut: 'repondue', depotId: depot.id, reponduLe: depot.closLe });
   }
+  // Le dépôt garde la référence des demandes auxquelles il répond : elle
+  // figurera dans le filigrane des pièces et au journal.
+  depot.demandes = repondues.filter(d => d && d.reference).map(d => d.reference);
+  if (depot.demandes.length) await coffre.ecrireJson(`depots/${depot.id}.json`, depot);
 
   const objet = depot.nature === 'rib' ? 'RIB déposé' : 'Origine des fonds justifiée';
   await coffre.journaliser({
     acteur: 'client', action: depot.nature === 'rib' ? 'rib-client-depose' : 'origine-fonds-deposee',
     nom: depot.nomClient, telephone: sec.masquerTelephone(depot.telephone),
-    ip: sec.ipDe(req), depot: depot.id, pieces: depot.pieces.length
+    ip: sec.ipDe(req), depot: depot.id, pieces: depot.pieces.length,
+    ...(depot.demandes.length ? { demande: depot.demandes.join(', ') } : {})
   });
   await avisAuNotaire(req, `Espace client — ${objet} par ${depot.nomClient}`, objet, [
     `${depot.nomClient} vient de déposer ${depot.pieces.length} pièce(s) dans l'espace client.`,

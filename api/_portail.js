@@ -2,8 +2,9 @@
  * _portail.js — Portail du notaire (servi par api/espace.js, ?zone=portail :
  * le projet est limité à 12 fonctions Vercel)
  *
- * Portail du notaire : validation des fiches clients, RIB de
- * l'étude, demandes d'origine des fonds, pièces reçues, journal.
+ * Portail du notaire : validation des fiches clients, RIB de l'étude
+ * (dépôt, communication à un client), demandes de RIB et d'origine des fonds,
+ * pièces reçues (consultées sous filigrane), journal.
  *
  * Accès : code d'accès (PORTAIL_CODE) + code à six chiffres du téléphone
  * (TOTP). Le téléphone s'enrôle au premier passage par QR code.
@@ -24,6 +25,7 @@ const {
   MOTIFS, SOURCES, erreurClient, ribEtudeInfo, ribEtudeContenu, ribEtudeDeposer,
   envoyerEmail, adresseDuSite, enveloppe, euros
 } = require('./_metier');
+const { filigraner, filigranerPiece, nouvelleReference } = require('./_filigrane');
 
 const DUREE_SESSION = 12 * 60 * 60 * 1000;
 const TOTP = 'portail/totp.json';
@@ -136,7 +138,10 @@ async function tableau(req, res) {
       telephone: f.telephone || f.telephoneBrut, telephoneExploitable: !!f.telephone && sec.estMobile(f.telephone),
       etat: f.etat, valideeLe: f.valideeLe
     })),
-    demandes: demandes.sort((a, b) => recent(a, b, 'creeLe')).map(d => ({ ...d, motifLibelle: MOTIFS[d.motif] || d.motif })),
+    demandes: demandes.sort((a, b) => recent(a, b, 'creeLe')).map(d => ({
+      ...d, nature: d.nature || 'origine',
+      motifLibelle: d.nature === 'rib' ? 'RIB du client' : d.nature === 'rib-etude' ? 'RIB de l\'étude communiqué' : (MOTIFS[d.motif] || d.motif)
+    })),
     depots: depots.filter(d => d.statut === 'clos').sort((a, b) => recent(a, b, 'closLe')).map(d => ({
       ...d, telephone: sec.masquerTelephone(d.telephone),
       sources: (d.sources || []).map(s => ({ ...s, libelle: SOURCES[s.type] || s.type }))
@@ -192,7 +197,7 @@ async function retirer(req, res) {
 async function ribDeposer(req, res) {
   const f = sec.fichierRecu(req.body.fichier);
   // Le RIB doit pouvoir être marqué au moment de sa remise : on le vérifie dès le dépôt.
-  await require('./_filigrane').filigraner(f, { beneficiaire: 'essai', reference: 'RIB-ESSAI' }).catch(() => {
+  await filigraner(f, { beneficiaire: 'essai', reference: 'RIB-ESSAI' }).catch(() => {
     throw erreurClient('Ce fichier ne peut pas recevoir le filigrane (PDF protégé ou endommagé). Déposez un PDF non protégé, ou une image du RIB.');
   });
   const courant = await ribEtudeDeposer(f, 'notaire');
@@ -208,12 +213,12 @@ async function demandeCreer(req, res) {
   if (!(montant > 0) || montant > 1e9) throw erreurClient('Montant à justifier invalide');
 
   const demande = {
-    id: coffre.identifiant(), statut: 'en-attente', contactId: f.id,
+    id: coffre.identifiant(), reference: nouvelleReference('DEM'), statut: 'en-attente', contactId: f.id,
     nomClient: `${f.nom} ${f.prenom}`.trim(), motif: req.body.motif, montant,
     justificatifs: req.body.justificatifs !== false, creeLe: new Date().toISOString()
   };
   await coffre.ecrireJson(`demandes/${demande.id}.json`, demande);
-  await coffre.journaliser({ acteur: 'notaire', action: 'demande-origine-fonds', nom: demande.nomClient, montant, ip: sec.ipDe(req) });
+  await coffre.journaliser({ acteur: 'notaire', action: 'demande-origine-fonds', nom: demande.nomClient, demande: demande.reference, montant, ip: sec.ipDe(req) });
 
   let prevenu = false;
   if (req.body.prevenir === true && f.email) {
@@ -226,6 +231,7 @@ async function demandeCreer(req, res) {
       corpsHtml:
         `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` +
         `<p style="margin:0 0 14px;">Dans le cadre de votre dossier, je vous remercie de bien vouloir me justifier l'origine des fonds à hauteur de <strong>${euros(montant)}</strong>.</p>` +
+        `<p style="margin:0 0 14px;">Référence de ma demande : <strong>${demande.reference}</strong>.</p>` +
         `<p style="margin:0 0 14px;">Vous pouvez le faire en ligne, depuis l'espace client de l'office : ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>, puis identifiez-vous avec votre numéro de mobile. Un code vous sera adressé par SMS.</p>` +
         '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable. Je ne vous demanderai jamais de mot de passe ni de coordonnées bancaires par email.</p>' +
         '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
@@ -233,6 +239,78 @@ async function demandeCreer(req, res) {
   }
   res.json({ ok: true, prevenu });
 }
+
+/**
+ * Les deux gestes « RIB » du notaire envers un client : lui demander son RIB,
+ * ou lui communiquer celui de l'étude. Dans les deux cas :
+ *   - seule une fiche validée (email et mobile vérifiés par le notaire) est visée ;
+ *   - le client reçoit toujours un email de l'étude, sans lien ni pièce jointe ;
+ *   - il agit ensuite dans l'espace client, où il n'entre qu'après un code
+ *     reçu par email puis un code reçu par SMS.
+ * La demande reste ouverte jusqu'au dépôt du RIB du client, ou jusqu'à ce
+ * qu'il ait consulté celui de l'étude : le portail montre où il en est.
+ */
+const GESTES_RIB = {
+  rib: {
+    refus: 'Cette fiche n\'est pas validée : validez-la avant de lui demander son RIB',
+    journal: 'demande-rib',
+    sujet: 'Votre RIB — à me transmettre par l\'espace client',
+    titre: 'Votre relevé d\'identité bancaire',
+    texte: '<p style="margin:0 0 14px;">Dans le cadre de votre dossier, je vous remercie de bien vouloir me transmettre votre relevé d\'identité bancaire (RIB), à votre nom.</p>' +
+      '<p style="margin:0 0 14px;">Pour des raisons de sécurité, je vous remercie de ne pas me l\'adresser par email, mais de le déposer dans l\'espace client de l\'office.</p>'
+  },
+  'rib-etude': {
+    refus: 'Cette fiche n\'est pas validée : validez-la avant de lui communiquer le RIB de l\'étude',
+    journal: 'rib-etude-communique',
+    sujet: 'RIB de l\'office — à consulter dans votre espace client',
+    titre: 'RIB de l\'office',
+    texte: '<p style="margin:0 0 14px;">Dans le cadre de votre dossier, le relevé d\'identité bancaire de l\'office est à votre disposition, pour les virements que vous aurez à effectuer.</p>' +
+      '<p style="margin:0 0 14px;">Pour des raisons de sécurité, je ne vous l\'adresse pas par email : vous le trouverez dans l\'espace client de l\'office. L\'exemplaire qui vous y sera remis portera votre nom, la date et une référence unique.</p>' +
+      '<p style="margin:0 0 14px;"><strong>Je ne vous communiquerai jamais de RIB ni de changement de RIB par email ou par SMS.</strong> Si vous recevez un RIB se recommandant de l\'office par un autre moyen, ne faites aucun virement et contactez-moi à un numéro que vous connaissez déjà.</p>'
+  }
+};
+
+async function gesteRib(nature, req, res) {
+  const g = GESTES_RIB[nature];
+  const f = await annuaire.ficheOuverte(String(req.body.contactId || ''));
+  if (!f) throw erreurClient(g.refus);
+  if (!f.email) throw erreurClient('Aucune adresse email sur cette fiche : le client ne pourrait pas s\'identifier');
+  if (nature === 'rib-etude' && !(await ribEtudeInfo()).courant) {
+    throw erreurClient('Aucun RIB de l\'étude déposé : déposez-le d\'abord (onglet « RIB de l\'étude »)');
+  }
+
+  const nomClient = `${f.nom} ${f.prenom}`.trim();
+  // Une demande déjà en attente est relancée, sous sa référence d'origine.
+  let demande = (await coffre.listerJson('demandes/'))
+    .find(d => d.nature === nature && d.statut === 'en-attente' && d.contactId === f.id);
+  const deja = !!demande;
+  if (!demande || !demande.reference) {
+    demande = { id: coffre.identifiant(), ...demande, reference: nouvelleReference('DEM'), nature, statut: 'en-attente', contactId: f.id, nomClient, creeLe: (demande && demande.creeLe) || new Date().toISOString() };
+    await coffre.ecrireJson(`demandes/${demande.id}.json`, demande);
+  }
+
+  const site = adresseDuSite(req).replace(/^https?:\/\//, '');
+  const envoye = await envoyerEmail({
+    a: f.email, sujet: g.sujet, titre: g.titre, sousTitre: 'Espace client de l\'office',
+    corpsHtml:
+      `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` + g.texte +
+      `<p style="margin:0 0 14px;">Référence de ma demande : <strong>${demande.reference}</strong>. Elle figurera sur ${nature === 'rib' ? 'votre RIB une fois reçu par l\'office' : 'le RIB qui vous sera remis'}.</p>` +
+      `<p style="margin:0 0 14px;">Ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>. Indiquez votre adresse email : vous recevrez un premier code par email, puis un second par SMS sur votre téléphone mobile.</p>` +
+      '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable ni aucune pièce jointe. Je ne vous demanderai jamais de mot de passe, ni de me communiquer un code reçu par SMS.</p>' +
+      '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
+  });
+  await coffre.journaliser({
+    acteur: 'notaire', action: g.journal, nom: nomClient, demande: demande.reference, destinataire: f.email, ...(deja ? { relance: true } : {}),
+    ...(envoye ? {} : { email: 'non-parti' }), ip: sec.ipDe(req)
+  });
+  if (!envoye) {
+    throw erreurClient(`La demande est enregistrée dans l'espace client, mais l'email à ${f.email} n'a pas pu partir. Réessayez dans quelques minutes.`, 502);
+  }
+  res.json({ ok: true, email: f.email, dejaEnCours: deja, demande: demande.reference });
+}
+
+const demandeRib = (req, res) => gesteRib('rib', req, res);
+const ribCommuniquer = (req, res) => gesteRib('rib-etude', req, res);
 
 async function depotVu(req, res) {
   const id = String(req.body.id || '');
@@ -275,8 +353,18 @@ async function telechargement(req, res) {
     const piece = depot && depot.pieces.find(p => p.id === q.piece);
     const buf = piece && await coffre.lire(`pieces/${q.depot}/${q.piece}.bin`);
     if (!buf) throw erreurClient('Pièce inconnue', 404);
-    await coffre.journaliser({ acteur: 'notaire', action: 'piece-consultee', nom: depot.nomClient, depot: depot.id, fichier: piece.nom, ip: sec.ipDe(req) });
-    return envoyerFichier(res, { buf, type: piece.type, nom: piece.nom }, q.telecharger === '1');
+    // Copie filigranée : l'original reste intact dans le coffre. Un PDF qui ne
+    // se laisse pas marquer (protégé, endommagé) est remis tel quel, et le
+    // journal le dit.
+    const marque = await filigranerPiece({ buf, type: piece.type }, { client: depot.nomClient, recuLe: depot.closLe || depot.ouvertLe, demande: (depot.demandes || []).join(', ') })
+      .catch(() => null);
+    await coffre.journaliser({
+      acteur: 'notaire', action: marque ? 'piece-consultee' : 'piece-consultee-sans-filigrane',
+      nom: depot.nomClient, depot: depot.id, fichier: piece.nom,
+      ...(depot.demandes && depot.demandes.length ? { demande: depot.demandes.join(', ') } : {}), ip: sec.ipDe(req)
+    });
+    if (!marque) return envoyerFichier(res, { buf, type: piece.type, nom: piece.nom }, q.telecharger === '1');
+    return envoyerFichier(res, { buf: marque, type: 'application/pdf', nom: piece.nom.replace(/\.(pdf|jpe?g|png)$/i, '') + '.pdf' }, q.telecharger === '1');
   }
   throw erreurClient('Action inconnue', 404);
 }
@@ -284,7 +372,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
+const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-rib': demandeRib, 'rib-communiquer': ribCommuniquer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
