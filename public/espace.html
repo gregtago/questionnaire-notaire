@@ -326,7 +326,7 @@ $('mRibEtude').addEventListener('click', async () => {
     el.className = 'apercu'; el.src = urlRib; el.title = 'RIB de l\'étude'; if (!pdf) el.alt = 'RIB de l\'étude';
     $('zoneRib').append(el);
     const a = $('telechargerRib');
-    a.href = urlRib; a.download = 'RIB-etude-TAGOT' + (pdf ? '.pdf' : blob.type === 'image/png' ? '.png' : '.jpg');
+    a.href = urlRib; a.download = 'RIB-office-TAGOT.pdf';
     a.classList.remove('hidden');
   } catch (err) { $('errRibEtude').textContent = err.message; }
 });

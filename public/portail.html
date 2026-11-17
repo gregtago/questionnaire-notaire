@@ -155,7 +155,7 @@
         </div>
         <div class="err" id="errRib"></div>
       </form>
-      <p class="gris">PDF, JPEG ou PNG, 3 Mo maximum. Le RIB précédent est conservé dans l'historique ; seul le dernier déposé est remis aux clients.</p>
+      <p class="gris">PDF, JPEG ou PNG, 3 Mo maximum. Le RIB précédent est conservé dans l'historique ; seul le dernier déposé est remis aux clients. Chaque exemplaire remis à un client porte un filigrane, son nom, la date et une référence unique, que vous retrouvez dans le journal.</p>
       <div id="ribApercu"></div>
     </div>
 
@@ -392,7 +392,7 @@ async function chargerJournal() {
     const { lignes } = await api('journal');
     $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      el('td', { className: 'gris', textContent: [l.nom, l.reference, l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }

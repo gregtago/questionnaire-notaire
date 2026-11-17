@@ -21,6 +21,7 @@ Deux pages ajoutées au site des questionnaires :
 - Ce parcours ne modifie aucune coordonnée. Un questionnaire qui change le téléphone ou l'email d'une fiche validée la fait retomber en `Coord-declarees` ; un mobile ou un email modifié dans Outlook referme la fiche.
 - Pièces et journal chiffrés (AES-256-GCM) avant écriture ; stockage Vercel Blob privé.
 - Seuls PDF, JPEG et PNG sont acceptés (contrôle sur le contenu), 3 Mo par fichier.
+- Le RIB de l'étude n'est jamais remis tel quel : chaque exemplaire est un PDF portant un filigrane, le nom du client, la date, une référence unique (consignée au journal) et un QR code vers la page de vérification de l'office (`RIB_QR_URL`, défaut `https://www.tagot.notaires.fr/rib`).
 - Rien n'est supprimé : un RIB remplacé reste dans l'historique, une validation retirée reste au journal.
 - Portail : code d'accès + code à six chiffres du téléphone (TOTP), session de 12 heures.
 - Les avis par email au notaire ne contiennent jamais de pièce jointe ; l'email au client ne contient aucun lien cliquable.

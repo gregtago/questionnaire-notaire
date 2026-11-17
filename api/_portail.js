@@ -158,6 +158,10 @@ async function retirer(req, res) {
 
 async function ribDeposer(req, res) {
   const f = sec.fichierRecu(req.body.fichier);
+  // Le RIB doit pouvoir être marqué au moment de sa remise : on le vérifie dès le dépôt.
+  await require('./_filigrane').filigraner(f, { beneficiaire: 'essai', reference: 'RIB-ESSAI' }).catch(() => {
+    throw erreurClient('Ce fichier ne peut pas recevoir le filigrane (PDF protégé ou endommagé). Déposez un PDF non protégé, ou une image du RIB.');
+  });
   const courant = await ribEtudeDeposer(f, 'notaire');
   await coffre.journaliser({ acteur: 'notaire', action: 'rib-etude-depose', rib: courant.id, fichier: courant.nom, ip: sec.ipDe(req) });
   res.json({ ok: true });
