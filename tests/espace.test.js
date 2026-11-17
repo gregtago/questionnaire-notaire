@@ -48,7 +48,7 @@ async function espace(action, corps = {}) {
   return { r, d: r.headers.get('content-type')?.includes('json') ? await r.json() : null };
 }
 async function portail(action, corps = {}, enTetes = { 'X-Portail': '1' }) {
-  const r = await fetch(`${BASE}/api/portail`, {
+  const r = await fetch(`${BASE}/api/espace?zone=portail`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', cookie, ...enTetes }, body: JSON.stringify({ action, ...corps })
   });
   const pose = r.headers.get('set-cookie');
@@ -228,7 +228,7 @@ test('dépôt du RIB du client : contrôles, puis réception par le notaire', as
   assert.equal(d.pieces[0].nom, '.._.._rib mon compte.png');
   assert.ok(!d.telephone.includes('123456'), 'téléphone masqué');
 
-  const url = `${BASE}/api/portail?action=piece&depot=${d.id}&piece=${d.pieces[0].id}`;
+  const url = `${BASE}/api/espace?zone=portail&action=piece&depot=${d.id}&piece=${d.pieces[0].id}`;
   assert.equal((await fetch(url)).status, 401, 'sans session du notaire, aucune pièce');
   const piece = await fetch(url, { headers: { cookie } });
   assert.equal(piece.status, 200);

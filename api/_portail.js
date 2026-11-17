@@ -1,5 +1,8 @@
 /**
- * portail.js — Portail du notaire : validation des fiches clients, RIB de
+ * _portail.js — Portail du notaire (servi par api/espace.js, ?zone=portail :
+ * le projet est limité à 12 fonctions Vercel)
+ *
+ * Portail du notaire : validation des fiches clients, RIB de
  * l'étude, demandes d'origine des fonds, pièces reçues, journal.
  *
  * Accès : code d'accès (PORTAIL_CODE) + code à six chiffres du téléphone
@@ -61,7 +64,7 @@ function lireCookie(req) {
 function poserCookie(req, res, valeur, dureeMs) {
   const local = /^(localhost|127\.0\.0\.1)(:|$)/.test(req.headers.host || '');
   res.setHeader('Set-Cookie',
-    `portail=${encodeURIComponent(valeur)}; Path=/api/portail; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(dureeMs / 1000)}${local ? '' : '; Secure'}`);
+    `portail=${encodeURIComponent(valeur)}; Path=/api/espace; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(dureeMs / 1000)}${local ? '' : '; Secure'}`);
 }
 
 const connecte = (req) => !!sec.lireJeton('portail', lireCookie(req));

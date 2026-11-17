@@ -1,6 +1,6 @@
 /**
  * _metier.js — Éléments communs à l'espace client (api/espace.js) et au
- * portail du notaire (api/portail.js) : libellés, RIB de l'étude, avis par
+ * portail du notaire (api/_portail.js) : libellés, RIB de l'étude, avis par
  * email, traitement uniforme des erreurs.
  */
 

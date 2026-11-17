@@ -178,7 +178,7 @@ const euros = (n) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 
 let donnees = null;
 
 async function api(action, corps) {
-  const r = await fetch('/api/portail', {
+  const r = await fetch('/api/espace?zone=portail', {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Portail': '1' },
     body: JSON.stringify({ action, ...corps })
   });
@@ -328,7 +328,7 @@ function afficherPieces() {
       (d.sources || []).forEach(s => objet.append(el('div', { className: 'gris', textContent: `${s.libelle} — ${euros(s.montant)}${s.precision ? ' — ' + s.precision : ''}` })));
     }
     const pieces = el('ul', { className: 'pieces' }, ...d.pieces.map(p => {
-      const url = `/api/portail?action=piece&depot=${d.id}&piece=${p.id}`;
+      const url = `/api/espace?zone=portail&action=piece&depot=${d.id}&piece=${p.id}`;
       return el('li', {},
         el('a', { href: url, target: '_blank', rel: 'noopener', textContent: p.nom, onclick: () => marquerVu(d) }), ' ',
         el('a', { href: url + '&telecharger=1', className: 'gris', textContent: '(télécharger)', onclick: () => marquerVu(d) }));
@@ -362,7 +362,7 @@ function afficherRib() {
     : 'Aucun RIB déposé : les clients ne peuvent pas encore le consulter.';
   $('ribApercu').replaceChildren();
   if (c) {
-    const src = '/api/portail?action=rib-etude&v=' + c.id;
+    const src = '/api/espace?zone=portail&action=rib-etude&v=' + c.id;
     $('ribApercu').append(c.type === 'application/pdf'
       ? el('iframe', { className: 'apercu', src, title: 'RIB de l\'étude' })
       : el('img', { className: 'apercu', src, alt: 'RIB de l\'étude', style: 'height:auto' }));

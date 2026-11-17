@@ -3,7 +3,8 @@
  * justification de l'origine des fonds.
  *
  * Un seul point d'entrée (POST /api/espace, champ « action ») pour ne pas
- * multiplier les fonctions Vercel.
+ * multiplier les fonctions Vercel. Le portail du notaire (_portail.js) passe
+ * par la même fonction, avec ?zone=portail.
  *
  * Parcours :
  *   demander-code  → le client donne son mobile ; s'il correspond à une fiche
@@ -291,10 +292,17 @@ const ACTIONS = {
   'depot-piece': depotPiece, 'depot-clore': depotClore
 };
 
-module.exports = enveloppe(async (req, res) => {
+const clients = enveloppe(async (req, res) => {
   if (req.method !== 'POST') return res.status(405).end();
   req.body = req.body && typeof req.body === 'object' ? req.body : {};
   const action = ACTIONS[req.body.action];
   if (!action) throw erreurClient('Action inconnue');
   await action(req, res);
 });
+
+// Le portail du notaire partage cette fonction (limite de 12 fonctions par
+// déploiement) : /api/espace?zone=portail. Ses contrôles d'accès sont les siens.
+module.exports = (req, res) => {
+  const zone = (req.query && req.query.zone) || new URL(req.url, 'http://x').searchParams.get('zone');
+  return zone === 'portail' ? require('./_portail')(req, res) : clients(req, res);
+};
