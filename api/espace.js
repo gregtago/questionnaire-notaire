@@ -144,7 +144,7 @@ async function verifierEmail(req, res) {
     const c = codeAleatoire();
     envois.push({ t: tel, c: ids, h: sec.hmac(`sms|${ticket}|${tel}|${c}`) });
     const envoi = await sms.envoyerSms(tel,
-      `Grégoire TAGOT notaire : votre code est ${c}, valable 10 minutes. Ne le communiquez à personne.`)
+      `Grégoire TAGOT  |  notaire : votre code est ${c}, valable 10 minutes. Ne le communiquez à personne.`)
       .catch(async (e) => {
         console.error('[espace] SMS non envoyé :', e.message);
         await coffre.journaliser({ acteur: 'client', action: 'code-non-envoye-echec-sms', telephone: sec.masquerTelephone(tel), ip: sec.ipDe(req) });
