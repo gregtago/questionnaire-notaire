@@ -24,6 +24,8 @@ const crypto = require('crypto');
 const coffre = require('./_coffre');
 const { telephoneE164, estMobile } = require('./_securite');
 
+const { nomAffiche, nomNaissanceDe } = require('./_contacts');
+
 const VERIFIEE = 'Coord-verifiees';
 const DECLAREE = 'Coord-declarees';
 
@@ -41,6 +43,7 @@ function fiche(c) {
     id: c.id,
     nom: c.surname || '',
     prenom: c.givenName || '',
+    nomNaissance: nomNaissanceDe(c.displayName),
     email: ((c.emailAddresses || [])[0] || {}).address || '',
     telephone: telephoneE164(c.mobilePhone),
     telephoneBrut: c.mobilePhone || '',
@@ -61,7 +64,7 @@ async function lireContacts() {
   const { graph, getFolderId, MAILBOX } = require('./_contacts');
   const folderId = await getFolderId();
   let chemin = `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}/contacts` +
-    '?$select=id,givenName,surname,mobilePhone,emailAddresses,categories&$top=200';
+    '?$select=id,givenName,surname,displayName,mobilePhone,emailAddresses,categories&$top=200';
   const out = [];
   for (let page = 0; chemin && page < 50; page++) {
     const r = await graph('GET', chemin);
@@ -146,6 +149,52 @@ async function valider(id) {
   return c;
 }
 
+/**
+ * Saisie manuelle d'un client depuis le portail. La fiche est créée dans le
+ * carnet comme celles des questionnaires — « Coord-declarees » — et doit être
+ * validée ensuite, comme les autres. Si une fiche existe déjà sous le même
+ * email, nom et prénom, elle est mise à jour au lieu d'être dédoublée.
+ */
+async function creerFiche(p) {
+  const t = (v, n) => String(v || '').trim().slice(0, n);
+  const f = {
+    nom: t(p.nom, 80), prenom: t(p.prenom, 80), email: t(p.email, 200).toLowerCase(),
+    nomNaissance: t(p.nomNaissance, 80), accord: ['F', 'M'].includes(p.accord) ? p.accord : '',
+    telephone: t(p.telephone, 30), adresse: t(p.adresse, 200), codePostal: t(p.codePostal, 10), ville: t(p.ville, 80)
+  };
+  const refus = (m) => Object.assign(new Error(m), { client: true });
+  if (!f.nom || !f.prenom) throw refus('Le nom et le prénom sont obligatoires');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) throw refus('Adresse email invalide');
+  if (!f.telephone) throw refus('Le téléphone est obligatoire');
+
+  if (modeEssai()) {
+    const tous = (await coffre.lireJson(ESSAI)) || [];
+    const n = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+    const tel = telephoneE164(f.telephone) || f.telephone;
+    const existant = tous.find(c => n(c.surname) === n(f.nom) && n(c.givenName) === n(f.prenom) &&
+      (c.emailAddresses || []).some(a => (a.address || '').toLowerCase() === f.email));
+    const garde = !f.nomNaissance && existant ? nomNaissanceDe(existant.displayName) : '';
+    const displayName = garde ? existant.displayName : nomAffiche(f.nom, f.prenom, f.nomNaissance, f.accord);
+    const champs = { givenName: f.prenom, surname: f.nom.toUpperCase(), displayName, mobilePhone: tel, emailAddresses: [{ address: f.email }] };
+    if (existant) {
+      const inchange = existant.mobilePhone === tel;
+      Object.assign(existant, champs);
+      if (!inchange) existant.categories = (existant.categories || []).filter(x => x !== VERIFIEE && x !== DECLAREE).concat(DECLAREE);
+    } else {
+      tous.push({ id: crypto.randomBytes(12).toString('hex'), ...champs, categories: [DECLAREE, 'Saisie-manuelle'] });
+    }
+    await coffre.ecrireJson(ESSAI, tous);
+    return { action: existant ? 'updated' : 'created', ...f };
+  }
+
+  const { upsertContact } = require('./_contacts');
+  const r = await upsertContact({
+    ...f, natureDossier: 'Saisie-manuelle',
+    notes: `Fiche saisie manuellement le ${new Date().toLocaleDateString('fr-FR')}`
+  });
+  return { action: r.action, ...f };
+}
+
 async function retirer(id) {
   const c = (await lireContacts()).find(x => x.id === id);
   if (!c) throw Object.assign(new Error('Fiche introuvable'), { client: true });
@@ -158,4 +207,4 @@ async function retirer(id) {
   return c;
 }
 
-module.exports = { listerFiches, fichesOuvertesPourTelephone, fichesOuvertesPourEmail, ficheOuverte, valider, retirer, modeEssai };
+module.exports = { listerFiches, creerFiche, fichesOuvertesPourTelephone, fichesOuvertesPourEmail, ficheOuverte, valider, retirer, modeEssai };

@@ -407,6 +407,22 @@ test('journal : les gestes sont consignés, sans numéro complet', async () => {
   assert.ok(!JSON.stringify(j.d.lignes).includes('612345678'));
 });
 
+test('saisie manuelle d\'un client depuis le portail', async () => {
+  assert.equal((await portail('fiche-creer', { nom: 'Martin', prenom: 'Lucie', email: 'pas-un-email', telephone: '06 11 22 33 44' })).r.status, 400);
+  assert.equal((await portail('fiche-creer', { nom: 'Martin', prenom: '', email: 'lucie@example.org', telephone: '06 11 22 33 44' })).r.status, 400);
+  const a = await portail('fiche-creer', { nom: 'Martin', prenom: 'Lucie', nomNaissance: 'Dupont', accord: 'F', email: 'Lucie@Example.org', telephone: '06 11 22 33 44' });
+  assert.equal(a.r.status, 200); assert.equal(a.d.action, 'created');
+  // Le conjoint, même nom, même email : fiche distincte.
+  assert.equal((await portail('fiche-creer', { nom: 'MARTIN', prenom: 'Paul', email: 'lucie@example.org', telephone: '06 55 66 77 88' })).d.action, 'created');
+  assert.equal((await portail('fiche-creer', { nom: 'Martin', prenom: 'Lucie', email: 'lucie@example.org', telephone: '06 11 22 33 44' })).d.action, 'updated');
+  const fiches = (await portail('tableau')).d.fiches.filter(f => f.nom === 'MARTIN');
+  assert.equal(fiches.find(f => f.prenom === 'Lucie').nomNaissance, 'DUPONT', 'nom de naissance conservé à la mise à jour');
+  assert.deepEqual(fiches.map(f => f.prenom).sort(), ['Lucie', 'Paul']);
+  assert.ok(fiches.every(f => f.etat === 'a-valider'));
+  const j = await portail('journal');
+  assert.ok(j.d.lignes.some(l => l.action === 'fiche-saisie'));
+});
+
 test('déconnexion du portail', async () => {
   await portail('deconnexion');
   assert.equal((await portail('tableau')).r.status, 401);

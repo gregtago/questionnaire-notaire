@@ -131,7 +131,7 @@ async function tableau(req, res) {
   res.json({
     ok: true,
     fiches: fiches.map(f => ({
-      id: f.id, nom: f.nom, prenom: f.prenom, email: f.email,
+      id: f.id, nom: f.nom, prenom: f.prenom, nomNaissance: f.nomNaissance, email: f.email,
       telephone: f.telephone || f.telephoneBrut, telephoneExploitable: !!f.telephone && sec.estMobile(f.telephone),
       etat: f.etat, valideeLe: f.valideeLe
     })),
@@ -148,6 +148,16 @@ async function valider(req, res) {
   const c = await annuaire.valider(String(req.body.id || ''));
   await coffre.journaliser({ acteur: 'notaire', action: 'fiche-validee', nom: `${c.nom} ${c.prenom}`.trim(), telephone: sec.masquerTelephone(c.telephone), ip: sec.ipDe(req) });
   res.json({ ok: true });
+}
+
+async function ficheCreer(req, res) {
+  const b = req.body;
+  const c = await annuaire.creerFiche({
+    nom: b.nom, prenom: b.prenom, nomNaissance: b.nomNaissance, accord: b.accord, email: b.email, telephone: b.telephone,
+    adresse: b.adresse, codePostal: b.codePostal, ville: b.ville
+  });
+  await coffre.journaliser({ acteur: 'notaire', action: c.action === 'created' ? 'fiche-saisie' : 'fiche-saisie-maj', nom: `${c.nom.toUpperCase()} ${c.prenom}`.trim(), ip: sec.ipDe(req) });
+  res.json({ ok: true, action: c.action });
 }
 
 async function retirer(req, res) {
@@ -251,7 +261,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
+const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');

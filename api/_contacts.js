@@ -139,24 +139,26 @@ async function getFolderId() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Un couple partage souvent une seule adresse email. L'appairage se fait donc
- * sur email ET nom : si l'email existe déjà mais sous un autre nom, on crée
- * une fiche distincte au lieu d'écraser celle du conjoint.
+ * Un couple partage souvent une seule adresse email, et souvent le même nom
+ * d'usage. L'appairage se fait donc sur email, nom ET prénom : sinon la fiche
+ * du conjoint viendrait écraser celle de l'autre époux au lieu d'être créée.
+ * Une fiche ancienne sans prénom reste appariée sur le seul nom.
  */
-async function findExisting(folderId, email, nom) {
+async function findExisting(folderId, email, nom, prenom) {
   if (!email) return null;
   const base  = `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}/contacts`;
   const safe  = String(email).toLowerCase().replace(/'/g, "''");
   const cible = norm(nom);
+  const cibleP = norm(prenom);
 
   let candidats = [];
   try {
     const filter = encodeURIComponent(`emailAddresses/any(a:a/address eq '${safe}')`);
-    const res = await graph('GET', `${base}?$filter=${filter}&$select=id,surname&$top=20`);
+    const res = await graph('GET', `${base}?$filter=${filter}&$select=id,surname,givenName&$top=20`);
     candidats = res.value || [];
   } catch (e) {
     // Repli si le filtre any() est refusé : balayage local du dossier.
-    const res = await graph('GET', `${base}?$select=id,surname,emailAddresses&$top=999`);
+    const res = await graph('GET', `${base}?$select=id,surname,givenName,emailAddresses&$top=999`);
     candidats = (res.value || []).filter(c =>
       (c.emailAddresses || []).some(a => (a.address || '').toLowerCase() === safe)
     );
@@ -164,8 +166,31 @@ async function findExisting(folderId, email, nom) {
 
   if (!candidats.length) return null;
 
-  const hit = candidats.find(c => norm(c.surname) === cible);
+  const memeNom = candidats.filter(c => norm(c.surname) === cible);
+  const hit = memeNom.find(c => norm(c.givenName) === cibleP)
+    || (cibleP ? null : memeNom[0])
+    || memeNom.find(c => !norm(c.givenName));
   return hit ? hit.id : null;
+}
+
+/**
+ * Nom affiché : « MARTIN Lucie (née DUPONT) ». Outlook n'a pas de champ pour
+ * le nom de naissance ; le nom affiché le montre dans la liste du carnet et le
+ * rend trouvable par la recherche, sans toucher au nom (surname) qui sert à
+ * reconnaître la fiche.
+ */
+function nomAffiche(nom, prenom, nomNaissance, accord) {
+  const base = `${String(nom || '').toUpperCase()} ${prenom || ''}`.trim();
+  const naiss = String(nomNaissance || '').trim().toUpperCase();
+  if (!naiss || norm(naiss) === norm(nom)) return base;
+  const ne = accord === 'F' ? 'née' : accord === 'M' ? 'né' : 'né(e)';
+  return `${base} (${ne} ${naiss})`;
+}
+
+/** Retrouve le nom de naissance inscrit dans un nom affiché. */
+function nomNaissanceDe(displayName) {
+  const m = String(displayName || '').match(/\((?:née|né|né\(e\)) ([^()]+)\)\s*$/);
+  return m ? m[1].trim() : '';
 }
 
 /** Normalise pour comparaison : sans accents, sans casse, sans ponctuation. */
@@ -221,6 +246,8 @@ function toE164(tel) {
  * @param {string} p.nom
  * @param {string} p.prenom
  * @param {string} p.email
+ * @param {string} [p.nomNaissance] nom de naissance, s'il diffère du nom d'usage
+ * @param {string} [p.accord]       'F' ou 'M' (pour « née » / « né »)
  * @param {string} [p.telephone]
  * @param {string} [p.adresse]        ligne de voie
  * @param {string} [p.codePostal]
@@ -246,9 +273,9 @@ async function upsertContact(p) {
   const contact = {
     givenName:   prenom,
     surname:     nom.toUpperCase(),
-    displayName: `${nom.toUpperCase()} ${prenom}`.trim(),
+    displayName: nomAffiche(nom, prenom, p.nomNaissance, p.accord),
     categories,
-    personalNotes: `Questionnaire reçu le ${new Date().toLocaleDateString('fr-FR')}`
+    personalNotes: p.notes || `Questionnaire reçu le ${new Date().toLocaleDateString('fr-FR')}`
   };
 
   if (p.email) {
@@ -273,7 +300,7 @@ async function upsertContact(p) {
   const bday = toBirthday(p.dateNaissance);
   if (bday) contact.birthday = bday;
 
-  const existingId = await findExisting(folderId, p.email, nom);
+  const existingId = await findExisting(folderId, p.email, nom, prenom);
 
   if (existingId) {
     // Une fiche validée par le notaire (« Coord-verifiees ») sert d'ancre à
@@ -281,7 +308,14 @@ async function upsertContact(p) {
     // n'apporte AUCUN changement de téléphone ni d'email ; sinon elle retombe
     // en « Coord-declarees » jusqu'à nouvelle validation.
     try {
-      const avant = await graph('GET', `${base}/${existingId}?$select=mobilePhone,emailAddresses,categories`);
+      const avant = await graph('GET', `${base}/${existingId}?$select=mobilePhone,emailAddresses,categories,displayName`);
+      // Sans nom de naissance transmis, on garde celui déjà inscrit sur la fiche
+      // (il a pu être ajouté à la main dans Outlook).
+      const garde = nomNaissanceDe(avant.displayName);
+      if (!String(p.nomNaissance || '').trim() && garde) {
+        contact.displayName = `${contact.displayName} ${avant.displayName.slice(avant.displayName.lastIndexOf('('))}`;
+        if (contact.emailAddresses) contact.emailAddresses[0].name = contact.displayName;
+      }
       const memeTel   = !tel || toE164(avant.mobilePhone) === tel;
       const memeEmail = !p.email || (avant.emailAddresses || [])
         .some(a => (a.address || '').toLowerCase() === String(p.email).trim().toLowerCase());
@@ -321,5 +355,5 @@ async function upsertContactSafe(p) {
 module.exports = {
   upsertContact, upsertContactSafe,
   // Réutilisés par _annuaire.js (lecture et validation des fiches).
-  graph, getFolderId, toE164, MAILBOX
+  graph, getFolderId, toE164, MAILBOX, nomAffiche, nomNaissanceDe
 };
