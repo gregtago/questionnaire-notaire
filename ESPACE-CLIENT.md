@@ -11,14 +11,14 @@ Deux pages ajoutées au site des questionnaires :
 
 1. Le client remplit un questionnaire : sa fiche est créée dans le dossier « Clients » d'Outlook, catégorie `Coord-declarees` (déjà en place).
 2. Le notaire valide la fiche depuis `/portail` : catégorie `Coord-verifiees`, et empreinte du numéro validé conservée dans le coffre.
-3. Le client saisit son mobile sur `/espace`. Si ce numéro est celui d'une fiche validée, il reçoit un code par SMS, puis accède à son espace pour 20 minutes.
+3. Le client saisit son adresse email sur `/espace`. Si elle est celle d'une fiche validée, il reçoit un code à cette adresse ; ce code saisi, un second lui est envoyé par SMS sur le mobile validé. Il accède alors à son espace pour 20 minutes. Deux personnes partageant une adresse mais pas un mobile reçoivent chacune leur SMS, qui n'ouvre que leur fiche.
 
 ## Règles de sécurité tenues par le code
 
-- La réponse à la saisie du numéro est la même qu'il soit connu ou non.
-- Code à six chiffres, 10 minutes, cinq essais, usage unique ; trois codes par quart d'heure et par numéro.
+- La réponse à la saisie de l'adresse est la même qu'elle soit connue ou non ; le mobile n'est jamais affiché avant que l'adresse soit prouvée, et seulement par ses deux derniers chiffres.
+- Deux codes à six chiffres (email, puis SMS), 10 minutes et cinq essais chacun, usage unique ; trois codes par quart d'heure, par adresse comme par mobile.
 - Le client dépose mais ne relit jamais ce qu'il a déposé.
-- Ce parcours ne modifie aucune coordonnée. Un questionnaire qui change le téléphone ou l'email d'une fiche validée la fait retomber en `Coord-declarees` ; un numéro modifié dans Outlook referme la fiche.
+- Ce parcours ne modifie aucune coordonnée. Un questionnaire qui change le téléphone ou l'email d'une fiche validée la fait retomber en `Coord-declarees` ; un mobile ou un email modifié dans Outlook referme la fiche.
 - Pièces et journal chiffrés (AES-256-GCM) avant écriture ; stockage Vercel Blob privé.
 - Seuls PDF, JPEG et PNG sont acceptés (contrôle sur le contenu), 3 Mo par fichier.
 - Rien n'est supprimé : un RIB remplacé reste dans l'historique, une validation retirée reste au journal.

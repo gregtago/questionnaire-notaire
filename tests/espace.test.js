@@ -37,7 +37,11 @@ const CONTACTS = [
   { id: 'c-vial-1', surname: 'VIAL', givenName: 'Anne', mobilePhone: '06 98 76 54 32', emailAddresses: [{ address: 'vial@example.org' }], categories: ['Coord-declarees'] },
   { id: 'c-vial-2', surname: 'VIAL', givenName: 'Marc', mobilePhone: '0698765432', emailAddresses: [{ address: 'vial@example.org' }], categories: ['Coord-declarees'] },
   { id: 'c-sans', surname: 'SANSTEL', givenName: 'Luc', mobilePhone: 'voir fixe', emailAddresses: [], categories: [] },
-  { id: 'c-fixe', surname: 'FIXE', givenName: 'Paul', mobilePhone: '01 44 00 00 00', emailAddresses: [], categories: [] }
+  { id: 'c-fixe', surname: 'FIXE', givenName: 'Paul', mobilePhone: '01 44 00 00 00', emailAddresses: [{ address: 'fixe@example.org' }], categories: [] },
+  { id: 'c-sansmail', surname: 'SANSMAIL', givenName: 'Eve', mobilePhone: '0655555555', emailAddresses: [], categories: [] },
+  // Un couple qui partage une adresse mais pas un téléphone.
+  { id: 'c-duo-1', surname: 'DUO', givenName: 'Alice', mobilePhone: '0611111111', emailAddresses: [{ address: 'Duo@Example.org' }], categories: [] },
+  { id: 'c-duo-2', surname: 'DUO', givenName: 'Bruno', mobilePhone: '0622222222', emailAddresses: [{ address: 'duo@example.org' }], categories: [] }
 ];
 
 const oublierLimites = () => fs.rmSync(path.join(DIR, 'limites'), { recursive: true, force: true });
@@ -58,14 +62,18 @@ async function portail(action, corps = {}, enTetes = { 'X-Portail': '1' }) {
 }
 const b64 = (buf, nom) => ({ nom, contenu: buf.toString('base64') });
 
-async function connecterClient(telephone) {
-  const a = await espace('demander-code', { telephone });
+/** Identification complète : code par email, puis code par SMS (rang = mobile visé). */
+async function connecterClient(email, rang = 0) {
+  const a = await espace('demander-code', { email });
   assert.equal(a.r.status, 200);
-  assert.match(a.d.codeEssai || '', /^\d{6}$/, 'un code doit être émis pour une fiche validée');
-  const b = await espace('verifier-code', { ticket: a.d.ticket, code: a.d.codeEssai });
+  assert.match(a.d.codeEssai || '', /^\d{6}$/, 'un code email doit être émis pour une fiche validée');
+  const b = await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai });
   assert.equal(b.r.status, 200);
-  return b.d.session;
+  const c = await espace('verifier-code', { ticket: a.d.ticket, code: b.d.codesEssai[rang] });
+  assert.equal(c.r.status, 200);
+  return c.d.session;
 }
+const autreCode = (c) => (c === '000000' ? '111111' : '000000');
 
 test.before(async () => {
   await new Promise(ok => (serveur.listening ? ok() : serveur.once('listening', ok)));
@@ -146,7 +154,7 @@ test('portail : connexion par code d\'accès et code à six chiffres', async () 
   assert.equal((await portail('connexion', { code: 'faux-code-d-acces', totp: sec.totp(secretTotp) })).r.status, 401);
   assert.equal((await portail('connexion', { code: process.env.PORTAIL_CODE, totp: sec.totp(secretTotp) })).r.status, 200);
   const t = await portail('tableau');
-  assert.equal(t.d.fiches.length, 5);
+  assert.equal(t.d.fiches.length, 8);
   assert.ok(t.d.fiches.every(f => f.etat === 'a-valider'));
 });
 
@@ -159,46 +167,84 @@ test('portail : un jeton falsifié ne passe pas', async () => {
 
 /* ── Espace client ── */
 
-test('numéro inconnu ou fiche non validée : même réponse, aucun code', async () => {
-  const inconnu = await espace('demander-code', { telephone: '0611111111' });
-  const nonValide = await espace('demander-code', { telephone: '0612345678' });
+test('adresse inconnue ou fiche non validée : même réponse, aucun code', async () => {
+  const inconnu = await espace('demander-code', { email: 'inconnu@example.org' });
+  const nonValide = await espace('demander-code', { email: 'samuel@example.org' });
   for (const x of [inconnu, nonValide]) {
     assert.equal(x.r.status, 200);
     assert.deepEqual(Object.keys(x.d).sort(), ['ok', 'ticket']);
   }
+  assert.equal((await espace('verifier-email', { ticket: inconnu.d.ticket, code: '123456' })).r.status, 400);
   assert.equal((await espace('verifier-code', { ticket: inconnu.d.ticket, code: '123456' })).r.status, 400);
-  assert.equal((await espace('demander-code', { telephone: 'abc' })).r.status, 400);
+  assert.equal((await espace('demander-code', { email: 'abc' })).r.status, 400);
 });
 
 test('validation des fiches, y compris refus d\'une fiche sans mobile', async () => {
   assert.equal((await portail('valider', { id: 'c-sans' })).r.status, 400);
   assert.match((await portail('valider', { id: 'c-fixe' })).d.error, /ligne fixe/);
-  for (const id of ['c-diai', 'c-vial-1', 'c-vial-2']) assert.equal((await portail('valider', { id })).r.status, 200);
+  assert.match((await portail('valider', { id: 'c-sansmail' })).d.error, /adresse email/);
+  for (const id of ['c-diai', 'c-vial-1', 'c-vial-2', 'c-duo-1', 'c-duo-2']) assert.equal((await portail('valider', { id })).r.status, 200);
   const t = await portail('tableau');
-  assert.equal(t.d.fiches.filter(f => f.etat === 'ouverte').length, 3);
+  assert.equal(t.d.fiches.filter(f => f.etat === 'ouverte').length, 5);
   const annuaire = await coffre.lireJson('essai-annuaire/contacts.json');
   assert.deepEqual(annuaire[0].categories, ['Vente', 'Coord-verifiees'], 'les autres catégories sont conservées');
   assert.equal(annuaire[0].mobilePhone, '+33612345678', 'la validation ne touche pas au numéro');
 });
 
-test('code SMS : cinq essais au plus, usage unique', async () => {
-  const a = await espace('demander-code', { telephone: '06 12 34 56 78' });
-  const faux = a.d.codeEssai === '000000' ? '111111' : '000000';
-  for (let i = 0; i < 5; i++) assert.equal((await espace('verifier-code', { ticket: a.d.ticket, code: faux })).r.status, 400);
-  assert.equal((await espace('verifier-code', { ticket: a.d.ticket, code: a.d.codeEssai })).r.status, 400, 'le bon code arrive trop tard');
-
-  const b = await espace('demander-code', { telephone: '0612345678' });
-  assert.equal((await espace('verifier-code', { ticket: b.d.ticket, code: b.d.codeEssai })).r.status, 200);
-  assert.equal((await espace('verifier-code', { ticket: b.d.ticket, code: b.d.codeEssai })).r.status, 400, 'un code ne sert qu\'une fois');
+test('code email : cinq essais au plus, et le code SMS ne s\'obtient pas sans lui', async () => {
+  const a = await espace('demander-code', { email: 'Samuel@Example.org ' });
+  assert.equal((await espace('verifier-code', { ticket: a.d.ticket, code: a.d.codeEssai })).r.status, 400, 'pas de saut d\'étape');
+  for (let i = 0; i < 5; i++) assert.equal((await espace('verifier-email', { ticket: a.d.ticket, code: autreCode(a.d.codeEssai) })).r.status, 400);
+  assert.equal((await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai })).r.status, 400, 'le bon code arrive trop tard');
 });
 
-test('pas plus de trois codes par quart d\'heure pour un même numéro', async () => {
-  for (let i = 0; i < 3; i++) assert.equal((await espace('demander-code', { telephone: '0612345678' })).r.status, 200);
-  assert.equal((await espace('demander-code', { telephone: '0612345678' })).r.status, 429);
+test('code SMS : cinq essais au plus, usage unique, mobile masqué', async () => {
+  const a = await espace('demander-code', { email: 'samuel@example.org' });
+  const b = await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai });
+  assert.deepEqual(b.d.mobiles, ['•• •• •• •• 78']);
+  assert.equal((await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai })).r.status, 400, 'le code email ne sert qu\'une fois');
+  const bon = b.d.codesEssai[0];
+  for (let i = 0; i < 5; i++) assert.equal((await espace('verifier-code', { ticket: a.d.ticket, code: autreCode(bon) })).r.status, 400);
+  assert.equal((await espace('verifier-code', { ticket: a.d.ticket, code: bon })).r.status, 400, 'le bon code arrive trop tard');
+
+  oublierLimites();
+  const c = await espace('demander-code', { email: 'samuel@example.org' });
+  const d = await espace('verifier-email', { ticket: c.d.ticket, code: c.d.codeEssai });
+  assert.equal((await espace('verifier-code', { ticket: c.d.ticket, code: d.d.codesEssai[0] })).r.status, 200);
+  assert.equal((await espace('verifier-code', { ticket: c.d.ticket, code: d.d.codesEssai[0] })).r.status, 400, 'un code ne sert qu\'une fois');
+});
+
+test('pas plus de trois codes par quart d\'heure pour une même adresse ni pour un même mobile', async () => {
+  for (let i = 0; i < 3; i++) assert.equal((await espace('demander-code', { email: 'samuel@example.org' })).r.status, 200);
+  assert.equal((await espace('demander-code', { email: 'SAMUEL@example.org' })).r.status, 429);
+
+  // Même mobile atteint par une autre voie : la limite par numéro tient aussi.
+  fs.rmSync(path.join(DIR, 'limites/code-email'), { recursive: true, force: true });
+  let dernier;
+  for (let i = 0; i < 3; i++) {
+    const a = await espace('demander-code', { email: 'vial@example.org' });
+    dernier = await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai });
+    if (i < 2) { assert.equal(dernier.r.status, 200); fs.rmSync(path.join(DIR, 'limites/code-email'), { recursive: true, force: true }); }
+  }
+  assert.equal(dernier.r.status, 200);
+  fs.rmSync(path.join(DIR, 'limites/code-email'), { recursive: true, force: true });
+  const a = await espace('demander-code', { email: 'vial@example.org' });
+  assert.equal((await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai })).r.status, 429);
+});
+
+test('une adresse partagée, deux mobiles : chacun son code, chacun sa fiche', async () => {
+  const a = await espace('demander-code', { email: 'duo@example.org' });
+  const b = await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai });
+  assert.deepEqual(b.d.mobiles, ['•• •• •• •• 11', '•• •• •• •• 22']);
+  assert.equal(b.d.codesEssai.length, 2);
+  const c = await espace('verifier-code', { ticket: a.d.ticket, code: b.d.codesEssai[1] });
+  const e = await espace('etat', { session: c.d.session });
+  assert.deepEqual(e.d.personnes.map(p => p.prenom), ['Bruno']);
+  assert.equal((await espace('verifier-code', { ticket: a.d.ticket, code: b.d.codesEssai[0] })).r.status, 400, 'le ticket est consommé');
 });
 
 test('RIB de l\'étude : indisponible, puis déposé par le notaire et remis au client', async () => {
-  const session = await connecterClient('0612345678');
+  const session = await connecterClient('samuel@example.org');
   assert.equal((await espace('etat', { session })).d.ribEtudeDisponible, false);
   assert.equal((await espace('rib-etude', { session })).r.status, 404);
 
@@ -222,7 +268,7 @@ test('RIB de l\'étude : indisponible, puis déposé par le notaire et remis au 
 let depotRib;
 
 test('dépôt du RIB du client : contrôles, puis réception par le notaire', async () => {
-  const session = await connecterClient('0612345678');
+  const session = await connecterClient('samuel@example.org');
   assert.equal((await espace('depot-ouvrir', { session, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI', iban: 'FR7630006000011234567890188' })).r.status, 400);
   assert.equal((await espace('depot-ouvrir', { session, nature: 'rib', personne: 3, titulaire: 'X' })).r.status, 400);
 
@@ -254,8 +300,8 @@ test('dépôt du RIB du client : contrôles, puis réception par le notaire', as
 });
 
 test('un client ne peut pas agir sur le dépôt d\'un autre', async () => {
-  const autre = await connecterClient('0698765432');
-  const mien = await connecterClient('0612345678');
+  const autre = await connecterClient('vial@example.org');
+  const mien = await connecterClient('samuel@example.org');
   const o = await espace('depot-ouvrir', { session: mien, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' });
   assert.equal((await espace('depot-piece', { session: autre, depot: o.d.depot, fichier: b64(PNG, 'x.png') })).r.status, 400);
 });
@@ -267,7 +313,7 @@ test('origine des fonds : demande du notaire, déclaration et justificatifs du c
   assert.equal((await portail('demande-creer', { contactId: 'c-vial-2', motif: 'achat_immobilier', montant: 250000, justificatifs: true })).r.status, 200);
 
   // Le couple partage un mobile : deux personnes dans la session, la demande vise Marc.
-  const session = await connecterClient('06 98 76 54 32');
+  const session = await connecterClient('vial@example.org');
   const e = await espace('etat', { session });
   assert.equal(e.d.personnes.length, 2);
   assert.equal(e.d.demandes.length, 1);
@@ -297,19 +343,27 @@ test('origine des fonds : demande du notaire, déclaration et justificatifs du c
 });
 
 test('la session tombe dès que la validation est retirée ou que le numéro change', async () => {
-  const session = await connecterClient('0612345678');
+  const session = await connecterClient('samuel@example.org');
   assert.equal((await portail('retirer', { id: 'c-diai' })).r.status, 200);
   assert.equal((await espace('etat', { session })).r.status, 401);
-  assert.deepEqual(Object.keys((await espace('demander-code', { telephone: '0612345678' })).d).sort(), ['ok', 'ticket']);
+  assert.deepEqual(Object.keys((await espace('demander-code', { email: 'samuel@example.org' })).d).sort(), ['ok', 'ticket']);
 
   // Numéro modifié dans le carnet après validation : la fiche se referme d'elle-même.
-  const s2 = await connecterClient('0698765432');
+  const s2 = await connecterClient('vial@example.org');
   const annuaire = await coffre.lireJson('essai-annuaire/contacts.json');
   annuaire.find(c => c.id === 'c-vial-1').mobilePhone = '+33700000000';
   annuaire.find(c => c.id === 'c-vial-2').mobilePhone = '+33700000000';
   await coffre.ecrireJson('essai-annuaire/contacts.json', annuaire);
   assert.equal((await espace('etat', { session: s2 })).r.status, 401);
-  assert.equal((await espace('demander-code', { telephone: '+33700000000' })).d.codeEssai, undefined);
+  assert.equal((await espace('demander-code', { email: 'vial@example.org' })).d.codeEssai, undefined);
+
+  // Email modifié dans le carnet après validation : même effet.
+  const s3 = await connecterClient('duo@example.org');
+  const carnet = await coffre.lireJson('essai-annuaire/contacts.json');
+  carnet.find(c => c.id === 'c-duo-1').emailAddresses = [{ address: 'pirate@example.org' }];
+  await coffre.ecrireJson('essai-annuaire/contacts.json', carnet);
+  assert.equal((await espace('etat', { session: s3 })).r.status, 401);
+  assert.equal((await espace('demander-code', { email: 'pirate@example.org' })).d.codeEssai, undefined);
   const t = await portail('tableau');
   assert.equal(t.d.fiches.find(f => f.id === 'c-vial-1').etat, 'a-revalider');
 });
@@ -317,7 +371,7 @@ test('la session tombe dès que la validation est retirée ou que le numéro cha
 test('journal : les gestes sont consignés, sans numéro complet', async () => {
   const j = await portail('journal');
   const actions = new Set(j.d.lignes.map(l => l.action));
-  for (const a of ['fiche-validee', 'rib-etude-consulte', 'rib-client-depose', 'origine-fonds-deposee', 'piece-consultee', 'validation-retiree', 'portail-refus']) {
+  for (const a of ['code-email-envoye', 'code-envoye', 'fiche-validee', 'rib-etude-consulte', 'rib-client-depose', 'origine-fonds-deposee', 'piece-consultee', 'validation-retiree', 'portail-refus']) {
     assert.ok(actions.has(a), `journal : ${a}`);
   }
   assert.ok(!JSON.stringify(j.d.lignes).includes('612345678'));

@@ -133,7 +133,7 @@
         <label class="case" style="margin:0;"><input type="checkbox" id="seulAValider"><span>À valider seulement</span></label>
       </div>
       <table><thead><tr><th>Client</th><th>Mobile</th><th>Email</th><th>Espace client</th><th></th></tr></thead><tbody id="tClients"></tbody></table>
-      <p class="gris" style="margin-top:14px;">Les fiches proviennent du dossier « Clients » de votre carnet d'adresses Outlook. Valider une fiche, c'est attester que son numéro de mobile est bien celui du client : ce numéro lui ouvre l'espace client.</p>
+      <p class="gris" style="margin-top:14px;">Les fiches proviennent du dossier « Clients » de votre carnet d'adresses Outlook. Valider une fiche, c'est attester que son adresse email et son numéro de mobile sont bien ceux du client : il s'identifie par un code reçu à cette adresse, puis par un code reçu sur ce mobile.</p>
     </div>
 
     <div class="card hidden" id="o-pieces">
@@ -267,7 +267,7 @@ function afficherClients() {
       if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'pas un mobile exploitable : à corriger dans Outlook' }));
       const etat = el('td', {}, el('span', { className: 'etat ' + f.etat, textContent: ETATS[f.etat] }));
       if (f.valideeLe) etat.append(el('div', { className: 'gris', textContent: 'validée le ' + date(f.valideeLe) }));
-      if (f.etat === 'a-revalider') etat.append(el('div', { className: 'gris', textContent: 'numéro modifié ou validation hors portail' }));
+      if (f.etat === 'a-revalider') etat.append(el('div', { className: 'gris', textContent: 'mobile ou email modifié, ou validation hors portail' }));
       return el('tr', {}, el('td', {}, el('strong', { textContent: f.nom }), ' ' + f.prenom), tel, el('td', {}, f.email || '—'), etat, actions);
     });
   $('tClients').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune fiche.' }))]));
@@ -292,7 +292,7 @@ $('fond').addEventListener('click', (e) => { if (e.target === $('fond')) fermer(
 
 function fenetreValider(f) {
   fenetre(`Valider la fiche de ${f.prenom} ${f.nom}`,
-    `Vous attestez avoir vérifié que le ${fmtTel(f.telephone) || '(aucun numéro)'} est bien le mobile de ce client. Ce numéro lui permettra de consulter le RIB de l'étude et de déposer ses pièces.`,
+    `Vous attestez avoir vérifié que ${f.email || '(aucune adresse)'} et le ${fmtTel(f.telephone) || '(aucun numéro)'} sont bien l'adresse email et le mobile de ce client. Ils lui permettront de consulter le RIB de l'étude et de déposer ses pièces.`,
     [], 'Valider', () => api('valider', { id: f.id }));
 }
 function fenetreRetirer(f) {
@@ -377,7 +377,7 @@ $('formRib').addEventListener('submit', async (e) => {
 
 /* ── Journal ── */
 const ACTIONS = {
-  'code-envoye': 'Code SMS envoyé', 'code-non-envoye-echec-sms': 'Code SMS non parti (échec d\'envoi)',
+  'code-envoye': 'Code SMS envoyé', 'code-email-envoye': 'Code email envoyé', 'code-refuse-email-non-valide': 'Adresse non reconnue : aucun code envoyé', 'code-non-envoye-echec-sms': 'Code SMS non parti (échec d\'envoi)',
   'code-refuse-numero-non-valide': 'Numéro non reconnu : aucun code envoyé', connexion: 'Connexion à l\'espace client',
   'rib-etude-consulte': 'RIB de l\'étude consulté', 'rib-client-depose': 'RIB du client déposé',
   'origine-fonds-deposee': 'Origine des fonds déposée', 'portail-connexion': 'Connexion au portail',

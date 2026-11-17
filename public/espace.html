@@ -77,15 +77,15 @@
     </div>
   </div>
 
-  <!-- 1. TÉLÉPHONE -->
+  <!-- 1. ADRESSE EMAIL -->
   <div class="screen" id="e-tel">
     <div class="card">
       <h2>Identification</h2>
-      <p class="intro">Saisissez le numéro de mobile que vous avez communiqué à l'étude. Vous recevrez un code par SMS.</p>
+      <p class="intro">Saisissez l'adresse email que vous avez communiquée à l'étude. Vous recevrez un premier code par email, puis un second par SMS.</p>
       <form id="formTel">
         <div class="fg">
-          <label for="tel">Numéro de mobile</label>
-          <input type="tel" id="tel" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required>
+          <label for="email">Adresse email</label>
+          <input type="email" id="email" autocomplete="email" inputmode="email" placeholder="prenom.nom@exemple.fr" required>
         </div>
         <button type="submit" class="btn" id="btnTel">Recevoir mon code</button>
         <div class="err" id="errTel"></div>
@@ -94,14 +94,31 @@
     <div class="info">Cet espace est réservé aux clients dont la fiche a été validée par l'étude. Si vous n'avez pas encore rempli votre questionnaire d'état civil, commencez par là.</div>
   </div>
 
-  <!-- 2. CODE -->
+  <!-- 2. CODE REÇU PAR EMAIL -->
+  <div class="screen hidden" id="e-codeemail">
+    <div class="card">
+      <h2>Étape 1 sur 2 — code reçu par email</h2>
+      <p class="intro">Si cette adresse est celle que l'étude a enregistrée pour vous, un code à six chiffres vient de vous y être envoyé. Il est valable 10 minutes. Pensez à regarder vos courriers indésirables.</p>
+      <form id="formCodeEmail">
+        <div class="fg">
+          <label for="codeEmail">Code reçu par email</label>
+          <input type="text" id="codeEmail" class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+        </div>
+        <button type="submit" class="btn" id="btnCodeEmail">Continuer</button>
+        <div class="err" id="errCodeEmail"></div>
+      </form>
+      <button type="button" class="lien" id="btnAutreEmail">Je n'ai rien reçu — recommencer</button>
+    </div>
+  </div>
+
+  <!-- 3. CODE REÇU PAR SMS -->
   <div class="screen hidden" id="e-code">
     <div class="card">
-      <h2>Code de vérification</h2>
-      <p class="intro">Si ce numéro est celui que l'étude a enregistré pour vous, un code à six chiffres vient de vous être envoyé par SMS. Il est valable 10 minutes.</p>
+      <h2>Étape 2 sur 2 — code reçu par SMS</h2>
+      <p class="intro" id="introSms"></p>
       <form id="formCode">
         <div class="fg">
-          <label for="code">Code reçu</label>
+          <label for="code">Code reçu par SMS</label>
           <input type="text" id="code" class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
         </div>
         <button type="submit" class="btn" id="btnCode">Valider</button>
@@ -191,7 +208,7 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
-const ECRANS = ['e-tel', 'e-code', 'e-menu', 'e-ribetude', 'e-ribclient', 'e-origine', 'e-fait'];
+const ECRANS = ['e-tel', 'e-codeemail', 'e-code', 'e-menu', 'e-ribetude', 'e-ribclient', 'e-origine', 'e-fait'];
 const montrer = (id) => { ECRANS.forEach(e => $(e).classList.toggle('hidden', e !== id)); window.scrollTo(0, 0); };
 
 // La session ne vit qu'en mémoire : fermer l'onglet la détruit.
@@ -228,7 +245,7 @@ function quitter() {
   session = null; ticket = null; etat = null;
   if (urlRib) { URL.revokeObjectURL(urlRib); urlRib = null; }
   $('zoneRib').replaceChildren();
-  ['formTel', 'formCode', 'formRib', 'formOrigine'].forEach(f => $(f).reset());
+  ['formTel', 'formCodeEmail', 'formCode', 'formRib', 'formOrigine'].forEach(f => $(f).reset());
   montrer('e-tel');
 }
 
@@ -238,15 +255,30 @@ $('formTel').addEventListener('submit', async (e) => {
   $('errTel').textContent = '';
   occupe($('btnTel'), 'Envoi…');
   try {
-    const d = await apiJson('demander-code', { telephone: $('tel').value });
+    const d = await apiJson('demander-code', { email: $('email').value });
     ticket = d.ticket;
-    $('code').value = d.codeEssai || '';   // présent uniquement sur une version d'essai
-    $('errCode').textContent = '';
-    montrer('e-code'); $('code').focus();
+    $('codeEmail').value = d.codeEssai || '';   // présent uniquement sur une version d'essai
+    $('errCodeEmail').textContent = '';
+    montrer('e-codeemail'); $('codeEmail').focus();
   } catch (err) { $('errTel').textContent = err.message; }
   finally { libre($('btnTel')); }
 });
 $('btnAutreNum').addEventListener('click', quitter);
+$('btnAutreEmail').addEventListener('click', quitter);
+
+$('formCodeEmail').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('errCodeEmail').textContent = '';
+  occupe($('btnCodeEmail'), 'Vérification…');
+  try {
+    const d = await apiJson('verifier-email', { ticket, code: $('codeEmail').value });
+    $('introSms').textContent = `Un code à six chiffres vient d'être envoyé par SMS au ${d.mobiles.join(' et au ')}. Il est valable 10 minutes.`;
+    $('code').value = (d.codesEssai || [])[0] || '';   // présent uniquement sur une version d'essai
+    $('errCode').textContent = '';
+    montrer('e-code'); $('code').focus();
+  } catch (err) { $('errCodeEmail').textContent = err.message; }
+  finally { libre($('btnCodeEmail')); }
+});
 
 $('formCode').addEventListener('submit', async (e) => {
   e.preventDefault();
