@@ -206,6 +206,10 @@ async function depotVu(req, res) {
   res.json({ ok: true });
 }
 
+async function liaisonSms(req, res) {
+  res.json({ ok: true, liaison: await require('./_sms').diagnostic() });
+}
+
 async function journal(req, res) {
   res.json({ ok: true, lignes: (await coffre.lireJournal(3)).slice(0, 400) });
 }
@@ -243,7 +247,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal };
+const PROTEGEES = { tableau, valider, retirer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');

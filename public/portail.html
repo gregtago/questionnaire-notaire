@@ -160,6 +160,7 @@
     </div>
 
     <div class="card hidden" id="o-journal">
+      <div class="barre"><button type="button" class="btn-ghost" id="btnLiaison">Tester la liaison SMS</button><span class="gris" id="txtLiaison"></span></div>
       <table><thead><tr><th>Date</th><th>Qui</th><th>Événement</th><th>Détail</th></tr></thead><tbody id="tJournal"></tbody></table>
     </div>
   </div>
@@ -395,6 +396,18 @@ async function chargerJournal() {
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }
+
+$('btnLiaison').addEventListener('click', async () => {
+  $('txtLiaison').textContent = 'Test en cours…';
+  try {
+    const { liaison: l } = await api('liaison-sms');
+    $('txtLiaison').textContent = l.ok
+      ? `Liaison correcte : compte ${l.configure}` + (l.credits != null ? `, ${l.credits} crédit(s) restant(s)` : '') + (l.statut ? `, statut ${l.statut}` : '') + '.'
+      : l.etape === 'configuration' ? `Variables absentes dans Vercel : ${l.manquantes.join(', ')}.`
+      : l.etape === 'cles' ? `OVHcloud refuse les clés d'API : ${l.motif}.`
+      : `Le compte configuré (${l.configure}) ne figure pas parmi vos comptes SMS : ${l.comptes.join(', ') || 'aucun compte visible'}.`;
+  } catch (err) { $('txtLiaison').textContent = err.message; }
+});
 
 demarrer();
 </script>
