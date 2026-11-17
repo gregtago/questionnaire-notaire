@@ -276,6 +276,22 @@ async function upsertContact(p) {
   const existingId = await findExisting(folderId, p.email, nom);
 
   if (existingId) {
+    // Une fiche validée par le notaire (« Coord-verifiees ») sert d'ancre à
+    // l'espace client. Elle ne garde ce statut que si le questionnaire
+    // n'apporte AUCUN changement de téléphone ni d'email ; sinon elle retombe
+    // en « Coord-declarees » jusqu'à nouvelle validation.
+    try {
+      const avant = await graph('GET', `${base}/${existingId}?$select=mobilePhone,emailAddresses,categories`);
+      const memeTel   = !tel || toE164(avant.mobilePhone) === tel;
+      const memeEmail = !p.email || (avant.emailAddresses || [])
+        .some(a => (a.address || '').toLowerCase() === String(p.email).trim().toLowerCase());
+      if ((avant.categories || []).includes('Coord-verifiees') && memeTel && memeEmail) {
+        contact.categories = categories.map(c => (c === 'Coord-declarees' ? 'Coord-verifiees' : c));
+      }
+    } catch (e) {
+      // En cas de doute, la fiche retombe en « déclarée » : c'est le sens sûr.
+    }
+
     // Mise à jour : on ne réécrit pas les notes, qui peuvent avoir été
     // annotées à la main par l'étude.
     delete contact.personalNotes;
@@ -302,4 +318,8 @@ async function upsertContactSafe(p) {
   }
 }
 
-module.exports = { upsertContact, upsertContactSafe };
+module.exports = {
+  upsertContact, upsertContactSafe,
+  // Réutilisés par _annuaire.js (lecture et validation des fiches).
+  graph, getFolderId, toE164, MAILBOX
+};

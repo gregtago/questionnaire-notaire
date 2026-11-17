@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Espace client — Grégoire TAGOT | notaire</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #f7f7f5; color: #1a1a1a; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+    .header { background: #111; color: #fff; }
+    .header .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .header .cabinet { font-size: 13px; letter-spacing: .04em; color: rgba(255,255,255,.55); }
+    .header .site-link { font-size: 11px; color: rgba(255,255,255,.35); text-decoration: none; letter-spacing: .04em; }
+    .header .site-link:hover { color: rgba(255,255,255,.7); }
+    .header .title-bar { padding: 14px 28px 18px; background: #1a1a1a; }
+    .header h1 { font-size: 22px; font-weight: 300; }
+    .header .subtitle { font-size: 13px; color: #888; margin-top: 6px; }
+    .screen { max-width: 560px; margin: 28px auto; padding: 0 20px 60px; }
+    .screen.wide { max-width: 760px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 36px; margin-bottom: 14px; }
+    .card h2 { font-size: 20px; font-weight: 400; margin-bottom: 8px; }
+    .card p.intro { color: #777; font-size: 14px; margin-bottom: 24px; }
+    .fg { margin-bottom: 18px; }
+    .fg label, .lbl { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+    .fg input, .fg select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; outline: none; background: #fff; font-family: inherit; color: #1a1a1a; }
+    .fg input:focus, .fg select:focus { border-color: #111; }
+    .fg .aide { font-size: 12px; color: #999; margin-top: 5px; }
+    .btn { width: 100%; padding: 12px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
+    .btn:hover { background: #333; }
+    .btn:disabled { background: #999; cursor: not-allowed; }
+    .btn-ghost { background: none; border: 1px solid #ddd; color: #555; font-size: 12px; padding: 9px 16px; border-radius: 4px; cursor: pointer; letter-spacing: .06em; text-transform: uppercase; font-family: inherit; text-decoration: none; display: inline-block; }
+    .btn-ghost:hover { border-color: #111; color: #111; }
+    .lien { background: none; border: none; color: #777; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 14px; font-family: inherit; }
+    .err { color: #c0392b; font-size: 13px; margin-top: 10px; min-height: 18px; }
+    .otp-input { text-align: center; font-size: 28px !important; letter-spacing: .3em; font-weight: 600; }
+    .hidden { display: none !important; }
+    .alerte { background: #fff8e6; border: 1px solid #f0d58a; border-radius: 4px; padding: 14px 16px; font-size: 13px; color: #6b5200; margin-bottom: 20px; }
+    .alerte strong { color: #4d3b00; }
+    .info { background: #f9f9f7; border: 1px solid #eee; border-radius: 4px; padding: 14px 16px; font-size: 13px; color: #555; margin-bottom: 20px; }
+    .choix { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; text-align: left; background: #fff; border: 1px solid #e5e5e5; border-radius: 6px; padding: 20px 24px; margin-bottom: 10px; cursor: pointer; font-family: inherit; color: inherit; }
+    .choix:hover { border-color: #111; }
+    .choix:disabled { cursor: default; opacity: .55; }
+    .choix:disabled:hover { border-color: #e5e5e5; }
+    .choix .t { font-size: 16px; font-weight: 500; }
+    .choix .d { font-size: 13px; color: #888; margin-top: 3px; }
+    .choix .fleche { font-size: 18px; color: #bbb; }
+    .pastille { display: inline-block; background: #111; color: #fff; font-size: 11px; border-radius: 10px; padding: 1px 8px; margin-left: 8px; vertical-align: middle; }
+    .apercu { width: 100%; height: 520px; border: 1px solid #e5e5e5; border-radius: 4px; background: #fafafa; }
+    img.apercu { height: auto; }
+    .ligne-source { display: grid; grid-template-columns: 1.3fr .8fr; gap: 10px; margin-bottom: 8px; }
+    .ligne-source .prec { grid-column: 1 / -1; }
+    .ligne-source input, .ligne-source select { width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; background: #fff; }
+    .bloc-source { border: 1px solid #eee; border-radius: 4px; padding: 12px; margin-bottom: 10px; background: #fcfcfb; }
+    .total { display: flex; justify-content: space-between; font-size: 14px; padding: 10px 0 18px; }
+    .total.ok b { color: #15803d; } .total.ko b { color: #c0392b; }
+    .case { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #555; margin: 18px 0; }
+    .case input { margin-top: 3px; }
+    .confirm { text-align: center; padding: 20px 10px 6px; }
+    .confirm .icon { font-size: 40px; margin-bottom: 12px; }
+    .confirm p { color: #777; font-size: 14px; margin: 8px 0 22px; }
+    .retour { margin-bottom: 14px; }
+    .pied { font-size: 11px; color: #aaa; text-align: center; margin-top: 18px; }
+    @media (max-width: 520px) { .card { padding: 24px 20px; } .apercu { height: 380px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="top-bar">
+      <div class="cabinet">Grégoire TAGOT&nbsp;|&nbsp;notaire</div>
+      <a href="https://tagot.notaires.fr" class="site-link" target="_blank" rel="noopener">tagot.notaires.fr ↗</a>
+    </div>
+    <div class="title-bar">
+      <h1>Espace client</h1>
+      <div class="subtitle" id="sousTitre">RIB de l'étude, dépôt de votre RIB, origine des fonds</div>
+    </div>
+  </div>
+
+  <!-- 1. TÉLÉPHONE -->
+  <div class="screen" id="e-tel">
+    <div class="card">
+      <h2>Identification</h2>
+      <p class="intro">Saisissez le numéro de mobile que vous avez communiqué à l'étude. Vous recevrez un code par SMS.</p>
+      <form id="formTel">
+        <div class="fg">
+          <label for="tel">Numéro de mobile</label>
+          <input type="tel" id="tel" autocomplete="tel" inputmode="tel" placeholder="06 12 34 56 78" required>
+        </div>
+        <button type="submit" class="btn" id="btnTel">Recevoir mon code</button>
+        <div class="err" id="errTel"></div>
+      </form>
+    </div>
+    <div class="info">Cet espace est réservé aux clients dont la fiche a été validée par l'étude. Si vous n'avez pas encore rempli votre questionnaire d'état civil, commencez par là.</div>
+  </div>
+
+  <!-- 2. CODE -->
+  <div class="screen hidden" id="e-code">
+    <div class="card">
+      <h2>Code de vérification</h2>
+      <p class="intro">Si ce numéro est celui que l'étude a enregistré pour vous, un code à six chiffres vient de vous être envoyé par SMS. Il est valable 10 minutes.</p>
+      <form id="formCode">
+        <div class="fg">
+          <label for="code">Code reçu</label>
+          <input type="text" id="code" class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+        </div>
+        <button type="submit" class="btn" id="btnCode">Valider</button>
+        <div class="err" id="errCode"></div>
+      </form>
+      <button type="button" class="lien" id="btnAutreNum">Je n'ai rien reçu — recommencer</button>
+    </div>
+  </div>
+
+  <!-- 3. MENU -->
+  <div class="screen hidden" id="e-menu">
+    <div class="info" id="bonjour"></div>
+    <button type="button" class="choix" id="mRibEtude">
+      <span><span class="t">Consulter le RIB de l'étude</span><br><span class="d">Pour effectuer un virement à l'office.</span></span><span class="fleche">→</span>
+    </button>
+    <button type="button" class="choix" id="mRibClient">
+      <span><span class="t">Déposer mon RIB</span><br><span class="d">Pour recevoir des fonds de l'office.</span></span><span class="fleche">→</span>
+    </button>
+    <button type="button" class="choix" id="mOrigine">
+      <span><span class="t">Justifier l'origine des fonds <span class="pastille hidden" id="nbDemandes"></span></span><br><span class="d" id="dOrigine">Aucune demande en cours.</span></span><span class="fleche">→</span>
+    </button>
+    <div class="pied">Votre session se ferme automatiquement au bout de 20 minutes. <button type="button" class="lien" id="btnQuitter" style="margin:0;font-size:11px;">Quitter</button></div>
+  </div>
+
+  <!-- 4. RIB DE L'ÉTUDE -->
+  <div class="screen wide hidden" id="e-ribetude">
+    <div class="retour"><button type="button" class="btn-ghost" data-retour>← Retour</button></div>
+    <div class="card">
+      <h2>RIB de l'étude</h2>
+      <div class="alerte"><strong>Attention aux fraudes au virement.</strong> L'étude ne vous communiquera jamais un nouveau RIB par email ni par SMS. Si l'on vous en adresse un autre que celui-ci, ne faites aucun virement et joignez l'étude à un numéro que vous connaissez déjà.</div>
+      <div id="zoneRib"></div>
+      <div class="err" id="errRibEtude"></div>
+      <p style="margin-top:16px;"><a class="btn-ghost hidden" id="telechargerRib" download="RIB-etude-TAGOT.pdf">Télécharger le RIB</a></p>
+    </div>
+  </div>
+
+  <!-- 5. DÉPÔT DU RIB DU CLIENT -->
+  <div class="screen hidden" id="e-ribclient">
+    <div class="retour"><button type="button" class="btn-ghost" data-retour>← Retour</button></div>
+    <div class="card">
+      <h2>Déposer mon RIB</h2>
+      <p class="intro">Le RIB doit être à votre nom. Une fois déposé, il n'est plus consultable depuis cet espace : seule l'étude y accède.</p>
+      <form id="formRib">
+        <div class="fg hidden" id="fgPersRib"><label for="persRib">Vous êtes</label><select id="persRib"></select></div>
+        <div class="fg"><label for="titulaire">Titulaire du compte</label><input type="text" id="titulaire" maxlength="120" required></div>
+        <div class="fg"><label for="iban">IBAN (facultatif)</label><input type="text" id="iban" autocomplete="off" placeholder="FR76 …" maxlength="42">
+          <div class="aide">S'il est saisi, il est contrôlé pour éviter une erreur de frappe.</div></div>
+        <div class="fg"><label for="fichierRib">RIB (PDF, JPEG ou PNG — 3 Mo maximum)</label><input type="file" id="fichierRib" accept="application/pdf,image/jpeg,image/png" required></div>
+        <button type="submit" class="btn" id="btnRib">Déposer</button>
+        <div class="err" id="errRib"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. ORIGINE DES FONDS -->
+  <div class="screen wide hidden" id="e-origine">
+    <div class="retour"><button type="button" class="btn-ghost" data-retour>← Retour</button></div>
+    <div class="card">
+      <h2>Origine des fonds</h2>
+      <p class="intro">La loi impose au notaire de s'assurer de l'origine des fonds employés (article L. 561-5-1 du code monétaire et financier). Indiquez d'où proviennent les sommes et joignez les justificatifs.</p>
+      <form id="formOrigine">
+        <div class="fg hidden" id="fgDemande"><label for="demande">Demande concernée</label><select id="demande"></select></div>
+        <div class="info" id="rappelDemande"></div>
+        <span class="lbl">Provenance des fonds</span>
+        <div id="sources"></div>
+        <button type="button" class="btn-ghost" id="btnAjouterSource">+ Ajouter une origine</button>
+        <div class="total" id="total"></div>
+        <div class="fg"><label for="fichiersOrigine" id="lblFichiers">Justificatifs (PDF, JPEG ou PNG — 3 Mo par fichier, 10 fichiers au plus)</label><input type="file" id="fichiersOrigine" accept="application/pdf,image/jpeg,image/png" multiple></div>
+        <label class="case"><input type="checkbox" id="atteste"><span>J'atteste sur l'honneur que les informations ci-dessus sont exactes et que les fonds ne proviennent pas d'une activité illicite.</span></label>
+        <button type="submit" class="btn" id="btnOrigine">Transmettre à l'étude</button>
+        <div class="err" id="errOrigine"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. CONFIRMATION -->
+  <div class="screen hidden" id="e-fait">
+    <div class="card">
+      <div class="confirm">
+        <div class="icon">✓</div>
+        <h2 id="faitTitre">Transmis à l'étude</h2>
+        <p id="faitTexte"></p>
+        <button type="button" class="btn-ghost" data-retour>Retour à l'accueil</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const ECRANS = ['e-tel', 'e-code', 'e-menu', 'e-ribetude', 'e-ribclient', 'e-origine', 'e-fait'];
+const montrer = (id) => { ECRANS.forEach(e => $(e).classList.toggle('hidden', e !== id)); window.scrollTo(0, 0); };
+
+// La session ne vit qu'en mémoire : fermer l'onglet la détruit.
+let session = null, ticket = null, etat = null, urlRib = null;
+
+async function api(action, donnees) {
+  const r = await fetch('/api/espace', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, session, ...donnees })
+  });
+  if (r.status === 401) { quitter(); throw new Error('Votre session a expiré. Merci de vous identifier à nouveau.'); }
+  return r;
+}
+async function apiJson(action, donnees) {
+  const r = await api(action, donnees);
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error || 'Une erreur est survenue.');
+  return d;
+}
+function occupe(btn, texte) { btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = texte; }
+function libre(btn) { btn.disabled = false; btn.textContent = btn.dataset.t || btn.textContent; }
+function lireFichier(f) {
+  return new Promise((ok, ko) => {
+    if (f.size > 3 * 1024 * 1024) return ko(new Error(`« ${f.name} » dépasse 3 Mo.`));
+    const l = new FileReader();
+    l.onload = () => ok({ nom: f.name, contenu: String(l.result).split(',')[1] || '' });
+    l.onerror = () => ko(new Error(`Lecture de « ${f.name} » impossible.`));
+    l.readAsDataURL(f);
+  });
+}
+const euros = (n) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+function quitter() {
+  session = null; ticket = null; etat = null;
+  if (urlRib) { URL.revokeObjectURL(urlRib); urlRib = null; }
+  $('zoneRib').replaceChildren();
+  ['formTel', 'formCode', 'formRib', 'formOrigine'].forEach(f => $(f).reset());
+  montrer('e-tel');
+}
+
+/* ── Identification ── */
+$('formTel').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('errTel').textContent = '';
+  occupe($('btnTel'), 'Envoi…');
+  try {
+    const d = await apiJson('demander-code', { telephone: $('tel').value });
+    ticket = d.ticket;
+    $('code').value = d.codeEssai || '';   // présent uniquement sur une version d'essai
+    $('errCode').textContent = '';
+    montrer('e-code'); $('code').focus();
+  } catch (err) { $('errTel').textContent = err.message; }
+  finally { libre($('btnTel')); }
+});
+$('btnAutreNum').addEventListener('click', quitter);
+
+$('formCode').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('errCode').textContent = '';
+  occupe($('btnCode'), 'Vérification…');
+  try {
+    const d = await apiJson('verifier-code', { ticket, code: $('code').value });
+    session = d.session;
+    setTimeout(() => { if (session === d.session) quitter(); }, d.expireDans);
+    await ouvrirMenu();
+  } catch (err) { $('errCode').textContent = err.message; }
+  finally { libre($('btnCode')); }
+});
+
+/* ── Menu ── */
+async function ouvrirMenu() {
+  etat = await apiJson('etat');
+  const noms = etat.personnes.map(p => `${p.prenom} ${p.nom}`.trim()).join(' et ');
+  $('bonjour').textContent = `Bonjour ${noms}. Que souhaitez-vous faire ?`;
+  $('mRibEtude').disabled = !etat.ribEtudeDisponible;
+  const n = etat.demandes.length;
+  $('mOrigine').disabled = !n;
+  $('nbDemandes').textContent = n; $('nbDemandes').classList.toggle('hidden', !n);
+  $('dOrigine').textContent = n ? 'L\'étude vous demande de justifier la provenance de fonds.' : 'Aucune demande en cours.';
+  const remplir = (sel) => { sel.replaceChildren(...etat.personnes.map(p => new Option(`${p.prenom} ${p.nom}`.trim(), p.indice))); };
+  remplir($('persRib'));
+  $('fgPersRib').classList.toggle('hidden', etat.personnes.length < 2);
+  $('titulaire').value = etat.personnes.length === 1 ? `${etat.personnes[0].prenom} ${etat.personnes[0].nom}`.trim() : '';
+  montrer('e-menu');
+}
+document.querySelectorAll('[data-retour]').forEach(b => b.addEventListener('click', () => ouvrirMenu().catch(() => {})));
+$('btnQuitter').addEventListener('click', quitter);
+
+/* ── RIB de l'étude ── */
+$('mRibEtude').addEventListener('click', async () => {
+  $('errRibEtude').textContent = ''; $('zoneRib').replaceChildren(); $('telechargerRib').classList.add('hidden');
+  montrer('e-ribetude');
+  try {
+    const r = await api('rib-etude');
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'RIB indisponible.');
+    const blob = await r.blob();
+    if (urlRib) URL.revokeObjectURL(urlRib);
+    urlRib = URL.createObjectURL(blob);
+    const pdf = blob.type === 'application/pdf';
+    const el = document.createElement(pdf ? 'iframe' : 'img');
+    el.className = 'apercu'; el.src = urlRib; el.title = 'RIB de l\'étude'; if (!pdf) el.alt = 'RIB de l\'étude';
+    $('zoneRib').append(el);
+    const a = $('telechargerRib');
+    a.href = urlRib; a.download = 'RIB-etude-TAGOT' + (pdf ? '.pdf' : blob.type === 'image/png' ? '.png' : '.jpg');
+    a.classList.remove('hidden');
+  } catch (err) { $('errRibEtude').textContent = err.message; }
+});
+
+/* ── Dépôt du RIB ── */
+$('mRibClient').addEventListener('click', () => { $('errRib').textContent = ''; montrer('e-ribclient'); });
+$('formRib').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('errRib').textContent = '';
+  occupe($('btnRib'), 'Dépôt en cours…');
+  try {
+    const fichier = await lireFichier($('fichierRib').files[0]);
+    const { depot } = await apiJson('depot-ouvrir', {
+      nature: 'rib', personne: Number($('persRib').value || 0),
+      titulaire: $('titulaire').value, iban: $('iban').value.trim() || undefined
+    });
+    await apiJson('depot-piece', { depot, fichier });
+    await apiJson('depot-clore', { depot });
+    $('formRib').reset();
+    $('faitTitre').textContent = 'RIB transmis à l\'étude';
+    $('faitTexte').textContent = 'Votre RIB a bien été déposé. L\'étude en est informée.';
+    montrer('e-fait');
+  } catch (err) { $('errRib').textContent = err.message; }
+  finally { libre($('btnRib')); }
+});
+
+/* ── Origine des fonds ── */
+function ligneSource() {
+  const bloc = document.createElement('div'); bloc.className = 'bloc-source';
+  const ligne = document.createElement('div'); ligne.className = 'ligne-source';
+  const type = document.createElement('select'); type.className = 's-type'; type.setAttribute('aria-label', 'Origine');
+  type.append(new Option('— Origine —', ''), ...Object.entries(etat.sources).map(([k, v]) => new Option(v, k)));
+  const montant = document.createElement('input'); montant.className = 's-montant'; montant.type = 'number'; montant.min = '0'; montant.step = '0.01'; montant.placeholder = 'Montant (€)'; montant.setAttribute('aria-label', 'Montant en euros');
+  const prec = document.createElement('input'); prec.className = 's-prec prec'; prec.type = 'text'; prec.maxLength = 300; prec.placeholder = 'Précision (banque, bien vendu, donateur…)'; prec.setAttribute('aria-label', 'Précision');
+  ligne.append(type, montant, prec); bloc.append(ligne);
+  montant.addEventListener('input', majTotal);
+  $('sources').append(bloc);
+}
+function demandeChoisie() { return etat.demandes.find(d => d.id === $('demande').value) || etat.demandes[0]; }
+function sourcesSaisies() {
+  return [...document.querySelectorAll('.bloc-source')].map(b => ({
+    type: b.querySelector('.s-type').value, montant: Number(b.querySelector('.s-montant').value),
+    precision: b.querySelector('.s-prec').value
+  })).filter(s => s.type || s.montant);
+}
+function majTotal() {
+  const d = demandeChoisie(); if (!d) return;
+  const t = sourcesSaisies().reduce((a, s) => a + (s.montant || 0), 0);
+  const el = $('total'); el.className = 'total ' + (t + 0.005 >= d.montant ? 'ok' : 'ko');
+  el.replaceChildren(Object.assign(document.createElement('span'), { textContent: `Montant à justifier : ${euros(d.montant)}` }),
+    Object.assign(document.createElement('b'), { textContent: `Total déclaré : ${euros(t)}` }));
+}
+function majDemande() {
+  const d = demandeChoisie(); if (!d) return;
+  const p = etat.personnes[d.personne];
+  $('rappelDemande').textContent = `${d.motif} — ${euros(d.montant)} à justifier` + (etat.personnes.length > 1 && p ? ` (${p.prenom} ${p.nom})` : '') + '.';
+  $('lblFichiers').textContent = (d.justificatifs ? 'Justificatifs' : 'Justificatifs (facultatifs)') + ' — PDF, JPEG ou PNG, 3 Mo par fichier, 10 fichiers au plus';
+  majTotal();
+}
+$('mOrigine').addEventListener('click', () => {
+  $('errOrigine').textContent = '';
+  $('demande').replaceChildren(...etat.demandes.map(d => new Option(`${d.motif} — ${euros(d.montant)}`, d.id)));
+  $('fgDemande').classList.toggle('hidden', etat.demandes.length < 2);
+  $('sources').replaceChildren(); ligneSource(); majDemande();
+  montrer('e-origine');
+});
+$('demande').addEventListener('change', majDemande);
+$('btnAjouterSource').addEventListener('click', ligneSource);
+$('formOrigine').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('errOrigine').textContent = '';
+  const d = demandeChoisie();
+  const fichiers = [...$('fichiersOrigine').files];
+  if (!$('atteste').checked) { $('errOrigine').textContent = 'Merci de cocher l\'attestation sur l\'honneur.'; return; }
+  if (d.justificatifs && !fichiers.length) { $('errOrigine').textContent = 'Joignez au moins un justificatif.'; return; }
+  if (fichiers.length > 10) { $('errOrigine').textContent = '10 fichiers au maximum.'; return; }
+  occupe($('btnOrigine'), 'Transmission en cours…');
+  try {
+    const lus = await Promise.all(fichiers.map(lireFichier));
+    const { depot } = await apiJson('depot-ouvrir', {
+      nature: 'origine', personne: d.personne, demande: d.id, sources: sourcesSaisies(), atteste: true
+    });
+    for (let i = 0; i < lus.length; i++) {
+      $('btnOrigine').textContent = `Envoi du fichier ${i + 1} sur ${lus.length}…`;
+      await apiJson('depot-piece', { depot, fichier: lus[i] });
+    }
+    await apiJson('depot-clore', { depot });
+    $('formOrigine').reset();
+    $('faitTitre').textContent = 'Déclaration transmise à l\'étude';
+    $('faitTexte').textContent = 'Votre déclaration d\'origine des fonds et vos justificatifs ont bien été déposés. L\'étude en est informée.';
+    montrer('e-fait');
+  } catch (err) { $('errOrigine').textContent = err.message; }
+  finally { libre($('btnOrigine')); }
+});
+</script>
+</body>
+</html>
