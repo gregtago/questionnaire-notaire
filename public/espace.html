@@ -134,7 +134,7 @@
       <span><span class="t">Consulter le RIB de l'étude</span><br><span class="d">Pour effectuer un virement à l'office.</span></span><span class="fleche">→</span>
     </button>
     <button type="button" class="choix" id="mRibClient">
-      <span><span class="t">Déposer mon RIB</span><br><span class="d">Pour recevoir des fonds de l'office.</span></span><span class="fleche">→</span>
+      <span><span class="t">Déposer mon RIB <span class="pastille hidden" id="nbRib">1</span></span><br><span class="d" id="dRibClient">Pour recevoir des fonds de l'office.</span></span><span class="fleche">→</span>
     </button>
     <button type="button" class="choix" id="mOrigine">
       <span><span class="t">Justifier l'origine des fonds <span class="pastille hidden" id="nbDemandes"></span></span><br><span class="d" id="dOrigine">Aucune demande en cours.</span></span><span class="fleche">→</span>
@@ -304,6 +304,10 @@ async function ouvrirMenu() {
   $('dOrigine').textContent = n ? 'L\'étude vous demande de justifier la provenance de fonds.' : 'Aucune demande en cours.';
   const remplir = (sel) => { sel.replaceChildren(...etat.personnes.map(p => new Option(`${p.prenom} ${p.nom}`.trim(), p.indice))); };
   remplir($('persRib'));
+  const ribAttendu = etat.ribDemande || [];
+  $('nbRib').classList.toggle('hidden', !ribAttendu.length);
+  $('dRibClient').textContent = ribAttendu.length ? 'L\'étude vous demande votre RIB.' : 'Pour recevoir des fonds de l\'office.';
+  if (ribAttendu.length) $('persRib').value = ribAttendu[0];
   $('fgPersRib').classList.toggle('hidden', etat.personnes.length < 2);
   $('titulaire').value = etat.personnes.length === 1 ? `${etat.personnes[0].prenom} ${etat.personnes[0].nom}`.trim() : '';
   montrer('e-menu');

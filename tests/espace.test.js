@@ -307,7 +307,7 @@ test('dépôt du RIB du client : contrôles, puis réception par le notaire', as
   depotRib = o.d.depot;
   assert.equal((await espace('depot-clore', { session, depot: depotRib })).r.status, 400, 'pas de clôture sans pièce');
   assert.equal((await espace('depot-piece', { session, depot: depotRib, fichier: b64(Buffer.from('MZ programme'), 'rib.pdf') })).r.status, 400);
-  assert.equal((await espace('depot-piece', { session, depot: depotRib, fichier: b64(PNG, '../../rib mon compte.png') })).r.status, 200);
+  assert.equal((await espace('depot-piece', { session, depot: depotRib, fichier: b64(RIB_PNG, '../../rib mon compte.png') })).r.status, 200);
   assert.equal((await espace('depot-clore', { session, depot: depotRib })).r.status, 200);
   assert.equal((await espace('depot-piece', { session, depot: depotRib, fichier: b64(PNG, 'encore.png') })).r.status, 400, 'dépôt clos');
 
@@ -322,11 +322,48 @@ test('dépôt du RIB du client : contrôles, puis réception par le notaire', as
   assert.equal((await fetch(url)).status, 401, 'sans session du notaire, aucune pièce');
   const piece = await fetch(url, { headers: { cookie } });
   assert.equal(piece.status, 200);
-  assert.ok(Buffer.from(await piece.arrayBuffer()).equals(PNG));
+  // Le notaire consulte une copie filigranée, en PDF ; l'original reste au coffre.
+  assert.equal(piece.headers.get('content-type'), 'application/pdf');
+  assert.match(piece.headers.get('content-disposition'), /rib%20mon%20compte\.pdf/);
+  const marquee = await PDFDocument.load(Buffer.from(await piece.arrayBuffer()));
+  assert.match(marquee.getSubject(), /DIAI Samuel/);
+  assert.ok(coffre.lire && (await coffre.lire(`pieces/${d.id}/${d.pieces[0].id}.bin`)).equals(RIB_PNG));
 
   // Sur le disque, la pièce est chiffrée.
-  assert.ok(!fs.readFileSync(path.join(DIR, `pieces/${d.id}/${d.pieces[0].id}.bin`)).subarray(0, 8).equals(PNG.subarray(0, 8)));
+  assert.ok(!fs.readFileSync(path.join(DIR, `pieces/${d.id}/${d.pieces[0].id}.bin`)).subarray(0, 8).equals(RIB_PNG.subarray(0, 8)));
   assert.ok(!fs.readFileSync(path.join(DIR, `depots/${d.id}.json`)).includes('FR76'));
+});
+
+test('demande de RIB : visible du client, close par son dépôt', async () => {
+  assert.equal((await portail('demande-rib', { contactId: 'c-sans' })).r.status, 400, 'fiche non validée');
+  const a = await portail('demande-rib', { contactId: 'c-diai', prevenir: true });
+  assert.equal(a.r.status, 200);
+  assert.equal(a.d.prevenu, false, 'aucun email pendant les essais');
+  assert.equal((await portail('demande-rib', { contactId: 'c-diai' })).d.dejaDemande, true, 'pas de doublon');
+
+  const session = await connecterClient('samuel@example.org');
+  const e = await espace('etat', { session });
+  assert.deepEqual(e.d.ribDemande, [0]);
+  assert.equal(e.d.demandes.length, 0, 'une demande de RIB n\'est pas une demande d\'origine des fonds');
+  let t = await portail('tableau');
+  assert.equal(t.d.demandes.find(d => d.nature === 'rib').motifLibelle, 'RIB du client');
+
+  const o = await espace('depot-ouvrir', { session, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' });
+  await espace('depot-piece', { session, depot: o.d.depot, fichier: b64(RIB_PNG, 'rib.png') });
+  assert.equal((await espace('depot-clore', { session, depot: o.d.depot })).r.status, 200);
+  assert.deepEqual((await espace('etat', { session })).d.ribDemande, []);
+  t = await portail('tableau');
+  const d = t.d.demandes.find(x => x.nature === 'rib');
+  assert.equal(d.statut, 'repondue');
+  assert.equal(d.depotId, o.d.depot);
+});
+
+test('envoi du RIB de l\'étude par email : fiche validée exigée', async () => {
+  assert.equal((await portail('rib-envoyer', { contactId: 'c-sans' })).r.status, 400);
+  // Sans serveur d'envoi (essais), l'email ne part pas et rien n'est consigné.
+  const r = await portail('rib-envoyer', { contactId: 'c-diai' });
+  assert.equal(r.r.status, 502);
+  assert.ok(!(await portail('journal')).d.lignes.some(l => l.action === 'rib-etude-envoye'));
 });
 
 test('un client ne peut pas agir sur le dépôt d\'un autre', async () => {

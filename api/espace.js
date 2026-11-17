@@ -201,15 +201,16 @@ function personneChoisie(session, indice) {
 
 const nomDe = (f) => `${f.nom} ${f.prenom}`.trim();
 
-async function demandesEnAttente(ids) {
+/** Demandes du notaire en attente : origine des fonds (par défaut) ou RIB. */
+async function demandesEnAttente(ids, nature = 'origine') {
   return (await coffre.listerJson('demandes/'))
-    .filter(d => d.statut === 'en-attente' && ids.includes(d.contactId));
+    .filter(d => d.statut === 'en-attente' && ids.includes(d.contactId) && (d.nature || 'origine') === nature);
 }
 
 async function etat(req, res) {
   const session = await ouvrirSession(req);
   const ids = session.fiches.map(f => f.id);
-  const [rib, demandes] = await Promise.all([ribEtudeInfo(), demandesEnAttente(ids)]);
+  const [rib, demandes, demandesRib] = await Promise.all([ribEtudeInfo(), demandesEnAttente(ids), demandesEnAttente(ids, 'rib')]);
   res.json({
     ok: true,
     personnes: session.fiches.map((f, i) => ({ indice: i, nom: f.nom, prenom: f.prenom })),
@@ -218,6 +219,8 @@ async function etat(req, res) {
       id: d.id, personne: ids.indexOf(d.contactId), motif: MOTIFS[d.motif] || d.motif,
       montant: d.montant, justificatifs: !!d.justificatifs, creeLe: d.creeLe
     })),
+    // Personnes dont l'étude attend le RIB.
+    ribDemande: [...new Set(demandesRib.map(d => ids.indexOf(d.contactId)))],
     sources: SOURCES
   });
 }
@@ -334,12 +337,13 @@ async function depotClore(req, res) {
   depot.closLe = new Date().toISOString();
   await coffre.ecrireJson(`depots/${depot.id}.json`, depot);
 
-  if (depot.demandeId) {
-    const chemin = `demandes/${depot.demandeId}.json`;
-    const demande = await coffre.lireJson(chemin);
-    if (demande) {
-      await coffre.ecrireJson(chemin, { ...demande, statut: 'repondue', depotId: depot.id, reponduLe: depot.closLe });
-    }
+  // Demandes auxquelles ce dépôt répond : celle d'origine des fonds visée,
+  // ou toutes les demandes de RIB en attente pour cette personne.
+  const repondues = depot.demandeId
+    ? [await coffre.lireJson(`demandes/${depot.demandeId}.json`)]
+    : depot.nature === 'rib' ? await demandesEnAttente([depot.contactId], 'rib') : [];
+  for (const demande of repondues.filter(Boolean)) {
+    await coffre.ecrireJson(`demandes/${demande.id}.json`, { ...demande, statut: 'repondue', depotId: depot.id, reponduLe: depot.closLe });
   }
 
   const objet = depot.nature === 'rib' ? 'RIB déposé' : 'Origine des fonds justifiée';

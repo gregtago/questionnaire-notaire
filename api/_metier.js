@@ -59,7 +59,8 @@ async function ribEtudeDeposer({ buf, type, nom }, auteur) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Avis par email au notaire — jamais de pièce jointe                  */
+/* Emails. Les avis au notaire n'ont jamais de pièce jointe ; seul     */
+/* l'envoi du RIB de l'étude au client en porte une (filigranée).      */
 /* ------------------------------------------------------------------ */
 
 function transporter() {
@@ -95,12 +96,13 @@ function adresseDuSite(req) {
 }
 
 /** Non bloquant : un email qui ne part pas ne doit pas faire échouer un dépôt. */
-async function envoyerEmail({ a, sujet, titre, sousTitre, corpsHtml }) {
+async function envoyerEmail({ a, sujet, titre, sousTitre, corpsHtml, piecesJointes }) {
   if (!process.env.SMTP_USER) return false;
   try {
     await transporter().sendMail({
       from: `"Grégoire TAGOT | notaire" <${process.env.SMTP_USER}>`,
-      to: a, subject: sujet, html: gabarit(titre, sousTitre, corpsHtml)
+      to: a, subject: sujet, html: gabarit(titre, sousTitre, corpsHtml),
+      ...(piecesJointes ? { attachments: piecesJointes } : {})
     });
     return true;
   } catch (e) {
