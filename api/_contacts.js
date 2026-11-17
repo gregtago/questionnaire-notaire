@@ -139,24 +139,26 @@ async function getFolderId() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Un couple partage souvent une seule adresse email. L'appairage se fait donc
- * sur email ET nom : si l'email existe déjà mais sous un autre nom, on crée
- * une fiche distincte au lieu d'écraser celle du conjoint.
+ * Un couple partage souvent une seule adresse email, et souvent le même nom
+ * d'usage. L'appairage se fait donc sur email, nom ET prénom : sinon la fiche
+ * du conjoint viendrait écraser celle de l'autre époux au lieu d'être créée.
+ * Une fiche ancienne sans prénom reste appariée sur le seul nom.
  */
-async function findExisting(folderId, email, nom) {
+async function findExisting(folderId, email, nom, prenom) {
   if (!email) return null;
   const base  = `/users/${encodeURIComponent(MAILBOX)}/contactFolders/${folderId}/contacts`;
   const safe  = String(email).toLowerCase().replace(/'/g, "''");
   const cible = norm(nom);
+  const cibleP = norm(prenom);
 
   let candidats = [];
   try {
     const filter = encodeURIComponent(`emailAddresses/any(a:a/address eq '${safe}')`);
-    const res = await graph('GET', `${base}?$filter=${filter}&$select=id,surname&$top=20`);
+    const res = await graph('GET', `${base}?$filter=${filter}&$select=id,surname,givenName&$top=20`);
     candidats = res.value || [];
   } catch (e) {
     // Repli si le filtre any() est refusé : balayage local du dossier.
-    const res = await graph('GET', `${base}?$select=id,surname,emailAddresses&$top=999`);
+    const res = await graph('GET', `${base}?$select=id,surname,givenName,emailAddresses&$top=999`);
     candidats = (res.value || []).filter(c =>
       (c.emailAddresses || []).some(a => (a.address || '').toLowerCase() === safe)
     );
@@ -164,7 +166,10 @@ async function findExisting(folderId, email, nom) {
 
   if (!candidats.length) return null;
 
-  const hit = candidats.find(c => norm(c.surname) === cible);
+  const memeNom = candidats.filter(c => norm(c.surname) === cible);
+  const hit = memeNom.find(c => norm(c.givenName) === cibleP)
+    || (cibleP ? null : memeNom[0])
+    || memeNom.find(c => !norm(c.givenName));
   return hit ? hit.id : null;
 }
 
@@ -248,7 +253,7 @@ async function upsertContact(p) {
     surname:     nom.toUpperCase(),
     displayName: `${nom.toUpperCase()} ${prenom}`.trim(),
     categories,
-    personalNotes: `Questionnaire reçu le ${new Date().toLocaleDateString('fr-FR')}`
+    personalNotes: p.notes || `Questionnaire reçu le ${new Date().toLocaleDateString('fr-FR')}`
   };
 
   if (p.email) {
@@ -273,7 +278,7 @@ async function upsertContact(p) {
   const bday = toBirthday(p.dateNaissance);
   if (bday) contact.birthday = bday;
 
-  const existingId = await findExisting(folderId, p.email, nom);
+  const existingId = await findExisting(folderId, p.email, nom, prenom);
 
   if (existingId) {
     // Une fiche validée par le notaire (« Coord-verifiees ») sert d'ancre à

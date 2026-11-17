@@ -24,7 +24,7 @@
     .card p.intro { color: #777; font-size: 13px; margin-bottom: 22px; }
     .fg { margin-bottom: 16px; }
     .fg label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
-    .fg input[type=text], .fg input[type=password], .fg input[type=number], .fg input[type=file], .fg input[type=search], .fg select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; outline: none; background: #fff; font-family: inherit; }
+    .fg input[type=text], .fg input[type=password], .fg input[type=number], .fg input[type=file], .fg input[type=search], .fg input[type=email], .fg input[type=tel], .fg select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; outline: none; background: #fff; font-family: inherit; }
     .fg input:focus, .fg select:focus { border-color: #111; }
     .btn { padding: 11px 20px; background: #111; color: #fff; border: none; border-radius: 4px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; font-family: inherit; }
     .btn.plein { width: 100%; }
@@ -131,6 +131,7 @@
       <div class="barre">
         <div class="fg"><input type="search" id="filtre" placeholder="Rechercher un client…" aria-label="Rechercher un client"></div>
         <label class="case" style="margin:0;"><input type="checkbox" id="seulAValider"><span>À valider seulement</span></label>
+        <button type="button" class="btn" id="btnAjouterClient">Ajouter un client</button>
       </div>
       <table><thead><tr><th>Client</th><th>Mobile</th><th>Email</th><th>Espace client</th><th></th></tr></thead><tbody id="tClients"></tbody></table>
       <p class="gris" style="margin-top:14px;">Les fiches proviennent du dossier « Clients » de votre carnet d'adresses Outlook. Valider une fiche, c'est attester que son adresse email et son numéro de mobile sont bien ceux du client : il s'identifie par un code reçu à cette adresse, puis par un code reçu sur ce mobile.</p>
@@ -274,6 +275,33 @@ function afficherClients() {
 }
 $('filtre').addEventListener('input', afficherClients);
 $('seulAValider').addEventListener('change', afficherClients);
+
+$('btnAjouterClient').addEventListener('click', fenetreAjouter);
+
+function fenetreAjouter() {
+  const champ = (id, libelle, type, attrs = {}) => {
+    const i = el('input', { id, type: type || 'text', ...attrs });
+    return [i, el('div', { className: 'fg' }, el('label', { htmlFor: id, textContent: libelle }), i)];
+  };
+  const [nom, fNom] = champ('aNom', 'Nom *', 'text', { autocomplete: 'off' });
+  const [prenom, fPrenom] = champ('aPrenom', 'Prénom *', 'text', { autocomplete: 'off' });
+  const [email, fEmail] = champ('aEmail', 'Email *', 'email', { autocomplete: 'off' });
+  const [tel, fTel] = champ('aTel', 'Mobile *', 'tel', { autocomplete: 'off', placeholder: '06 12 34 56 78' });
+  const [adr, fAdr] = champ('aAdr', 'Adresse', 'text', { autocomplete: 'off' });
+  const [cp, fCp] = champ('aCp', 'Code postal', 'text', { autocomplete: 'off', inputMode: 'numeric' });
+  const [ville, fVille] = champ('aVille', 'Ville', 'text', { autocomplete: 'off' });
+  fenetre('Ajouter un client',
+    'La fiche est créée dans le dossier « Clients » de votre carnet Outlook. Elle reste à valider avant d\'ouvrir l\'espace client.',
+    [fNom, fPrenom, fEmail, fTel, fAdr, fCp, fVille], 'Enregistrer',
+    async () => {
+      if (!nom.value.trim() || !prenom.value.trim()) throw new Error('Le nom et le prénom sont obligatoires.');
+      if (!email.value.trim()) throw new Error('L\'email est obligatoire.');
+      if (!tel.value.trim()) throw new Error('Le mobile est obligatoire.');
+      await api('fiche-creer', { nom: nom.value, prenom: prenom.value, email: email.value, telephone: tel.value,
+        adresse: adr.value, codePostal: cp.value, ville: ville.value });
+    });
+  nom.focus();
+}
 
 /* ── Fenêtres de confirmation (pas de boîte de dialogue du navigateur) ── */
 function fenetre(titre, texte, corps, libelle, action) {

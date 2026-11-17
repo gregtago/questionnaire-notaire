@@ -12,12 +12,15 @@ module.exports = async (req, res) => {
     console.error("Erreur email:", e.message);
   }
 
+  // L'email n'est exigé que de la première personne : le conjoint qui n'en
+  // donne pas partage celui du foyer, sans quoi sa fiche n'était jamais créée.
+  const emailFoyer = (personnes.find(p => p.EMAIL) || {}).EMAIL;
   for (const p of personnes) {
-    if (!p.EMAIL) continue;
+    if (!(p.NOMU || p.NOM) || !(p.EMAIL || emailFoyer)) continue;
     await upsertContactSafe({
       nom: p.NOMU || p.NOM,
       prenom: p.PRENOMU || p.PRENOM,
-      email: p.EMAIL,
+      email: p.EMAIL || emailFoyer,
       telephone: p.TEL,
       adresse: [p.ADR1, p.ADR2].filter(Boolean).join(' '),
       codePostal: p.ADR3,

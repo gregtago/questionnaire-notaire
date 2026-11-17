@@ -568,7 +568,7 @@ function buildPageHtml(p0, p1) {
         <input type="tel" data-f="TEL" value="${x(p.TEL)}" autocomplete="tel">
       </div>
       <div class="field">
-        <label>Email${i===0?' <span class="req">*</span>':''}</label>
+        <label>Email <span class="req">*</span></label>
         <input type="email" data-f="EMAIL" value="${x(p.EMAIL)}"${i===0&&email0?' class="ro" readonly':''} autocomplete="email">
       </div>
     </div>
@@ -1991,6 +1991,7 @@ document.getElementById('btnSubmit').onclick = async () => {
         if (!p.TEL) return showErr('Téléphone obligatoire.', i);
         if (i===0 && !p.EMAIL) return showErr('Email obligatoire.', i);
       }
+      if (p._role === 'conjoint' && !p.EMAIL) return showErr('2ème personne : email obligatoire.', i);
     }
     const btn = document.getElementById('btnSubmit');
     btn.disabled = true;
