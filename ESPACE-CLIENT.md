@@ -5,7 +5,9 @@ Deux pages ajoutées au site des questionnaires :
 | Adresse    | Pour qui   | Ce qu'on y fait |
 |------------|------------|-----------------|
 | `/espace`  | le client  | consulter le RIB de l'étude, déposer son RIB, justifier l'origine des fonds |
-| `/portail` | le notaire | valider les fiches, déposer le RIB de l'étude et le communiquer à un client, demander son RIB ou l'origine des fonds à un client, relever les pièces (sous filigrane), lire le journal |
+| `/portail` | le notaire | envoyer un questionnaire en ligne, valider les fiches, déposer le RIB de l'étude et le communiquer à un client, demander son RIB ou l'origine des fonds à un client, relever les pièces (sous filigrane), lire le journal |
+
+L'ancienne page `/admin` (envoi des questionnaires, protégée par le seul mot de passe `ADMIN_PASSWORD`) est fusionnée dans le portail : onglet « Questionnaires », ou bouton « Questionnaire » sur une fiche client. L'envoi exige la session du portail (code d'accès + code du téléphone) et figure au journal. `/admin` renvoie désormais vers `/portail` ; la variable `ADMIN_PASSWORD` ne sert plus.
 
 ## Principe
 

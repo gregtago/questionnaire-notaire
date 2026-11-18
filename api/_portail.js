@@ -4,7 +4,8 @@
  *
  * Portail du notaire : validation des fiches clients, RIB de l'étude
  * (dépôt, communication à un client), demandes de RIB et d'origine des fonds,
- * pièces reçues (consultées sous filigrane), journal.
+ * pièces reçues (consultées sous filigrane), envoi des questionnaires en
+ * ligne (ancienne page /admin), journal.
  *
  * Accès : code d'accès (PORTAIL_CODE) + code à six chiffres du téléphone
  * (TOTP). Le téléphone s'enrôle au premier passage par QR code.
@@ -26,6 +27,7 @@ const {
   envoyerEmail, adresseDuSite, enveloppe, euros
 } = require('./_metier');
 const { filigraner, filigranerPiece, nouvelleReference } = require('./_filigrane');
+const questionnaires = require('./_questionnaires');
 
 const DUREE_SESSION = 12 * 60 * 60 * 1000;
 const TOTP = 'portail/totp.json';
@@ -146,7 +148,7 @@ async function tableau(req, res) {
       ...d, telephone: sec.masquerTelephone(d.telephone),
       sources: (d.sources || []).map(s => ({ ...s, libelle: SOURCES[s.type] || s.type }))
     })),
-    rib, motifs: MOTIFS, essai: annuaire.modeEssai()
+    rib, motifs: MOTIFS, questionnaires: questionnaires.LIBELLES, essai: annuaire.modeEssai()
   });
 }
 
@@ -372,7 +374,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-rib': demandeRib, 'rib-communiquer': ribCommuniquer, 'depot-vu': depotVu, journal, 'liaison-sms': liaisonSms };
+const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-rib': demandeRib, 'rib-communiquer': ribCommuniquer, 'depot-vu': depotVu, 'questionnaire-envoyer': questionnaires.envoyerQuestionnaire, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');

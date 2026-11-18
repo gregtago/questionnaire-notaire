@@ -62,6 +62,9 @@
     .case input { margin-top: 3px; }
     .qr { text-align: center; margin: 14px 0; } .qr img { border: 1px solid #eee; border-radius: 4px; }
     .secret { font-family: ui-monospace, Menlo, monospace; font-size: 13px; word-break: break-all; background: #f6f6f4; padding: 8px 10px; border-radius: 4px; text-align: center; }
+    .deux { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .succes { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-top: 12px; }
+    @media (max-width: 520px) { .deux { grid-template-columns: 1fr; gap: 0; } }
     ul.pieces { list-style: none; } ul.pieces li { margin-bottom: 4px; }
     @media (max-width: 720px) { .card { padding: 20px 14px; } th:nth-child(3), td:nth-child(3) { display: none; } }
   </style>
@@ -74,7 +77,7 @@
     </div>
     <div class="title-bar">
       <h1>Portail clients</h1>
-      <div class="subtitle">Interface interne — validation des fiches, RIB, origine des fonds</div>
+      <div class="subtitle">Interface interne — fiches clients, questionnaires, RIB, origine des fonds</div>
     </div>
   </div>
 
@@ -124,6 +127,7 @@
     <div class="tabs" id="tabs">
       <button type="button" class="tab active" data-onglet="clients">Clients</button>
       <button type="button" class="tab" data-onglet="pieces">Pièces reçues <span class="n hidden" id="nPieces"></span></button>
+      <button type="button" class="tab" data-onglet="questionnaires">Questionnaires</button>
       <button type="button" class="tab" data-onglet="demandes">Demandes</button>
       <button type="button" class="tab" data-onglet="rib">RIB de l'étude</button>
       <button type="button" class="tab" data-onglet="journal">Journal</button>
@@ -142,6 +146,23 @@
 
     <div class="card hidden" id="o-pieces">
       <table><thead><tr><th>Reçu le</th><th>Client</th><th>Objet</th><th>Pièces</th><th></th></tr></thead><tbody id="tPieces"></tbody></table>
+    </div>
+
+    <div class="card hidden" id="o-questionnaires">
+      <h2>Envoyer un questionnaire</h2>
+      <p class="intro">Le client reçoit par email le lien du questionnaire ; il l'ouvre après un code reçu à cette adresse. L'envoi est consigné au journal.</p>
+      <form id="formQuest" style="max-width:520px;">
+        <div class="fg"><label for="qClient">Client du carnet (facultatif)</label><select id="qClient"></select></div>
+        <div class="fg"><label for="qType">Questionnaire</label><select id="qType" required></select></div>
+        <div class="deux">
+          <div class="fg"><label for="qPrenom">Prénom (facultatif)</label><input type="text" id="qPrenom" autocomplete="off"></div>
+          <div class="fg"><label for="qNom">Nom (facultatif)</label><input type="text" id="qNom" autocomplete="off"></div>
+        </div>
+        <div class="fg"><label for="qEmail">Email du client</label><input type="email" id="qEmail" autocomplete="off" required></div>
+        <button type="submit" class="btn" id="btnQuest">Envoyer le lien</button>
+        <div class="err" id="errQuest"></div>
+        <div class="succes hidden" id="okQuest" role="status"></div>
+      </form>
     </div>
 
     <div class="card hidden" id="o-demandes">
@@ -238,15 +259,18 @@ $('btnDeco').addEventListener('click', async () => { await api('deconnexion').ca
 /* ── Onglets ── */
 $('tabs').addEventListener('click', (e) => {
   const b = e.target.closest('.tab'); if (!b) return;
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === b));
-  ['clients', 'pieces', 'demandes', 'rib', 'journal'].forEach(o => $('o-' + o).classList.toggle('hidden', o !== b.dataset.onglet));
-  if (b.dataset.onglet === 'journal') chargerJournal();
+  ouvrirOnglet(b.dataset.onglet);
 });
+function ouvrirOnglet(nom) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.onglet === nom));
+  ['clients', 'pieces', 'questionnaires', 'demandes', 'rib', 'journal'].forEach(o => $('o-' + o).classList.toggle('hidden', o !== nom));
+  if (nom === 'journal') chargerJournal();
+}
 
 async function charger() {
   donnees = await api('tableau');
   $('bandeauEssai').classList.toggle('hidden', !donnees.essai);
-  afficherClients(); afficherPieces(); afficherDemandes(); afficherRib();
+  afficherClients(); afficherPieces(); afficherQuestionnaires(); afficherDemandes(); afficherRib();
   montrer('p-tableau');
 }
 
@@ -273,6 +297,7 @@ function afficherClients() {
       } else {
         actions.append(el('button', { type: 'button', className: 'btn-ghost', textContent: 'Valider', onclick: () => fenetreValider(f) }));
       }
+      if (f.etat !== 'a-supprimer' && f.email) actions.append(bouton('Questionnaire', () => questionnairePour(f)));
       if (f.etat !== 'a-supprimer') actions.append(bouton('Modifier', () => fenetreFiche(f)), bouton('Supprimer', () => fenetreEcarter(f)));
       const tel = el('td', {}, fmtTel(f.telephone) || '—');
       if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'pas un mobile exploitable : à corriger (Modifier)' }));
@@ -397,6 +422,39 @@ function fenetreEnvoyerRib(f) {
 }
 let alerteEnvoi = '';
 
+/* ── Questionnaires (ancienne page /admin) ── */
+function afficherQuestionnaires() {
+  const choix = $('qClient').value;
+  const fiches = donnees.fiches.filter(f => f.etat !== 'a-supprimer' && f.email)
+    .sort((a, b) => `${a.nom} ${a.prenom}`.localeCompare(`${b.nom} ${b.prenom}`, 'fr'));
+  $('qClient').replaceChildren(new Option('— Saisie libre —', ''), ...fiches.map(f => new Option(`${f.nom} ${f.prenom} — ${f.email}`, f.id)));
+  $('qClient').value = fiches.some(f => f.id === choix) ? choix : '';
+  if (!$('qType').options.length) {
+    $('qType').append(new Option('— Choisir —', ''), ...Object.entries(donnees.questionnaires).map(([k, v]) => new Option(v, k)));
+  }
+}
+$('qClient').addEventListener('change', () => {
+  const f = donnees.fiches.find(x => x.id === $('qClient').value);
+  if (!f) return;
+  $('qPrenom').value = f.prenom || ''; $('qNom').value = f.nom || ''; $('qEmail').value = f.email || '';
+});
+function questionnairePour(f) {
+  $('formQuest').reset(); $('errQuest').textContent = ''; $('okQuest').classList.add('hidden');
+  $('qClient').value = f.id; $('qClient').dispatchEvent(new Event('change'));
+  ouvrirOnglet('questionnaires'); $('qType').focus();
+}
+$('formQuest').addEventListener('submit', async (e) => {
+  e.preventDefault(); $('errQuest').textContent = ''; $('okQuest').classList.add('hidden');
+  if (!$('qType').value) { $('errQuest').textContent = 'Choisissez un questionnaire.'; return; }
+  occupe($('btnQuest'), 'Envoi en cours…');
+  try {
+    const r = await api('questionnaire-envoyer', { type: $('qType').value, prenom: $('qPrenom').value, nom: $('qNom').value, email: $('qEmail').value });
+    $('okQuest').textContent = `Questionnaire « ${r.questionnaire} » envoyé à ${r.email}.`;
+    $('okQuest').classList.remove('hidden');
+    $('formQuest').reset();
+  } catch (err) { $('errQuest').textContent = err.message; } finally { libre($('btnQuest')); }
+});
+
 /* ── Pièces reçues ── */
 function afficherPieces() {
   const nouveaux = donnees.depots.filter(d => !d.vuLe).length;
@@ -470,7 +528,8 @@ const ACTIONS = {
   'piece-consultee-sans-filigrane': 'Pièce consultée (PDF protégé : sans filigrane)',
   'demande-rib': 'RIB demandé au client (email)', 'rib-etude-communique': 'RIB de l\'étude communiqué (email)',
   'fiche-saisie': 'Fiche saisie', 'fiche-saisie-maj': 'Fiche mise à jour', 'fiche-modifiee': 'Fiche modifiée',
-  'fiche-mise-de-cote': 'Fiche supprimée du portail', 'fiche-restauree': 'Fiche restaurée'
+  'fiche-mise-de-cote': 'Fiche supprimée du portail', 'fiche-restauree': 'Fiche restaurée',
+  'questionnaire-envoye': 'Questionnaire envoyé (email)'
 };
 const ACTEURS = { client: 'Client', notaire: 'Notaire', inconnu: 'Inconnu' };
 async function chargerJournal() {
@@ -479,7 +538,7 @@ async function chargerJournal() {
     const { lignes } = await api('journal');
     $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.questionnaire, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }
