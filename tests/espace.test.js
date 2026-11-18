@@ -426,6 +426,23 @@ test('RIB de l\'étude communiqué : email sans pièce jointe, remis dans l\'esp
   assert.ok(j.some(l => l.action === 'rib-etude-consulte' && l.demande === ref && l.reference === reference));
 });
 
+test('rester identifié 24 heures : session longue, mais RIB déposé seulement après une identification récente', async () => {
+  const a = await espace('demander-code', { email: 'samuel@example.org' });
+  const b = await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai });
+  const c = await espace('verifier-code', { ticket: a.d.ticket, code: b.d.codesEssai[0], rester: true });
+  assert.equal(c.d.expireDans, 24 * 60 * 60 * 1000);
+  assert.equal((await espace('etat', { session: c.d.session })).r.status, 200);
+  assert.equal((await espace('depot-ouvrir', { session: c.d.session, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' })).r.status, 200, 'identification récente');
+  // La même session, le lendemain : elle ouvre l'espace, pas le dépôt d'un RIB.
+  const veille = sec.signerJeton('espace', { c: ['c-diai'], t: '+33612345678', d: Date.now() - 3 * 60 * 60 * 1000, l: 1 }, 60 * 1000);
+  assert.equal((await espace('etat', { session: veille })).r.status, 200);
+  const refus = await espace('depot-ouvrir', { session: veille, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' });
+  assert.equal(refus.r.status, 401);
+  assert.match(refus.d.error, /identification de moins de 20 minutes/);
+  // Sans la case, la session reste de 20 minutes.
+  assert.equal(sec.lireJeton('espace', await connecterClient('samuel@example.org')).l, undefined);
+});
+
 test('un client ne peut pas agir sur le dépôt d\'un autre', async () => {
   const autre = await connecterClient('vial@example.org');
   const mien = await connecterClient('samuel@example.org');
@@ -448,25 +465,147 @@ test('origine des fonds : demande du notaire, déclaration et justificatifs du c
   assert.equal(e.d.personnes[demande.personne].prenom, 'Marc');
   assert.equal(demande.motif, 'Achat immobilier');
 
-  const base = { session, nature: 'origine', personne: demande.personne, demande: demande.id };
-  const sources = [{ type: 'pret', montant: 200000, precision: 'Banque X' }, { type: 'epargne', montant: 50000 }];
-  assert.equal((await espace('depot-ouvrir', { ...base, sources, atteste: false })).r.status, 400);
-  assert.equal((await espace('depot-ouvrir', { ...base, sources: [sources[0]], atteste: true })).r.status, 400, 'total insuffisant');
-  assert.equal((await espace('depot-ouvrir', { ...base, personne: 1 - demande.personne, sources, atteste: true })).r.status, 400, 'la demande vise l\'autre personne');
-  const o = await espace('depot-ouvrir', { ...base, sources, atteste: true });
-  assert.equal(o.r.status, 200);
-  assert.equal((await espace('depot-clore', { session, depot: o.d.depot })).r.status, 400, 'justificatif attendu');
-  await espace('depot-piece', { session, depot: o.d.depot, fichier: b64(PDF, 'offre de prêt.pdf') });
-  await espace('depot-piece', { session, depot: o.d.depot, fichier: b64(PNG, 'relevé.png') });
-  assert.equal((await espace('depot-clore', { session, depot: o.d.depot })).r.status, 200);
+  assert.match(demande.reference, /^DEM-/);
 
-  assert.equal((await espace('etat', { session })).d.demandes.length, 0);
-  const t = await portail('tableau');
-  assert.equal(t.d.demandes[0].statut, 'repondue');
-  const d = t.d.depots.find(x => x.id === o.d.depot);
+  // L'ancien dépôt sans signature n'existe plus.
+  assert.equal((await espace('depot-ouvrir', { session, nature: 'origine', personne: demande.personne, demande: demande.id })).r.status, 400);
+
+  // Ouverture : le questionnaire, le montant attendu, l'identité reprise de la fiche.
+  const o = await espace('declaration-ouvrir', { session, demande: demande.id });
+  assert.equal(o.r.status, 200);
+  assert.equal(o.d.montant, 250000);
+  assert.equal(o.d.signataire, 'Marc VIAL');
+  assert.equal(o.d.saisie.identite.prenoms, 'Marc');
+  assert.ok(o.d.rubriques.some(r => r.titre === 'V. Origine des fonds'));
+  const depot = o.d.depot;
+  const samuel = await connecterClient('samuel@example.org');
+  assert.equal((await espace('declaration-enregistrer', { session: samuel, depot, saisie: {} })).r.status, 400, 'la déclaration d\'un autre');
+
+  // Saisie partielle, enregistrée ; la session est prolongée.
+  const saisie = o.d.saisie;
+  Object.assign(saisie.identite, { qualite: 'ACQ', dateNaissance: '1980-05-17', lieuNaissance: 'Lyon', adresseVoie: '12 rue Dante', codePostal: '75005', ville: 'Paris', intrus: 'x' });
+  const e1 = await espace('declaration-enregistrer', { session, depot, saisie });
+  assert.equal(e1.r.status, 200);
+  assert.ok(e1.d.session && e1.d.session !== session, 'session prolongée');
+  await espace('depot-piece', { session, depot, fichier: b64(PDF, 'offre de prêt.pdf') });
+
+  // Le lendemain, sur un autre appareil : nouvelle identification, tout est là.
+  oublierLimites();
+  const retour = await connecterClient('vial@example.org');
+  const etat2 = await espace('etat', { session: retour });
+  assert.ok(etat2.d.demandes[0].commenceeLe);
+  assert.equal(etat2.d.demandes[0].pieces, 1);
+  const o2 = await espace('declaration-ouvrir', { session: retour, demande: demande.id });
+  assert.equal(o2.d.depot, depot, 'le même brouillon');
+  assert.equal(o2.d.saisie.identite.lieuNaissance, 'Lyon');
+  assert.equal(o2.d.saisie.identite.intrus, undefined, 'un champ inconnu n\'est pas gardé');
+  assert.deepEqual(o2.d.pieces.map(p => p.nom), ['offre de prêt.pdf']);
+  assert.equal(o2.d.pieces[0].empreinte, undefined, 'le client ne revoit que le nom de ses pièces');
+  let t = await portail('tableau');
+  assert.equal(t.d.demandes.find(d => d.id === demande.id).enCours.pieces, 1, 'le notaire voit l\'avancement');
+
+  // Incomplète : la liste de ce qui manque.
+  const r1 = await espace('declaration-recapitulatif', { session: retour, depot, saisie: o2.d.saisie });
+  assert.equal(r1.r.status, 400);
+  assert.ok(r1.d.manques.some(m => /PPE/.test(m)) && r1.d.manques.some(m => /au moins une origine/.test(m)));
+
+  const complete = o2.d.saisie;
+  Object.assign(complete.identite, { nationalite: 'Française' });
+  Object.assign(complete.ppe, { self: 'N', famille: 'N', collaborateur: 'N', selfFonction: 'ne doit pas rester' });
+  Object.assign(complete.operation, { nature: 'acquisition', description: 'Appartement, 12 rue Dante, Paris 5e', prix: 400000 });
+  Object.assign(complete.personneMorale, { existe: 'N' });
+  Object.assign(complete.contexte, { objet: 'residence_principale', coherence: 'O', pourTiers: 'N', fondsEtranger: 'N' });
+  complete.fonds.sources = [{ type: 'pret', montant: 200000, precision: 'Banque X' }];
+  const r2 = await espace('declaration-recapitulatif', { session: retour, depot, saisie: complete });
+  assert.ok(r2.d.manques.some(m => /inférieur au montant à justifier/.test(m)), 'le montant attendu s\'impose');
+  complete.fonds.sources.push({ type: 'epargne', montant: 50000 }, { type: 'inconnue', montant: 9 });
+  const r3 = await espace('declaration-recapitulatif', { session: retour, depot, saisie: complete });
+  assert.equal(r3.r.status, 200);
+  assert.equal(r3.d.signataire, 'Marc VIAL');
+  const fonds = r3.d.recap.find(r => r.titre === 'V. Origine des fonds').lignes;
+  assert.ok(fonds.some(([a, b]) => /Montant à justifier/.test(a) && /250/.test(b)));
+  assert.ok(!JSON.stringify(r3.d.recap).includes('ne doit pas rester'), 'une précision masquée n\'est pas signée');
+
+  // Une pièce déposée par erreur est retirée de la déclaration.
+  const p2 = await espace('depot-piece', { session: retour, depot, fichier: b64(PNG, 'erreur.png') });
+  assert.equal(p2.d.liste.length, 2);
+  const retrait = await espace('declaration-piece-retirer', { session: retour, depot, piece: p2.d.liste[1].id });
+  assert.deepEqual(retrait.d.pieces.map(p => p.nom), ['offre de prêt.pdf']);
+  assert.equal((await espace('depot-clore', { session: retour, depot })).r.status, 400, 'pas de clôture sans signature');
+
+  // Signature : engagement, code SMS propre à la déclaration.
+  assert.equal((await espace('declaration-signer-demander', { session: retour, depot })).r.status, 400, 'engagement requis');
+  const c1 = await espace('declaration-signer-demander', { session: retour, depot, engagement: true });
+  assert.equal(c1.r.status, 200);
+  assert.match(c1.d.codeEssai, /^\d{6}$/);
+  assert.match(c1.d.mobile, /32$/);
+  // Modifiée après l'envoi du code : le code ne vaut plus.
+  complete.identite.profession = 'Architecte';
+  await espace('declaration-enregistrer', { session: retour, depot, saisie: complete });
+  assert.equal((await espace('declaration-signer', { session: retour, depot, code: c1.d.codeEssai })).r.status, 409);
+  const c2 = await espace('declaration-signer-demander', { session: retour, depot, engagement: true });
+  assert.notEqual(c2.d.empreinte, c1.d.empreinte);
+  assert.equal((await espace('declaration-signer', { session: retour, depot, code: autreCode(c2.d.codeEssai) })).r.status, 400);
+  let signee;
+  await avecEmails(async () => {
+    signee = await espace('declaration-signer', { session: retour, depot, code: c2.d.codeEssai });
+    assert.equal(signee.r.status, 200);
+    const confirmation = emails.find(m => m.to === 'vial@example.org');
+    assert.ok(confirmation.html.includes(c2.d.empreinte), 'le signataire reçoit l\'empreinte');
+    assert.ok(!/href=/.test(confirmation.html) && !confirmation.attachments);
+  });
+  assert.equal(signee.d.signataire, 'Marc VIAL');
+  assert.equal(signee.d.empreinte, c2.d.empreinte);
+  assert.equal((await espace('declaration-signer', { session: retour, depot, code: c2.d.codeEssai })).r.status, 400, 'on ne signe qu\'une fois');
+
+  // Le signataire retire sa copie ; un autre client, non.
+  const copie = await espace('declaration-copie', { session: retour, depot });
+  assert.equal(copie.r.status, 200);
+  assert.equal((await espace('declaration-copie', { session: samuel, depot })).r.status, 404);
+
+  assert.equal((await espace('etat', { session: retour })).d.demandes.length, 0);
+  t = await portail('tableau');
+  assert.equal(t.d.demandes.find(d => d.id === demande.id).statut, 'repondue');
+  const d = t.d.depots.find(x => x.id === depot);
   assert.equal(d.total, 250000);
-  assert.equal(d.pieces.length, 2);
+  assert.equal(d.pieces.length, 1);
   assert.equal(d.sources[0].libelle, 'Prêt bancaire');
+  assert.equal(d.saisie, undefined);
+  assert.equal(d.signature.signataire, 'Marc VIAL');
+  assert.equal(d.signature.empreinte, c2.d.empreinte);
+  assert.deepEqual(d.demandes, [demande.reference]);
+
+  // La déclaration signée, figée au coffre : nom, montant attendu, empreinte ; intégrité contrôlée.
+  const url = `${BASE}/api/espace?zone=portail&action=declaration&depot=${depot}`;
+  const pdf = await fetch(url, { headers: { cookie } });
+  assert.equal(pdf.status, 200);
+  const octets = Buffer.from(await pdf.arrayBuffer());
+  assert.equal(crypto.createHash('sha256').update(octets).digest('hex'), d.signature.empreintePdf);
+  assert.ok(octets.equals(Buffer.from(await copie.r.arrayBuffer())), 'la copie du signataire est la même');
+  const lu = await PDFDocument.load(octets);
+  assert.ok(lu.getSubject().includes('Marc VIAL') && lu.getSubject().includes(c2.d.empreinte));
+  const brut = await coffre.lireJson(`depots/${depot}.json`);
+  await coffre.ecrireJson(`depots/${depot}.json`, { ...brut, signature: { ...brut.signature, signataire: 'Jean FAUX' } });
+  assert.equal((await fetch(url, { headers: { cookie } })).status, 409, 'une signature retouchée est détectée');
+  await coffre.ecrireJson(`depots/${depot}.json`, brut);
+
+  const j = (await portail('journal')).d.lignes;
+  for (const action of ['declaration-commencee', 'code-signature-envoye', 'declaration-signee', 'origine-fonds-deposee', 'declaration-consultee', 'declaration-consultee-alteree']) {
+    assert.ok(j.some(l => l.action === action && l.demande === demande.reference), `journal : ${action}`);
+  }
+});
+
+test('origine des fonds : relance d\'une demande restée sans réponse', async () => {
+  await portail('demande-creer', { contactId: 'c-diai', motif: 'donation', montant: 1000, justificatifs: false });
+  const id = (await portail('tableau')).d.demandes.find(d => d.contactId === 'c-diai' && d.nature === 'origine' && d.statut === 'en-attente').id;
+  assert.equal((await portail('demande-relancer', { id })).r.status, 502);
+  await avecEmails(async () => {
+    const r = await portail('demande-relancer', { id });
+    assert.equal(r.r.status, 200);
+    assert.match(emails[0].subject, /^Rappel/);
+    assert.ok(!/href=/.test(emails[0].html));
+    assert.match(emails[0].html, /plusieurs fois/);
+  });
 });
 
 test('la session tombe dès que la validation est retirée ou que le numéro change', async () => {
