@@ -549,6 +549,34 @@ test('supprimer une fiche du portail : Outlook intact, restauration possible', a
   assert.equal((await portail('tableau')).d.fiches.find(f => f.id === paul.id).etat, 'a-valider');
 });
 
+test('questionnaires : envoi depuis le portail (ancienne page /admin), consigné au journal', async () => {
+  const t = await portail('tableau');
+  assert.equal(t.d.questionnaires.etatcivil, 'État civil');
+  // Sans email possible, le notaire est averti, et le journal le dit.
+  assert.equal((await portail('questionnaire-envoyer', { type: 'etatcivil', email: 'samuel@example.org' })).r.status, 502);
+  await avecEmails(async () => {
+    assert.equal((await portail('questionnaire-envoyer', { type: 'inconnu', email: 'samuel@example.org' })).r.status, 400);
+    assert.equal((await portail('questionnaire-envoyer', { type: 'succession', email: 'pas-une-adresse' })).r.status, 400);
+    const a = await portail('questionnaire-envoyer', { type: 'succession', email: 'samuel@example.org', prenom: 'Samuel', nom: '<b>DIAI</b>' });
+    assert.equal(a.r.status, 200);
+    assert.equal(emails.length, 1);
+    assert.equal(emails[0].to, 'samuel@example.org');
+    assert.match(emails[0].subject, /Succession/);
+    assert.match(emails[0].html, /\/succession"/, 'le lien du questionnaire figure dans l\'email');
+    assert.ok(!emails[0].html.includes('<b>DIAI'), 'le nom est échappé');
+  });
+  const j = (await portail('journal')).d.lignes.filter(l => l.action === 'questionnaire-envoye');
+  assert.equal(j.length, 2);
+  assert.ok(j.some(l => l.email === 'non-parti'));
+  assert.ok(j.some(l => l.questionnaire === 'Succession' && l.destinataire === 'samuel@example.org'));
+});
+
+test('/admin renvoie au portail', async () => {
+  const r = await fetch(`${BASE}/admin`, { redirect: 'manual' });
+  assert.equal(r.status, 307);
+  assert.equal(r.headers.get('location'), '/portail');
+});
+
 test('déconnexion du portail', async () => {
   await portail('deconnexion');
   assert.equal((await portail('tableau')).r.status, 401);

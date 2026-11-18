@@ -14,7 +14,11 @@ const racine = path.join(__dirname, '..');
 const app = express();
 app.use(express.json({ limit: '6mb' }));
 
-const reecritures = JSON.parse(fs.readFileSync(path.join(racine, 'vercel.json'), 'utf8')).rewrites || [];
+const config = JSON.parse(fs.readFileSync(path.join(racine, 'vercel.json'), 'utf8'));
+for (const r of config.redirects || []) {
+  app.get(r.source, (req, res) => res.redirect(r.permanent ? 308 : 307, r.destination));
+}
+const reecritures = config.rewrites || [];
 for (const r of reecritures) {
   app.get(r.source, (req, res) => res.sendFile(path.join(racine, 'public', r.destination)));
 }

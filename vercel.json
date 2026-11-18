@@ -1,5 +1,9 @@
 {
   "regions": ["cdg1"],
+  "redirects": [
+    { "source": "/admin",      "destination": "/portail", "permanent": false },
+    { "source": "/admin.html", "destination": "/portail", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/succession",        "destination": "/succession.html" },
     { "source": "/divorce",           "destination": "/divorce.html" },
@@ -9,7 +13,6 @@
     { "source": "/etatcivil",         "destination": "/etatcivil.html" },
     { "source": "/etat-civil",        "destination": "/etat-civil.html" },
     { "source": "/lcbft",             "destination": "/lcbft.html" },
-    { "source": "/admin",             "destination": "/admin.html" },
     { "source": "/espace",            "destination": "/espace.html" },
     { "source": "/portail",           "destination": "/portail.html" }
   ],
@@ -73,12 +76,6 @@
     },
     {
       "source": "/lcbft",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/admin",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
