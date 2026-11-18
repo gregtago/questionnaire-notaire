@@ -426,6 +426,23 @@ test('RIB de l\'étude communiqué : email sans pièce jointe, remis dans l\'esp
   assert.ok(j.some(l => l.action === 'rib-etude-consulte' && l.demande === ref && l.reference === reference));
 });
 
+test('rester identifié 24 heures : session longue, mais RIB déposé seulement après une identification récente', async () => {
+  const a = await espace('demander-code', { email: 'samuel@example.org' });
+  const b = await espace('verifier-email', { ticket: a.d.ticket, code: a.d.codeEssai });
+  const c = await espace('verifier-code', { ticket: a.d.ticket, code: b.d.codesEssai[0], rester: true });
+  assert.equal(c.d.expireDans, 24 * 60 * 60 * 1000);
+  assert.equal((await espace('etat', { session: c.d.session })).r.status, 200);
+  assert.equal((await espace('depot-ouvrir', { session: c.d.session, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' })).r.status, 200, 'identification récente');
+  // La même session, le lendemain : elle ouvre l'espace, pas le dépôt d'un RIB.
+  const veille = sec.signerJeton('espace', { c: ['c-diai'], t: '+33612345678', d: Date.now() - 3 * 60 * 60 * 1000, l: 1 }, 60 * 1000);
+  assert.equal((await espace('etat', { session: veille })).r.status, 200);
+  const refus = await espace('depot-ouvrir', { session: veille, nature: 'rib', personne: 0, titulaire: 'Samuel DIAI' });
+  assert.equal(refus.r.status, 401);
+  assert.match(refus.d.error, /identification de moins de 20 minutes/);
+  // Sans la case, la session reste de 20 minutes.
+  assert.equal(sec.lireJeton('espace', await connecterClient('samuel@example.org')).l, undefined);
+});
+
 test('un client ne peut pas agir sur le dépôt d\'un autre', async () => {
   const autre = await connecterClient('vial@example.org');
   const mien = await connecterClient('samuel@example.org');

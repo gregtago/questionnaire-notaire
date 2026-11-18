@@ -157,6 +157,7 @@
           <label for="code">Code reçu par SMS</label>
           <input type="text" id="code" class="otp-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
         </div>
+        <label class="case" style="margin:0 0 16px;"><input type="checkbox" id="rester" checked><span>Rester identifié sur cet appareil pendant 24 heures, pour reprendre plus tard sans nouveaux codes. <strong>Décochez cette case sur un ordinateur partagé.</strong></span></label>
         <button type="submit" class="btn" id="btnCode">Valider</button>
         <div class="err" id="errCode"></div>
       </form>
@@ -176,7 +177,7 @@
     <button type="button" class="choix" id="mOrigine">
       <span><span class="t">Justifier l'origine des fonds <span class="pastille hidden" id="nbDemandes"></span></span><br><span class="d" id="dOrigine">Aucune demande en cours.</span></span><span class="fleche">→</span>
     </button>
-    <div class="pied">Votre session se ferme automatiquement au bout de 20 minutes d'inactivité. <button type="button" class="lien" id="btnQuitter" style="margin:0;font-size:11px;">Quitter</button></div>
+    <div class="pied"><span id="piedSession"></span> <button type="button" class="lien" id="btnQuitter" style="margin:0;font-size:11px;">Quitter et fermer ma session</button></div>
   </div>
 
   <!-- 4. RIB DE L'ÉTUDE -->
@@ -293,16 +294,24 @@ const montrer = (id) => { ECRANS.forEach(e => $(e).classList.toggle('hidden', e 
 // La session ne vit qu'en mémoire : fermer l'onglet la détruit.
 let session = null, ticket = null, etat = null, urlRib = null, minuterie = null;
 
-/** La session dure 20 minutes ; elle est prolongée tant que le client travaille à sa déclaration. */
-function poserSession(jeton, dureeMs) {
-  session = jeton;
+/**
+ * La session dure 20 minutes (prolongée tant que le client travaille à sa
+ * déclaration), ou 24 heures s'il a choisi de rester identifié : elle est
+ * alors gardée sur l'appareil, jusqu'à son terme ou jusqu'à « Quitter ».
+ */
+const GARDE = 'espace-session';
+let gardee = false;
+function poserSession(jeton, dureeMs, garder = gardee) {
+  session = jeton; gardee = garder;
   clearTimeout(minuterie);
   minuterie = setTimeout(() => expirer(), dureeMs);
+  if (garder) { try { localStorage.setItem(GARDE, JSON.stringify({ s: jeton, e: Date.now() + dureeMs })); } catch (e) { /* stockage refusé : session en mémoire */ } }
+  $('piedSession').textContent = garder ? 'Vous restez identifié sur cet appareil pendant 24 heures.' : 'Votre session se ferme automatiquement au bout de 20 minutes d\'inactivité.';
 }
-function expirer() {
+function expirer(message) {
   const enCours = !!decl;
   quitter();
-  $('errTel').textContent = 'Votre session a expiré.' + (enCours ? ' Votre déclaration est enregistrée : identifiez-vous pour la reprendre où vous l\'avez laissée.' : ' Merci de vous identifier à nouveau.');
+  $('errTel').textContent = message || ('Votre session a expiré.' + (enCours ? ' Votre déclaration est enregistrée : identifiez-vous pour la reprendre où vous l\'avez laissée.' : ' Merci de vous identifier à nouveau.'));
 }
 
 async function api(action, donnees) {
@@ -310,7 +319,11 @@ async function api(action, donnees) {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, session, ...donnees })
   });
-  if (r.status === 401) { expirer(); throw new Error('Votre session a expiré. Merci de vous identifier à nouveau.'); }
+  if (r.status === 401) {
+    const d = await r.json().catch(() => ({}));
+    expirer(/identification de moins/.test(d.error || '') ? d.error : '');
+    throw new Error(d.error || 'Votre session a expiré. Merci de vous identifier à nouveau.');
+  }
   return r;
 }
 async function apiJson(action, donnees) {
@@ -334,7 +347,8 @@ function lireFichier(f) {
 const euros = (n) => Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
 function quitter() {
-  session = null; ticket = null; etat = null; decl = null;
+  session = null; ticket = null; etat = null; decl = null; gardee = false;
+  try { localStorage.removeItem(GARDE); } catch (e) { /* rien à effacer */ }
   clearTimeout(minuterie); clearTimeout(attenteEnr);
   $('declRubriques').replaceChildren(); $('recap').replaceChildren();
   if (urlRib) { URL.revokeObjectURL(urlRib); urlRib = null; }
@@ -379,8 +393,9 @@ $('formCode').addEventListener('submit', async (e) => {
   $('errCode').textContent = '';
   occupe($('btnCode'), 'Vérification…');
   try {
-    const d = await apiJson('verifier-code', { ticket, code: $('code').value });
-    poserSession(d.session, d.expireDans);
+    const rester = $('rester').checked;
+    const d = await apiJson('verifier-code', { ticket, code: $('code').value, rester });
+    poserSession(d.session, d.expireDans, rester);
     await ouvrirMenu();
   } catch (err) { $('errCode').textContent = err.message; }
   finally { libre($('btnCode')); }
@@ -740,6 +755,13 @@ $('formSigner').addEventListener('submit', async (e) => {
   }
   finally { libre($('btnSigner')); }
 });
+
+// Retour sur un appareil où le client a choisi de rester identifié.
+try {
+  const g = JSON.parse(localStorage.getItem(GARDE) || 'null');
+  if (g && g.s && g.e > Date.now() + 5000) { poserSession(g.s, g.e - Date.now(), true); ouvrirMenu().catch(() => {}); }
+  else localStorage.removeItem(GARDE);
+} catch (e) { /* stockage indisponible */ }
 </script>
 </body>
 </html>

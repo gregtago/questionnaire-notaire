@@ -11,7 +11,8 @@
  *                    d'une fiche validée par le notaire, un code part par email
  *   verifier-email → ce code est bon : un second code part par SMS vers le
  *                    mobile validé
- *   verifier-code  → le code SMS ouvre une session de 20 minutes
+ *   verifier-code  → le code SMS ouvre une session de 20 minutes, ou de
+ *                    24 heures si le client choisit de rester identifié
  *   etat           → ce que le client peut faire
  *   rib-etude      → remet le RIB de l'étude (consigné au journal)
  *   depot-ouvrir / depot-piece / depot-clore → dépôt d'un RIB
@@ -42,6 +43,11 @@ const DUREE_SESSION = 20 * 60 * 1000;
 // Tant que le client travaille à sa déclaration, sa session est prolongée,
 // sans jamais dépasser deux heures depuis son identification.
 const DUREE_SESSION_MAX = 2 * 60 * 60 * 1000;
+// « Rester identifié sur cet appareil » : le client revient le lendemain sans
+// repasser par les deux codes. Les gestes sensibles restent gardés : déposer
+// un RIB exige une identification récente, signer exige un nouveau code SMS.
+const DUREE_SESSION_LONGUE = 24 * 60 * 60 * 1000;
+const IDENTIFICATION_RECENTE = 20 * 60 * 1000;
 const ESSAIS_MAX = 5;
 const PIECES_MAX = 10;
 
@@ -178,9 +184,11 @@ async function verifierCode(req, res) {
   if (!envoi) throw refus();
   await coffre.ecrireJson(chemin, { etape: 'utilise', e: 0, n: ESSAIS_MAX });
 
-  const session = sec.signerJeton('espace', { c: envoi.c, t: envoi.t, d: Date.now() }, DUREE_SESSION);
-  await coffre.journaliser({ acteur: 'client', action: 'connexion', telephone: sec.masquerTelephone(envoi.t), ip: sec.ipDe(req) });
-  res.json({ ok: true, session, expireDans: DUREE_SESSION });
+  const longue = req.body.rester === true;
+  const duree = longue ? DUREE_SESSION_LONGUE : DUREE_SESSION;
+  const session = sec.signerJeton('espace', { c: envoi.c, t: envoi.t, d: Date.now(), ...(longue ? { l: 1 } : {}) }, duree);
+  await coffre.journaliser({ acteur: 'client', action: 'connexion', telephone: sec.masquerTelephone(envoi.t), ...(longue ? { session: '24 h' } : {}), ip: sec.ipDe(req) });
+  res.json({ ok: true, session, expireDans: duree });
 }
 
 /* ------------------------------------------------------------------ */
@@ -196,11 +204,12 @@ async function ouvrirSession(req) {
   if (!s) throw erreurClient('Session expirée. Merci de vous identifier à nouveau.', 401);
   const fiches = (await annuaire.fichesOuvertesPourTelephone(s.t)).filter(f => s.c.includes(f.id));
   if (!fiches.length) throw erreurClient('Session expirée. Merci de vous identifier à nouveau.', 401);
-  return { tel: s.t, fiches, jeton: { c: s.c, t: s.t, d: s.d } };
+  return { tel: s.t, fiches, jeton: { c: s.c, t: s.t, d: s.d }, longue: s.l === 1, recente: Date.now() - (s.d || 0) <= IDENTIFICATION_RECENTE };
 }
 
 /** Nouveau jeton de 20 minutes, dans la limite de deux heures depuis l'identification. */
 function renouveler(session) {
+  if (session.longue) return {}; // une session de 24 heures ne se prolonge pas
   const reste = (session.jeton.d || 0) + DUREE_SESSION_MAX - Date.now();
   if (reste <= 60 * 1000) return {};
   const duree = Math.min(DUREE_SESSION, reste);
@@ -285,6 +294,9 @@ async function ribEtude(req, res) {
 
 async function depotOuvrir(req, res) {
   const session = await ouvrirSession(req);
+  // Un RIB déposé sert à virer des fonds : on ne s'en remet pas à une session
+  // ouverte la veille sur un appareil resté sans surveillance.
+  if (!session.recente) throw erreurClient('Par sécurité, le dépôt d\'un RIB demande une identification de moins de 20 minutes. Merci de vous identifier à nouveau.', 401);
   const f = personneChoisie(session, req.body.personne);
   if (!await sec.sousLimite('depot', session.tel, 10, 60 * 60 * 1000)) {
     throw erreurClient('Trop de dépôts. Merci de patienter.', 429);
