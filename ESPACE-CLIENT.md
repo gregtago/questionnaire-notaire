@@ -32,6 +32,19 @@ L'ancienne page `/admin` (envoi des questionnaires, protégée par le seul mot d
 - Portail : code d'accès + code à six chiffres du téléphone (TOTP), session de 12 heures.
 - Les avis par email au notaire ne contiennent jamais de pièce jointe ; les emails au client ne contiennent ni lien cliquable ni pièce jointe.
 
+## Déclaration d'origine des fonds (questionnaire LCB-FT signé)
+
+Une demande « Origine des fonds » du portail ouvre, dans l'espace client, le questionnaire LCB-FT (`api/_declaration.js`) :
+
+- **Montant attendu** : le montant fixé par le notaire figure en « V. Origine des fonds » ; le total déclaré ne peut pas lui être inférieur.
+- **Brouillon** : la saisie est enregistrée automatiquement au coffre, rattachée à la demande. Le client la retrouve en revenant, même depuis un autre appareil, après s'être identifié de nouveau. Les justificatifs sont enregistrés un à un ; il en revoit le nom, jamais le contenu. Une pièce retirée sort de la déclaration mais reste au coffre. La session (20 minutes) est prolongée tant qu'il travaille, dans la limite de deux heures.
+- **Suivi** : l'onglet « Demandes » indique « En cours — n pièces déposées » et permet de relancer le client par email.
+- **Signature** : après relecture du récapitulatif et engagement sur l'honneur, le client signe par un code SMS propre à cette signature, envoyé au mobile validé ; son nom est affiché. Le code ne vaut que pour l'empreinte SHA-256 de ce qui est signé (réponses, déclarations, empreinte de chaque pièce) : toute modification l'annule.
+- **Dossier de preuve** : la déclaration signée est figée en PDF au coffre (signataire, date, mobile masqué, adresse IP, empreinte), avec son empreinte et un sceau de l'enregistrement de signature ; le portail refuse de la remettre si ce contrôle échoue. Le signataire peut télécharger sa copie pendant 30 minutes et reçoit un email de confirmation portant l'empreinte.
+- **Valeur** : signature électronique *simple* (règlement eIDAS n° 910/2014, art. 3, 10° et art. 25, § 1), appréciée au regard des articles 1366 et 1367 du code civil. Ce n'est ni une signature avancée (art. 26) ni une signature qualifiée : la présomption de fiabilité de l'article 1367, alinéa 2, ne joue pas.
+
+Le questionnaire LCB-FT public (`/lcbft`, envoyé depuis l'onglet « Questionnaires ») reste inchangé.
+
 ## Variables d'environnement (Vercel)
 
 | Variable | Rôle |

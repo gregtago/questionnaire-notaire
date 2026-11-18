@@ -14,7 +14,10 @@
  *   verifier-code  → le code SMS ouvre une session de 20 minutes
  *   etat           → ce que le client peut faire
  *   rib-etude      → remet le RIB de l'étude (consigné au journal)
- *   depot-ouvrir / depot-piece / depot-clore → dépôt d'un RIB ou de justificatifs
+ *   depot-ouvrir / depot-piece / depot-clore → dépôt d'un RIB
+ *   declaration-* (api/_declaration.js)     → déclaration d'origine des fonds :
+ *                    brouillon repris d'une session à l'autre, justificatifs,
+ *                    signature par un code SMS
  *
  * Règles tenues ici :
  *   - la réponse à « demander-code » est la même que le numéro soit connu ou
@@ -30,12 +33,15 @@ const annuaire = require('./_annuaire');
 const sec = require('./_securite');
 const { filigraner, nouvelleReference } = require('./_filigrane');
 const {
-  MOTIFS, SOURCES, erreurClient, ribEtudeInfo, ribEtudeContenu,
+  MOTIFS, erreurClient, ribEtudeInfo, ribEtudeContenu,
   avisAuNotaire, envoyerEmail, enveloppe, euros
 } = require('./_metier');
 
 const DUREE_CODE = 10 * 60 * 1000;
 const DUREE_SESSION = 20 * 60 * 1000;
+// Tant que le client travaille à sa déclaration, sa session est prolongée,
+// sans jamais dépasser deux heures depuis son identification.
+const DUREE_SESSION_MAX = 2 * 60 * 60 * 1000;
 const ESSAIS_MAX = 5;
 const PIECES_MAX = 10;
 
@@ -172,7 +178,7 @@ async function verifierCode(req, res) {
   if (!envoi) throw refus();
   await coffre.ecrireJson(chemin, { etape: 'utilise', e: 0, n: ESSAIS_MAX });
 
-  const session = sec.signerJeton('espace', { c: envoi.c, t: envoi.t }, DUREE_SESSION);
+  const session = sec.signerJeton('espace', { c: envoi.c, t: envoi.t, d: Date.now() }, DUREE_SESSION);
   await coffre.journaliser({ acteur: 'client', action: 'connexion', telephone: sec.masquerTelephone(envoi.t), ip: sec.ipDe(req) });
   res.json({ ok: true, session, expireDans: DUREE_SESSION });
 }
@@ -190,7 +196,15 @@ async function ouvrirSession(req) {
   if (!s) throw erreurClient('Session expirée. Merci de vous identifier à nouveau.', 401);
   const fiches = (await annuaire.fichesOuvertesPourTelephone(s.t)).filter(f => s.c.includes(f.id));
   if (!fiches.length) throw erreurClient('Session expirée. Merci de vous identifier à nouveau.', 401);
-  return { tel: s.t, fiches };
+  return { tel: s.t, fiches, jeton: { c: s.c, t: s.t, d: s.d } };
+}
+
+/** Nouveau jeton de 20 minutes, dans la limite de deux heures depuis l'identification. */
+function renouveler(session) {
+  const reste = (session.jeton.d || 0) + DUREE_SESSION_MAX - Date.now();
+  if (reste <= 60 * 1000) return {};
+  const duree = Math.min(DUREE_SESSION, reste);
+  return { session: sec.signerJeton('espace', session.jeton, duree), expireDans: duree };
 }
 
 function personneChoisie(session, indice) {
@@ -210,21 +224,23 @@ async function demandesEnAttente(ids, nature = 'origine') {
 async function etat(req, res) {
   const session = await ouvrirSession(req);
   const ids = session.fiches.map(f => f.id);
-  const [rib, demandes, demandesRib, ribCommunique] = await Promise.all([
-    ribEtudeInfo(), demandesEnAttente(ids), demandesEnAttente(ids, 'rib'), demandesEnAttente(ids, 'rib-etude')
+  const [rib, demandes, demandesRib, ribCommunique, depots] = await Promise.all([
+    ribEtudeInfo(), demandesEnAttente(ids), demandesEnAttente(ids, 'rib'), demandesEnAttente(ids, 'rib-etude'), coffre.listerJson('depots/')
   ]);
+  // Déclaration commencée et pas encore signée : le client la reprend où il l'a laissée.
+  const brouillon = (d) => depots.find(x => x.nature === 'origine' && x.statut === 'ouvert' && x.demandeId === d.id);
   res.json({
     ok: true,
     personnes: session.fiches.map((f, i) => ({ indice: i, nom: f.nom, prenom: f.prenom })),
     ribEtudeDisponible: !!rib.courant,
     demandes: demandes.map(d => ({
       id: d.id, personne: ids.indexOf(d.contactId), motif: MOTIFS[d.motif] || d.motif,
-      montant: d.montant, justificatifs: !!d.justificatifs, creeLe: d.creeLe
+      montant: d.montant, justificatifs: !!d.justificatifs, creeLe: d.creeLe, reference: d.reference,
+      ...(brouillon(d) ? { commenceeLe: brouillon(d).ouvertLe, enregistreeLe: brouillon(d).enregistreLe, pieces: brouillon(d).pieces.length } : {})
     })),
     // Personnes dont l'étude attend le RIB.
     ribDemande: [...new Set(demandesRib.map(d => ids.indexOf(d.contactId)))],
-    ribEtudeCommunique: ribCommunique.length > 0,
-    sources: SOURCES
+    ribEtudeCommunique: ribCommunique.length > 0
   });
 }
 
@@ -287,22 +303,6 @@ async function depotOuvrir(req, res) {
       depot.iban = sec.ibanValide(req.body.iban);
       if (!depot.iban) throw erreurClient('IBAN invalide : vérifiez la saisie');
     }
-  } else if (depot.nature === 'origine') {
-    const demande = (await demandesEnAttente([f.id])).find(d => d.id === req.body.demande);
-    if (!demande) throw erreurClient('Demande introuvable ou déjà traitée');
-    if (req.body.atteste !== true) throw erreurClient('L\'attestation sur l\'honneur est requise');
-    const sources = (Array.isArray(req.body.sources) ? req.body.sources : []).slice(0, 12).map(s => ({
-      type: s.type, montant: Math.round(Number(s.montant) * 100) / 100,
-      precision: String(s.precision || '').trim().slice(0, 300)
-    }));
-    if (!sources.length || sources.some(s => !SOURCES[s.type] || !(s.montant > 0))) {
-      throw erreurClient('Indiquez au moins une origine, avec son montant');
-    }
-    const total = sources.reduce((a, s) => a + s.montant, 0);
-    if (total + 0.005 < demande.montant) {
-      throw erreurClient(`Le total déclaré (${euros(total)}) est inférieur au montant à justifier (${euros(demande.montant)})`);
-    }
-    Object.assign(depot, { demandeId: demande.id, sources, total, justificatifsAttendus: !!demande.justificatifs });
   } else {
     throw erreurClient('Nature de dépôt inconnue');
   }
@@ -324,25 +324,37 @@ async function depotDuClient(req, session) {
 async function depotPiece(req, res) {
   const session = await ouvrirSession(req);
   const depot = await depotDuClient(req, session);
-  if (depot.pieces.length >= PIECES_MAX) throw erreurClient(`${PIECES_MAX} pièces au maximum par dépôt`);
+  const max = depot.piecesMax || PIECES_MAX;
+  if (depot.pieces.length >= max) throw erreurClient(`${max} pièces au maximum par dépôt`);
+  if (!await sec.sousLimite('piece', session.tel, 60, 60 * 60 * 1000)) throw erreurClient('Trop de fichiers déposés. Merci de patienter.', 429);
 
   const { buf, type, nom } = sec.fichierRecu(req.body.fichier);
   const id = coffre.identifiant();
   await coffre.ecrire(`pieces/${depot.id}/${id}.bin`, buf);
   depot.pieces.push({
-    id, nom, type, taille: buf.length,
+    id, nom, type, taille: buf.length, deposeLe: new Date().toISOString(),
     empreinte: crypto.createHash('sha256').update(buf).digest('hex')
   });
   await coffre.ecrireJson(`depots/${depot.id}.json`, depot);
-  res.json({ ok: true, pieces: depot.pieces.length });
+  res.json({
+    ok: true, pieces: depot.pieces.length,
+    liste: depot.pieces.map(p => ({ id: p.id, nom: p.nom, taille: p.taille, deposeLe: p.deposeLe })),
+    ...(depot.nature === 'origine' ? renouveler(session) : {})
+  });
 }
 
 async function depotClore(req, res) {
   const session = await ouvrirSession(req);
   const depot = await depotDuClient(req, session);
-  const pieceRequise = depot.nature === 'rib' || depot.justificatifsAttendus;
-  if (pieceRequise && !depot.pieces.length) throw erreurClient('Joignez au moins une pièce avant de valider');
+  // Une déclaration d'origine des fonds ne se clôt que par sa signature.
+  if (depot.nature !== 'rib') throw erreurClient('Cette déclaration doit être signée');
+  if (!depot.pieces.length) throw erreurClient('Joignez au moins une pièce avant de valider');
+  await cloreDepot(req, depot);
+  res.json({ ok: true });
+}
 
+/** Clôture d'un dépôt : RIB déposé, ou déclaration d'origine des fonds signée. */
+async function cloreDepot(req, depot) {
   depot.statut = 'clos';
   depot.closLe = new Date().toISOString();
   await coffre.ecrireJson(`depots/${depot.id}.json`, depot);
@@ -360,7 +372,7 @@ async function depotClore(req, res) {
   depot.demandes = repondues.filter(d => d && d.reference).map(d => d.reference);
   if (depot.demandes.length) await coffre.ecrireJson(`depots/${depot.id}.json`, depot);
 
-  const objet = depot.nature === 'rib' ? 'RIB déposé' : 'Origine des fonds justifiée';
+  const objet = depot.nature === 'rib' ? 'RIB déposé' : 'Déclaration d\'origine des fonds signée';
   await coffre.journaliser({
     acteur: 'client', action: depot.nature === 'rib' ? 'rib-client-depose' : 'origine-fonds-deposee',
     nom: depot.nomClient, telephone: sec.masquerTelephone(depot.telephone),
@@ -369,9 +381,10 @@ async function depotClore(req, res) {
   });
   await avisAuNotaire(req, `Espace client — ${objet} par ${depot.nomClient}`, objet, [
     `${depot.nomClient} vient de déposer ${depot.pieces.length} pièce(s) dans l'espace client.`,
-    depot.nature === 'origine' ? `Total déclaré : ${euros(depot.total)}.` : `Titulaire indiqué : ${depot.titulaire}.`
+    depot.nature === 'origine'
+      ? `Déclaration signée électroniquement par ${depot.signature.signataire}. Total déclaré : ${euros(depot.total)}.`
+      : `Titulaire indiqué : ${depot.titulaire}.`
   ]);
-  res.json({ ok: true });
 }
 
 /* ------------------------------------------------------------------ */
@@ -379,7 +392,8 @@ async function depotClore(req, res) {
 const ACTIONS = {
   'demander-code': demanderCode, 'verifier-email': verifierEmail, 'verifier-code': verifierCode, etat,
   'rib-etude': ribEtude, 'depot-ouvrir': depotOuvrir,
-  'depot-piece': depotPiece, 'depot-clore': depotClore
+  'depot-piece': depotPiece, 'depot-clore': depotClore,
+  ...require('./_declaration')({ ouvrirSession, demandesEnAttente, nomDe, cloreDepot, renouveler })
 };
 
 const clients = enveloppe(async (req, res) => {

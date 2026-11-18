@@ -48,6 +48,9 @@
     .etat.a-valider, .etat.en-attente { background: #f6f6f4; color: #666; border: 1px solid #e2e2df; }
     .etat.a-revalider, .etat.nouveau { background: #fff8e6; color: #8a6200; border: 1px solid #f0d58a; }
     .gris { color: #999; font-size: 12px; }
+    .signe { color: #15803d; font-size: 12px; margin-top: 4px; }
+    .empreinte { font-family: ui-monospace, Menlo, monospace; font-size: 10px; word-break: break-all; }
+    .etat.en-cours { background: #eef4ff; color: #1d4ed8; border: 1px solid #c7d7fb; }
     .vide { color: #999; text-align: center; padding: 34px 0; }
     .barre { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
     .barre .fg { margin: 0; flex: 1; min-width: 200px; }
@@ -167,7 +170,7 @@
 
     <div class="card hidden" id="o-demandes">
       <p class="intro">Pour adresser une demande, ouvrez l'onglet « Clients » et choisissez « Demander le RIB » ou « Origine des fonds » sur une fiche validée.</p>
-      <table><thead><tr><th>Demandé le</th><th>Client</th><th>Objet</th><th>Montant</th><th>État</th></tr></thead><tbody id="tDemandes"></tbody></table>
+      <table><thead><tr><th>Demandé le</th><th>Client</th><th>Objet</th><th>Montant</th><th>État</th><th></th></tr></thead><tbody id="tDemandes"></tbody></table>
     </div>
 
     <div class="card hidden" id="o-rib">
@@ -394,7 +397,7 @@ function fenetreDemande(f) {
   const justif = el('input', { type: 'checkbox', checked: true });
   const prevenir = el('input', { type: 'checkbox', checked: !!f.email, disabled: !f.email });
   fenetre(`Origine des fonds — ${f.prenom} ${f.nom}`,
-    'Le client verra cette demande dans son espace, déclarera la provenance des fonds et joindra ses justificatifs.',
+    'Le client remplit dans son espace le questionnaire LCB-FT, où ce montant figure en « V. Origine des fonds » : il ne peut pas déclarer moins. Sa saisie et ses justificatifs sont enregistrés au fur et à mesure ; il peut s\'y reprendre à plusieurs fois, puis signe sa déclaration par un code reçu par SMS.',
     [el('div', { className: 'fg' }, el('label', { htmlFor: 'dMotif', textContent: 'Motif' }), motif),
      el('div', { className: 'fg' }, el('label', { htmlFor: 'dMontant', textContent: 'Montant à justifier (€)' }), montant),
      el('label', { className: 'case' }, justif, el('span', { textContent: 'Demander des documents justificatifs' })),
@@ -466,6 +469,14 @@ function afficherPieces() {
       if (d.iban) objet.append(el('div', { className: 'gris', textContent: 'IBAN : ' + d.iban.replace(/(.{4})/g, '$1 ').trim() }));
     } else {
       objet.append(el('strong', { textContent: 'Origine des fonds' }), el('div', { className: 'gris', textContent: 'Total déclaré : ' + euros(d.total) }));
+      if (d.signature) {
+        const url = `/api/espace?zone=portail&action=declaration&depot=${d.id}`;
+        objet.append(
+          el('div', { className: 'signe', textContent: `Signée électroniquement par ${d.signature.signataire} le ${date(d.signature.signeLe)} — code SMS au ${d.signature.mobile}` }),
+          el('div', {}, el('a', { href: url, target: '_blank', rel: 'noopener', textContent: 'Déclaration signée (PDF)', onclick: () => marquerVu(d) }), ' ',
+            el('a', { href: url + '&telecharger=1', className: 'gris', textContent: '(télécharger)', onclick: () => marquerVu(d) })),
+          el('div', { className: 'gris empreinte', textContent: 'Empreinte : ' + d.signature.empreinte }));
+      }
       (d.sources || []).forEach(s => objet.append(el('div', { className: 'gris', textContent: `${s.libelle} — ${euros(s.montant)}${s.precision ? ' — ' + s.precision : ''}` })));
     }
     if (d.demandes && d.demandes.length) objet.append(el('div', { className: 'gris', textContent: 'En réponse à la demande ' + d.demandes.join(', ') }));
@@ -490,10 +501,26 @@ async function marquerVu(d) {
 
 /* ── Demandes ── */
 function afficherDemandes() {
-  const lignes = donnees.demandes.map(d => el('tr', {}, el('td', {}, date(d.creeLe), ...(d.reference ? [el('div', { className: 'gris', textContent: d.reference })] : [])), el('td', {}, el('strong', { textContent: d.nomClient })),
-    el('td', {}, d.nature === 'origine' ? 'Origine des fonds — ' + d.motifLibelle : d.motifLibelle), el('td', {}, d.nature === 'origine' ? euros(d.montant) : '—'),
-    el('td', {}, el('span', { className: 'etat ' + d.statut, textContent: d.statut === 'repondue' ? (d.nature === 'rib-etude' ? `Consulté le ${date(d.reponduLe)} — exemplaire ${d.exemplaire}` : 'Répondue le ' + date(d.reponduLe)) : (d.nature === 'rib-etude' ? 'Pas encore consulté' : 'En attente du client') }))));
-  $('tDemandes').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune demande.' }))]));
+  const lignes = donnees.demandes.map(d => {
+    const attente = d.statut !== 'repondue';
+    const libelle = !attente ? (d.nature === 'rib-etude' ? `Consulté le ${date(d.reponduLe)} — exemplaire ${d.exemplaire}` : (d.nature === 'origine' ? 'Signée le ' : 'Répondue le ') + date(d.reponduLe))
+      : d.nature === 'rib-etude' ? 'Pas encore consulté'
+      : d.enCours ? `En cours — ${d.enCours.pieces} pièce${d.enCours.pieces > 1 ? 's' : ''} déposée${d.enCours.pieces > 1 ? 's' : ''}`
+      : 'En attente du client';
+    const etat = el('td', {}, el('span', { className: 'etat ' + (attente && d.enCours ? 'en-cours' : d.statut), textContent: libelle }));
+    if (attente && d.enCours) etat.append(el('div', { className: 'gris', textContent: `commencée le ${date(d.enCours.commenceeLe)}` + (d.enCours.enregistreeLe ? `, dernière saisie le ${date(d.enCours.enregistreeLe)}` : '') + ' — pas encore signée' }));
+    const action = el('td', { className: 'actions' });
+    if (attente && d.nature === 'origine') action.append(el('button', { type: 'button', className: 'btn-ghost', textContent: 'Relancer', onclick: () => fenetreRelancer(d) }));
+    return el('tr', {}, el('td', {}, date(d.creeLe), ...(d.reference ? [el('div', { className: 'gris', textContent: d.reference })] : [])), el('td', {}, el('strong', { textContent: d.nomClient })),
+      el('td', {}, d.nature === 'origine' ? 'Origine des fonds — ' + d.motifLibelle : d.motifLibelle), el('td', {}, d.nature === 'origine' ? euros(d.montant) : '—'), etat, action);
+  });
+  $('tDemandes').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 6, className: 'vide', textContent: 'Aucune demande.' }))]));
+}
+function fenetreRelancer(d) {
+  fenetre(`Relancer ${d.nomClient}`,
+    `Le client reçoit un rappel par email (sans lien ni pièce jointe) pour la demande ${d.reference || ''} : ${euros(d.montant)} à justifier.` + (d.enCours ? ' Sa déclaration est commencée : il la reprendra où il l\'a laissée.' : ''),
+    [], 'Envoyer le rappel',
+    async () => { const r = await api('demande-relancer', { id: d.id }); alerteEnvoi = `Rappel de la demande ${r.demande} envoyé à ${r.email}.`; });
 }
 
 /* ── RIB de l'étude ── */
@@ -521,7 +548,7 @@ const ACTIONS = {
   'code-envoye': 'Code SMS envoyé', 'code-email-envoye': 'Code email envoyé', 'code-refuse-email-non-valide': 'Adresse non reconnue : aucun code envoyé', 'code-non-envoye-echec-sms': 'Code SMS non parti (échec d\'envoi)',
   'code-refuse-numero-non-valide': 'Numéro non reconnu : aucun code envoyé', connexion: 'Connexion à l\'espace client',
   'rib-etude-consulte': 'RIB de l\'étude consulté', 'rib-client-depose': 'RIB du client déposé',
-  'origine-fonds-deposee': 'Origine des fonds déposée', 'portail-connexion': 'Connexion au portail',
+  'origine-fonds-deposee': 'Origine des fonds : déclaration et pièces reçues', 'portail-connexion': 'Connexion au portail',
   'portail-refus': 'Connexion au portail refusée', 'portail-telephone-enrole': 'Téléphone enrôlé',
   'fiche-validee': 'Fiche validée', 'validation-retiree': 'Validation retirée', 'rib-etude-depose': 'RIB de l\'étude déposé',
   'demande-origine-fonds': 'Demande d\'origine des fonds', 'piece-consultee': 'Pièce consultée (filigranée)',
@@ -529,7 +556,10 @@ const ACTIONS = {
   'demande-rib': 'RIB demandé au client (email)', 'rib-etude-communique': 'RIB de l\'étude communiqué (email)',
   'fiche-saisie': 'Fiche saisie', 'fiche-saisie-maj': 'Fiche mise à jour', 'fiche-modifiee': 'Fiche modifiée',
   'fiche-mise-de-cote': 'Fiche supprimée du portail', 'fiche-restauree': 'Fiche restaurée',
-  'questionnaire-envoye': 'Questionnaire envoyé (email)'
+  'questionnaire-envoye': 'Questionnaire envoyé (email)',
+  'declaration-commencee': 'Déclaration d\'origine des fonds commencée', 'code-signature-envoye': 'Code de signature envoyé (SMS)',
+  'declaration-signee': 'Déclaration d\'origine des fonds signée (code SMS)', 'declaration-consultee': 'Déclaration signée consultée',
+  'declaration-consultee-alteree': 'DÉCLARATION SIGNÉE : CONTRÔLE D\'INTÉGRITÉ EN ÉCHEC'
 };
 const ACTEURS = { client: 'Client', notaire: 'Notaire', inconnu: 'Inconnu' };
 async function chargerJournal() {
@@ -538,7 +568,7 @@ async function chargerJournal() {
     const { lignes } = await api('journal');
     $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.questionnaire, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
+      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.questionnaire, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.empreinte ? 'empreinte ' + l.empreinte.slice(0, 16) + '…' : '', l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
       : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
   } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
 }

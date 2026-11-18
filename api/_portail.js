@@ -28,6 +28,7 @@ const {
 } = require('./_metier');
 const { filigraner, filigranerPiece, nouvelleReference } = require('./_filigrane');
 const questionnaires = require('./_questionnaires');
+const declaration = require('./_declaration');
 
 const DUREE_SESSION = 12 * 60 * 60 * 1000;
 const TOTP = 'portail/totp.json';
@@ -131,6 +132,11 @@ async function tableau(req, res) {
   const [fiches, demandes, depots, rib] = await Promise.all([
     annuaire.listerFiches(), coffre.listerJson('demandes/'), coffre.listerJson('depots/'), ribEtudeInfo()
   ]);
+  // Déclaration commencée par le client et pas encore signée : où il en est.
+  const enCours = (d) => {
+    const b = d.statut === 'en-attente' && depots.find(x => x.nature === 'origine' && x.statut === 'ouvert' && x.demandeId === d.id);
+    return b ? { enCours: { commenceeLe: b.ouvertLe, enregistreeLe: b.enregistreLe, pieces: b.pieces.length } } : {};
+  };
   const recent = (a, b, champ) => ((a[champ] || '') < (b[champ] || '') ? 1 : -1);
   res.json({
     ok: true,
@@ -141,10 +147,10 @@ async function tableau(req, res) {
       etat: f.etat, valideeLe: f.valideeLe
     })),
     demandes: demandes.sort((a, b) => recent(a, b, 'creeLe')).map(d => ({
-      ...d, nature: d.nature || 'origine',
+      ...d, nature: d.nature || 'origine', ...enCours(d),
       motifLibelle: d.nature === 'rib' ? 'RIB du client' : d.nature === 'rib-etude' ? 'RIB de l\'étude communiqué' : (MOTIFS[d.motif] || d.motif)
     })),
-    depots: depots.filter(d => d.statut === 'clos').sort((a, b) => recent(a, b, 'closLe')).map(d => ({
+    depots: depots.filter(d => d.statut === 'clos').sort((a, b) => recent(a, b, 'closLe')).map(({ saisie, piecesRetirees, ...d }) => ({
       ...d, telephone: sec.masquerTelephone(d.telephone),
       sources: (d.sources || []).map(s => ({ ...s, libelle: SOURCES[s.type] || s.type }))
     })),
@@ -222,24 +228,44 @@ async function demandeCreer(req, res) {
   await coffre.ecrireJson(`demandes/${demande.id}.json`, demande);
   await coffre.journaliser({ acteur: 'notaire', action: 'demande-origine-fonds', nom: demande.nomClient, demande: demande.reference, montant, ip: sec.ipDe(req) });
 
-  let prevenu = false;
-  if (req.body.prevenir === true && f.email) {
-    const site = adresseDuSite(req).replace(/^https?:\/\//, '');
-    prevenu = await envoyerEmail({
-      a: f.email,
-      sujet: 'Origine des fonds — justificatifs à me transmettre',
-      titre: 'Origine des fonds',
-      sousTitre: MOTIFS[demande.motif],
-      corpsHtml:
-        `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` +
-        `<p style="margin:0 0 14px;">Dans le cadre de votre dossier, je vous remercie de bien vouloir me justifier l'origine des fonds à hauteur de <strong>${euros(montant)}</strong>.</p>` +
-        `<p style="margin:0 0 14px;">Référence de ma demande : <strong>${demande.reference}</strong>.</p>` +
-        `<p style="margin:0 0 14px;">Vous pouvez le faire en ligne, depuis l'espace client de l'office : ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>, puis identifiez-vous avec votre numéro de mobile. Un code vous sera adressé par SMS.</p>` +
-        '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable. Je ne vous demanderai jamais de mot de passe ni de coordonnées bancaires par email.</p>' +
-        '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
-    });
-  }
+  const prevenu = req.body.prevenir === true && !!f.email && await emailOrigine(req, f, demande);
   res.json({ ok: true, prevenu });
+}
+
+/** Email au client : la déclaration se fait dans l'espace client, en une ou plusieurs fois. */
+function emailOrigine(req, f, demande, relance = false) {
+  const site = adresseDuSite(req).replace(/^https?:\/\//, '');
+  return envoyerEmail({
+    a: f.email,
+    sujet: `${relance ? 'Rappel — ' : ''}Origine des fonds — déclaration à compléter et à signer`,
+    titre: 'Origine des fonds',
+    sousTitre: MOTIFS[demande.motif] || demande.motif,
+    corpsHtml:
+      `<p style="margin:0 0 14px;">Bonjour ${sec.echapper(f.prenom)},</p>` +
+      `<p style="margin:0 0 14px;">Dans le cadre de votre dossier, ${relance ? 'je reste dans l\'attente de votre déclaration sur' : 'je vous remercie de bien vouloir me déclarer et me justifier'} l'origine des fonds à hauteur de <strong>${euros(demande.montant)}</strong>.</p>` +
+      `<p style="margin:0 0 14px;">Référence de ma demande : <strong>${demande.reference}</strong>.</p>` +
+      `<p style="margin:0 0 14px;">Vous le faites en ligne, dans l'espace client de l'office : ouvrez votre navigateur et saisissez vous-même l'adresse <strong>${sec.echapper(site)}/espace</strong>. Indiquez votre adresse email : vous recevrez un premier code par email, puis un second par SMS sur votre téléphone mobile.</p>` +
+      '<p style="margin:0 0 14px;">Vous pouvez vous y prendre en plusieurs fois : votre saisie et vos justificatifs sont enregistrés au fur et à mesure, et vous les retrouvez en revenant, même depuis un autre appareil. Une fois votre déclaration complète, vous la signez par un code reçu par SMS.</p>' +
+      '<p style="margin:0 0 14px;font-size:12px;color:#888;">Par prudence, cet email ne contient aucun lien cliquable. Je ne vous demanderai jamais de mot de passe ni de coordonnées bancaires par email, ni de me communiquer un code reçu par SMS.</p>' +
+      '<p style="margin:22px 0 0;">Bien cordialement,<br><strong>Grégoire TAGOT | notaire</strong></p>'
+  });
+}
+
+/** Rappel d'une demande d'origine des fonds restée sans réponse. */
+async function demandeRelancer(req, res) {
+  const id = String(req.body.id || '');
+  const demande = /^[0-9a-f]{24}$/.test(id) && await coffre.lireJson(`demandes/${id}.json`);
+  if (!demande || (demande.nature || 'origine') !== 'origine' || demande.statut !== 'en-attente') throw erreurClient('Cette demande n\'est plus en attente');
+  const f = await annuaire.ficheOuverte(demande.contactId);
+  if (!f) throw erreurClient('La fiche de ce client n\'est plus validée : validez-la avant de le relancer');
+  if (!f.email) throw erreurClient('Aucune adresse email sur cette fiche');
+  const envoye = await emailOrigine(req, f, demande, true);
+  await coffre.journaliser({
+    acteur: 'notaire', action: 'demande-origine-fonds', nom: demande.nomClient, demande: demande.reference, montant: demande.montant,
+    relance: true, destinataire: f.email, ...(envoye ? {} : { email: 'non-parti' }), ip: sec.ipDe(req)
+  });
+  if (!envoye) throw erreurClient(`Le rappel à ${f.email} n'a pas pu partir. Réessayez dans quelques minutes.`, 502);
+  res.json({ ok: true, email: f.email, demande: demande.reference });
 }
 
 /**
@@ -349,6 +375,18 @@ async function telechargement(req, res) {
     if (!rib) throw erreurClient('Aucun RIB déposé', 404);
     return envoyerFichier(res, rib, q.telecharger === '1');
   }
+  if (q.action === 'declaration') {
+    // La déclaration signée, telle qu'elle a été figée au coffre à la signature.
+    const depot = /^[0-9a-f]{24}$/.test(q.depot || '') && await coffre.lireJson(`depots/${q.depot}.json`);
+    const signee = await declaration.lireSignee(depot);
+    if (!signee) throw erreurClient('Déclaration inconnue', 404);
+    await coffre.journaliser({
+      acteur: 'notaire', action: signee.intacte ? 'declaration-consultee' : 'declaration-consultee-alteree',
+      nom: depot.nomClient, depot: depot.id, demande: depot.signature.demande, ip: sec.ipDe(req)
+    });
+    if (!signee.intacte) throw erreurClient('Le contrôle d\'intégrité de cette déclaration a échoué : son empreinte ne correspond plus à celle de la signature.', 409);
+    return envoyerFichier(res, { buf: signee.pdf, type: 'application/pdf', nom: `Déclaration origine des fonds — ${depot.nomClient} — ${depot.signature.demande}.pdf` }, q.telecharger === '1');
+  }
   if (q.action === 'piece') {
     if (!/^[0-9a-f]{24}$/.test(q.depot || '') || !/^[0-9a-f]{24}$/.test(q.piece || '')) throw erreurClient('Pièce inconnue', 404);
     const depot = await coffre.lireJson(`depots/${q.depot}.json`);
@@ -374,7 +412,7 @@ async function telechargement(req, res) {
 /* ------------------------------------------------------------------ */
 
 const PUBLIQUES = { etat: etatConnexion, connexion, 'enroler-debut': enrolerDebut, 'enroler-fin': enrolerFin, deconnexion };
-const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-rib': demandeRib, 'rib-communiquer': ribCommuniquer, 'depot-vu': depotVu, 'questionnaire-envoyer': questionnaires.envoyerQuestionnaire, journal, 'liaison-sms': liaisonSms };
+const PROTEGEES = { tableau, valider, retirer, 'fiche-creer': ficheCreer, 'fiche-modifier': ficheModifier, 'fiche-ecarter': ficheEcarter, 'fiche-restaurer': ficheRestaurer, 'rib-deposer': ribDeposer, 'demande-creer': demandeCreer, 'demande-relancer': demandeRelancer, 'demande-rib': demandeRib, 'rib-communiquer': ribCommuniquer, 'depot-vu': depotVu, 'questionnaire-envoyer': questionnaires.envoyerQuestionnaire, journal, 'liaison-sms': liaisonSms };
 
 module.exports = enveloppe(async (req, res) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
