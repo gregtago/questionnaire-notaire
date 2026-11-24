@@ -353,8 +353,22 @@ async function liaisonSms(req, res) {
   res.json({ ok: true, liaison: await require('./_sms').diagnostic() });
 }
 
+/**
+ * Journal des trois derniers mois. Le filtre (nom d'un client, référence d'une
+ * demande, adresse email…) s'applique avant la limite de 400 lignes : tous les
+ * mots saisis doivent figurer sur la ligne, sans égard aux accents ni à la casse.
+ */
+const sansAccent = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 async function journal(req, res) {
-  res.json({ ok: true, lignes: (await coffre.lireJournal(3)).slice(0, 400) });
+  const mots = sansAccent(req.body.filtre).slice(0, 80).split(/\s+/).filter(Boolean);
+  let lignes = await coffre.lireJournal(3);
+  if (mots.length) {
+    lignes = lignes.filter(l => {
+      const texte = sansAccent([l.nom, l.destinataire, l.demande, l.reference, l.telephone, l.fichier, l.questionnaire, l.action, l.ip].filter(Boolean).join(' '));
+      return mots.every(m => texte.includes(m));
+    });
+  }
+  res.json({ ok: true, lignes: lignes.slice(0, 400) });
 }
 
 /* ------------------------------------------------------------------ */
