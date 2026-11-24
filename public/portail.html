@@ -31,6 +31,10 @@
     .btn:hover { background: #333; } .btn:disabled { background: #999; cursor: not-allowed; }
     .btn-ghost { background: #fff; border: 1px solid #ddd; color: #555; font-size: 11px; padding: 6px 12px; border-radius: 4px; cursor: pointer; letter-spacing: .05em; text-transform: uppercase; font-family: inherit; text-decoration: none; display: inline-block; white-space: nowrap; }
     .btn-ghost:hover { border-color: #111; color: #111; }
+    .btn-ghost.attente { background: #fff4e0; border-color: #e8a33d; color: #9a5b00; }
+    .btn-ghost.regle { background: #f0fdf4; border-color: #86d9a3; color: #15803d; }
+    .legende { display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1px solid #ddd; background: #fff; margin: 0 4px 0 10px; vertical-align: baseline; }
+    .legende.attente { background: #fff4e0; border-color: #e8a33d; } .legende.regle { background: #f0fdf4; border-color: #86d9a3; }
     .err { color: #c0392b; font-size: 13px; margin-top: 10px; min-height: 18px; }
     .hidden { display: none !important; }
     .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -147,7 +151,8 @@
         <button type="button" class="btn" id="btnAjouterClient">Ajouter un client</button>
       </div>
       <div class="defile"><table><thead><tr><th>Client</th><th>Mobile</th><th>Email</th><th>Espace client</th><th></th></tr></thead><tbody id="tClients"></tbody></table></div>
-      <p class="gris" style="margin-top:14px;">Les fiches proviennent du dossier « Clients » de votre carnet d'adresses Outlook. Valider une fiche, c'est attester que son adresse email et son numéro de mobile sont bien ceux du client : il s'identifie par un code reçu à cette adresse, puis par un code reçu sur ce mobile.</p>
+      <p class="gris" style="margin-top:14px;">Boutons « RIB de l'office », « Demander le RIB » et « Origine des fonds » :<span class="legende"></span>rien n'a été demandé<span class="legende attente"></span>demandé, en attente du client<span class="legende regle"></span>réglé (RIB consulté, RIB reçu, déclaration signée). Survolez un bouton pour la date et la référence.</p>
+      <p class="gris" style="margin-top:8px;">Les fiches proviennent du dossier « Clients » de votre carnet d'adresses Outlook. Valider une fiche, c'est attester que son adresse email et son numéro de mobile sont bien ceux du client : il s'identifie par un code reçu à cette adresse, puis par un code reçu sur ce mobile.</p>
     </div>
 
     <div class="card hidden" id="o-pieces">
@@ -191,6 +196,7 @@
     </div>
 
     <div class="card hidden" id="o-journal">
+      <div class="barre"><div class="fg"><input type="search" id="filtreJournal" placeholder="Filtrer le journal : nom d'un client, référence d'une demande, email…" aria-label="Filtrer le journal"></div></div>
       <div class="barre"><button type="button" class="btn-ghost" id="btnLiaison">Tester la liaison SMS</button><span class="gris" id="txtLiaison"></span></div>
       <div class="defile"><table><thead><tr><th>Date</th><th>Qui</th><th>Événement</th><th>Détail</th></tr></thead><tbody id="tJournal"></tbody></table></div>
     </div>
@@ -296,14 +302,15 @@ function afficherClients() {
         actions.append(bouton('Restaurer', () => fenetreRestaurer(f)));
       } else if (f.etat === 'ouverte') {
         actions.append(
-          bouton('Communiquer le RIB de l\'office', () => fenetreEnvoyerRib(f)),
-          bouton('Demander le RIB', () => fenetreDemanderRib(f)),
-          el('button', { type: 'button', className: 'btn-ghost', textContent: 'Origine des fonds', onclick: () => fenetreDemande(f) }),
+          suivi(bouton('Communiquer le RIB de l\'office', () => fenetreEnvoyerRib(f)), f, 'rib-etude'),
+          suivi(bouton('Demander le RIB', () => fenetreDemanderRib(f)), f, 'rib'),
+          suivi(bouton('Origine des fonds', () => fenetreDemande(f)), f, 'origine'),
           el('button', { type: 'button', className: 'btn-ghost', textContent: 'Retirer', onclick: () => fenetreRetirer(f) }));
       } else {
         actions.append(el('button', { type: 'button', className: 'btn-ghost', textContent: 'Valider', onclick: () => fenetreValider(f) }));
       }
       if (f.etat !== 'a-supprimer' && f.email) actions.append(bouton('Questionnaire', () => questionnairePour(f)));
+      actions.append(bouton('Journal', () => journalDe(f)));
       if (f.etat !== 'a-supprimer') actions.append(bouton('Modifier', () => fenetreFiche(f)), bouton('Supprimer', () => fenetreEcarter(f)));
       const tel = el('td', { className: 'tel' }, fmtTel(f.telephone) || '—');
       if (f.telephone && !f.telephoneExploitable) tel.append(el('div', { className: 'gris', textContent: 'pas un mobile exploitable : à corriger (Modifier)' }));
@@ -314,6 +321,28 @@ function afficherClients() {
         ...(f.nomNaissance ? [el('div', { className: 'gris', textContent: 'naissance : ' + f.nomNaissance })] : [])), tel, el('td', { className: 'mail' }, f.email || '—'), etat, actions);
     });
   $('tClients').replaceChildren(...(lignes.length ? lignes : [el('tr', {}, el('td', { colSpan: 5, className: 'vide', textContent: 'Aucune fiche.' }))]));
+}
+/**
+ * Couleur d'un bouton de demande selon ce qui a été fait pour ce client :
+ * gris, rien ; orange, demandé et en attente ; vert, réglé.
+ */
+const SUIVI = {
+  'rib-etude': { attente: 'Communiqué le', regle: 'Consulté par le client le', encore: 'pas encore consulté' },
+  rib: { attente: 'Demandé le', regle: 'RIB reçu le', encore: 'pas encore reçu' },
+  origine: { attente: 'Demandée le', regle: 'Déclaration signée le', encore: 'pas encore signée' }
+};
+function suivi(b, f, nature) {
+  // Les demandes arrivent de la plus récente à la plus ancienne.
+  const ds = donnees.demandes.filter(d => d.contactId === f.id && d.nature === nature);
+  const attente = ds.find(d => d.statut !== 'repondue');
+  const d = attente || ds[0];
+  if (!d) { b.title = 'Rien n\'a encore été demandé'; return b; }
+  const t = SUIVI[nature], ref = d.reference ? ` (${d.reference})` : '';
+  b.classList.add(attente ? 'attente' : 'regle');
+  b.title = attente
+    ? `${t.attente} ${date(d.creeLe)}${ref} — ${d.enCours ? 'déclaration commencée, ' : ''}${t.encore}`
+    : `${t.regle} ${date(d.reponduLe)}${ref}`;
+  return b;
 }
 $('filtre').addEventListener('input', afficherClients);
 $('seulAValider').addEventListener('change', afficherClients);
@@ -566,15 +595,22 @@ const ACTIONS = {
 };
 const ACTEURS = { client: 'Client', notaire: 'Notaire', inconnu: 'Inconnu' };
 async function chargerJournal() {
-  $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Chargement…' })));
+  const vide = (t) => $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: t })));
+  const filtre = $('filtreJournal').value.trim();
+  vide('Chargement…');
   try {
-    const { lignes } = await api('journal');
-    $('tJournal').replaceChildren(...(lignes.length ? lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
+    const { lignes } = await api('journal', { filtre });
+    if ($('filtreJournal').value.trim() !== filtre) return; // une saisie plus récente est en route
+    if (!lignes.length) return vide(filtre ? 'Aucune ligne du journal ne correspond à ce filtre.' : 'Journal vide.');
+    $('tJournal').replaceChildren(...lignes.map(l => el('tr', {}, el('td', {}, date(l.quand)), el('td', {}, ACTEURS[l.acteur] || l.acteur),
       el('td', {}, ACTIONS[l.action] || l.action),
-      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.questionnaire, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.empreinte ? 'empreinte ' + l.empreinte.slice(0, 16) + '…' : '', l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') })))
-      : [el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: 'Journal vide.' }))]));
-  } catch (err) { $('tJournal').replaceChildren(el('tr', {}, el('td', { colSpan: 4, className: 'vide', textContent: err.message }))); }
+      el('td', { className: 'gris', textContent: [l.nom, l.demande ? 'demande ' + l.demande : '', l.reference ? 'exemplaire ' + l.reference : '', l.relance ? 'relance' : '', l.questionnaire, l.destinataire, l.email === 'non-parti' ? 'EMAIL NON PARTI' : '', l.telephone, l.fichier, l.empreinte ? 'empreinte ' + l.empreinte.slice(0, 16) + '…' : '', l.montant ? euros(l.montant) : '', l.ip ? 'IP ' + l.ip : ''].filter(Boolean).join(' · ') }))));
+  } catch (err) { vide(err.message); }
 }
+let attenteFiltre;
+$('filtreJournal').addEventListener('input', () => { clearTimeout(attenteFiltre); attenteFiltre = setTimeout(chargerJournal, 350); });
+/** Journal d'un client : l'onglet s'ouvre, filtré sur son nom. */
+function journalDe(f) { $('filtreJournal').value = `${f.nom} ${f.prenom}`.trim(); ouvrirOnglet('journal'); }
 
 $('btnLiaison').addEventListener('click', async () => {
   $('txtLiaison').textContent = 'Test en cours…';

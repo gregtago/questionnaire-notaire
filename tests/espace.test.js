@@ -710,6 +710,14 @@ test('questionnaires : envoi depuis le portail (ancienne page /admin), consigné
   assert.ok(j.some(l => l.questionnaire === 'Succession' && l.destinataire === 'samuel@example.org'));
 });
 
+test('journal : le filtre retient les lignes d\'un client, sans égard aux accents ni à la casse', async () => {
+  const tout = (await portail('journal')).d.lignes;
+  const diai = (await portail('journal', { filtre: 'samuel  DIAÏ' })).d.lignes;
+  assert.ok(diai.length > 0 && diai.length < tout.length);
+  assert.ok(diai.every(l => /diai/i.test(l.nom || '') && /samuel/i.test(l.nom || '')));
+  assert.equal((await portail('journal', { filtre: 'personne-de-ce-nom' })).d.lignes.length, 0);
+});
+
 test('/admin renvoie au portail', async () => {
   const r = await fetch(`${BASE}/admin`, { redirect: 'manual' });
   assert.equal(r.status, 307);
